@@ -80,7 +80,7 @@ public class StepSpleef {
 	}
 	
 	//Check/give players snowballs
-	public void giveSnowballs() {
+	public void giveSnowballs() { 
 		for (Player ply : players) {
 			if (ply.getInventory().getItem(0) != null) {
 				if (ply.getInventory().getItem(0).getAmount() < 16) {
