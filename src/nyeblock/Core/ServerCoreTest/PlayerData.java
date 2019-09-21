@@ -1,0 +1,188 @@
+package nyeblock.Core.ServerCoreTest;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
+
+import net.md_5.bungee.api.ChatColor;
+import nyeblock.Core.ServerCoreTest.Items.HubMenu;
+import nyeblock.Core.ServerCoreTest.Items.KitSelector;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+
+public class PlayerData {
+	private Main mainInstance;
+	private Player player;
+	private int points;
+	private int xp;
+	private double timePlayed;
+	private String ip;
+	private int userGroup;
+	private PermissionAttachment permissions;
+	private String realm;
+	//Scoreboard
+	private Scoreboard board;
+	private Objective objective;
+	
+	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, int userGroup, String realm) {
+		this.mainInstance = mainInstance;
+		this.player = ply;
+		permissions = new PermissionAttachment(mainInstance, ply);
+		this.points = points;
+		this.xp = xp;
+		this.timePlayed = timePlayed;
+		this.ip = ip;
+		this.userGroup = userGroup;
+		this.realm = realm;
+		ScoreboardManager sbm = Bukkit.getScoreboardManager();
+		board = sbm.getNewScoreboard();
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
+		ply.setScoreboard(board);
+		setPermissions();
+		setItems();
+	}
+	
+	//Set player permissions depending on their realm
+	public void setPermissions() {
+		if (realm.equals("hub")) {
+			permissions.setPermission("nyeblock.breakBlocks", false);
+			permissions.setPermission("nyeblock.useInventory", false);
+			permissions.setPermission("nyeblock.canDamage", false);
+			permissions.setPermission("nyeblock.canBeDamaged", false);
+			permissions.setPermission("nyeblock.takeFallDamage", false);
+			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
+			permissions.setPermission("nyeblock.dropItems", false);
+			permissions.setPermission("nyeblock.showRunningParticles", true);
+		} else if (realm.equals("kitPvP")) {
+			permissions.setPermission("nyeblock.breakBlocks", false);
+			permissions.setPermission("nyeblock.useInventory", false);
+			permissions.setPermission("nyeblock.canDamage", true);
+			permissions.setPermission("nyeblock.canBeDamaged", true);
+			permissions.setPermission("nyeblock.takeFallDamage", true);
+			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
+			permissions.setPermission("nyeblock.dropItems", false);
+			permissions.setPermission("nyeblock.showRunningParticles", true);
+		} else if (realm.equals("stepSpleef")) {
+			permissions.setPermission("nyeblock.breakBlocks", false);
+			permissions.setPermission("nyeblock.useInventory", false);
+			permissions.setPermission("nyeblock.canDamage", false);
+			permissions.setPermission("nyeblock.canBeDamaged", true);
+			permissions.setPermission("nyeblock.takeFallDamage", false);
+			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
+			permissions.setPermission("nyeblock.dropItems", false);
+			permissions.setPermission("nyeblock.showRunningParticles", true);
+		}
+	}
+	//Set a specific player permission
+	public void setPermission(String permission, boolean value) {
+		permissions.setPermission(permission, value);
+	}
+	//Give the player default items based on their realm
+	public void setItems() {
+		player.getInventory().clear();
+		
+		if (realm.equals("hub")) {
+			//Menu
+			HubMenu hubMenu = new HubMenu();
+			ItemStack hm = hubMenu.give();
+			player.getInventory().setItem(4, hm);
+			player.getInventory().setHeldItemSlot(4);
+		} else if (realm.equals("kitPvP")) {
+			//Return to hub
+			ReturnToHub returnToHub = new ReturnToHub();
+			player.getInventory().setItem(8, returnToHub.give());
+			//Select kit
+			KitSelector selectKit = new KitSelector();
+			player.getInventory().setItem(7, selectKit.give());
+			//Sword
+			ItemStack sword = new ItemStack(Material.IRON_SWORD);
+			sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+			player.getInventory().setItem(0, sword);
+			player.getInventory().setHeldItemSlot(0);
+			//Golden Apples
+			ItemStack goldenApples = new ItemStack(Material.ENCHANTED_GOLDEN_APPLE,1);
+			player.getInventory().setItem(1, goldenApples);
+			//Armor
+			ItemStack[] armor = {
+				new ItemStack(Material.IRON_BOOTS),
+				new ItemStack(Material.IRON_LEGGINGS),
+				new ItemStack(Material.IRON_CHESTPLATE),
+				new ItemStack(Material.IRON_HELMET)
+			};
+			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
+			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
+			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
+			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
+			player.getInventory().setArmorContents(armor);
+		} else if (realm.equalsIgnoreCase("stepspleef")) {
+			//Return to hub
+			ReturnToHub returnToHub = new ReturnToHub();
+			player.getInventory().setItem(8, returnToHub.give());
+		}
+	}
+	//Set a players realm
+	public void setRealm(String realm, boolean updatePermissions, boolean updateItems) {
+		this.realm = realm;
+		if (updatePermissions) {			
+			setPermissions();
+		}
+		if (updateItems) {			
+			setItems();
+		}
+		//Remove potion effects
+		for(PotionEffect effect : player.getActivePotionEffects())
+		{
+		    player.removePotionEffect(effect.getType());
+		}
+	}
+	//Get the players current realm
+	public String getRealm() {
+		return realm;
+	}
+	//Get the value of a specific permission
+	public boolean getPermission(String permission) {
+		boolean value = false;
+		
+		for (Map.Entry<String, Boolean> entry : permissions.getPermissions().entrySet()) {
+			if (permission.equalsIgnoreCase(entry.getKey())) {
+				value = entry.getValue();
+			}
+		}
+		return value;
+	}
+	//Get the title of the players scoreboard
+	public String getObjectiveName() {
+		return objective.getName();
+	}
+	//Get the players current scoreboard objective
+	public Objective getObjective() {
+		return objective;
+	}
+	//Set the title of the players scoreboard
+	public void setObjectiveName(String name) {
+		for (String s : board.getEntries()) {			
+			board.resetScores(s);
+		}
+		objective.setDisplayName(name);
+	}
+	//Update the players scoreboard text
+	public void updateObjectiveScores(HashMap<Integer,String> scores) {
+		for (Map.Entry<Integer, String> entry : scores.entrySet()) {
+			Miscellaneous.updateScore(objective, entry.getKey(), entry.getValue());
+		}
+	}
+}
