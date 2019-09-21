@@ -86,7 +86,7 @@ public class StepSpleef {
 				if (ply.getInventory().getItem(0).getAmount() < 16) {
 					ply.getInventory().setItem(0, new ItemStack(Material.SNOWBALL,16));
 				}				
-			} else {
+			} else { 
 				ply.getInventory().setItem(0, new ItemStack(Material.SNOWBALL,16));
 			}
 		}
