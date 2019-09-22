@@ -21,6 +21,7 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class PlayerData {
 	private Main mainInstance;
@@ -31,12 +32,12 @@ public class PlayerData {
 	private String ip;
 	private int userGroup;
 	private PermissionAttachment permissions;
-	private String realm;
+	private Realm realm = Realm.HUB;
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
 	
-	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, int userGroup, String realm) {
+	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, int userGroup) {
 		this.mainInstance = mainInstance;
 		this.player = ply;
 		permissions = new PermissionAttachment(mainInstance, ply);
@@ -45,7 +46,6 @@ public class PlayerData {
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
-		this.realm = realm;
 		ScoreboardManager sbm = Bukkit.getScoreboardManager();
 		board = sbm.getNewScoreboard();
 		objective = board.registerNewObjective("scoreboard", "");
@@ -58,7 +58,7 @@ public class PlayerData {
 	
 	//Set player permissions depending on their realm
 	public void setPermissions() {
-		if (realm.equals("hub")) {
+		if (realm == Realm.HUB) {
 			permissions.setPermission("nyeblock.breakBlocks", false);
 			permissions.setPermission("nyeblock.useInventory", false);
 			permissions.setPermission("nyeblock.canDamage", false);
@@ -67,7 +67,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.dropItems", false);
 			permissions.setPermission("nyeblock.showRunningParticles", true);
-		} else if (realm.equals("kitPvP")) {
+		} else if (realm == Realm.KITPVP) {
 			permissions.setPermission("nyeblock.breakBlocks", false);
 			permissions.setPermission("nyeblock.useInventory", false);
 			permissions.setPermission("nyeblock.canDamage", true);
@@ -76,7 +76,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.dropItems", false);
 			permissions.setPermission("nyeblock.showRunningParticles", true);
-		} else if (realm.equals("stepSpleef")) {
+		} else if (realm == Realm.STEPSPLEEF) {
 			permissions.setPermission("nyeblock.breakBlocks", false);
 			permissions.setPermission("nyeblock.useInventory", false);
 			permissions.setPermission("nyeblock.canDamage", false);
@@ -95,13 +95,13 @@ public class PlayerData {
 	public void setItems() {
 		player.getInventory().clear();
 		
-		if (realm.equals("hub")) {
+		if (realm == Realm.HUB) {
 			//Menu
 			HubMenu hubMenu = new HubMenu();
 			ItemStack hm = hubMenu.give();
 			player.getInventory().setItem(4, hm);
 			player.getInventory().setHeldItemSlot(4);
-		} else if (realm.equals("kitPvP")) {
+		} else if (realm == Realm.KITPVP) {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
@@ -128,14 +128,14 @@ public class PlayerData {
 			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			player.getInventory().setArmorContents(armor);
-		} else if (realm.equalsIgnoreCase("stepspleef")) {
+		} else if (realm == Realm.STEPSPLEEF) {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
 		}
 	}
 	//Set a players realm
-	public void setRealm(String realm, boolean updatePermissions, boolean updateItems) {
+	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems) {
 		this.realm = realm;
 		if (updatePermissions) {			
 			setPermissions();
@@ -150,7 +150,7 @@ public class PlayerData {
 		}
 	}
 	//Get the players current realm
-	public String getRealm() {
+	public Realm getRealm() {
 		return realm;
 	}
 	//Get the value of a specific permission
