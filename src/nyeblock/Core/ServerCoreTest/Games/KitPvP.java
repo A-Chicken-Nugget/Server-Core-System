@@ -29,13 +29,14 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class KitPvP {
 	//Instances needed to run the game
 	private Main mainInstance;
 	private PlayerHandling playerHandling;
 	//Game info
-	private String type;
+	private Realm realm = Realm.KITPVP;
 	private String worldName;
 	private int duration;
 	private long startTime;
@@ -59,10 +60,9 @@ public class KitPvP {
 	// CONSTRUCTOR
 	//
 	
-	public KitPvP(Main mainInstance, String type, String worldName, int duration, int maxPlayers) {
+	public KitPvP(Main mainInstance, String worldName, int duration, int maxPlayers) {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
-		this.type = type;
 		this.worldName = worldName;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
@@ -97,7 +97,7 @@ public class KitPvP {
 				//Delete world from server
 				mainInstance.getMultiverseInstance().deleteWorld(worldName);
 				//Remove game from games array
-				mainInstance.getGameInstance().removeGame(type,worldName);
+				mainInstance.getGameInstance().removeGame(realm,worldName);
 			}
 		}
 	}
@@ -537,9 +537,9 @@ public class KitPvP {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm("hub",true,true);
+			playerData.setRealm(Realm.HUB,true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, "hub");
+			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
 		}
 	}
 }

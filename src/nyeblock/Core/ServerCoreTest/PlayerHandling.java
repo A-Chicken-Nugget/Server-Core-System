@@ -58,6 +58,7 @@ import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
@@ -168,7 +169,7 @@ public class PlayerHandling implements Listener {
 //		} else {
 ////			mainInstance.getDatabaseInstance().updateQuery("INSERT INTO users (name,ip) VALUES ('" + ply.getName() + "','" + ply.getAddress() + "')");
 //		}
-		PlayerData playerData = new PlayerData(mainInstance,ply,0,0,0.0,ply.getAddress().getHostName(),1,"hub");
+		PlayerData playerData = new PlayerData(mainInstance,ply,0,0,0.0,ply.getAddress().getHostName(),1);
 		playersData.put(ply.getName(), playerData);
 		
 		ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
@@ -205,10 +206,10 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		PlayerData playerData = playersData.get(ply.getName());
 		
-		if (playerData.getRealm().equalsIgnoreCase("hub")) {
+		if (playerData.getRealm() == Realm.HUB) {
 			event.setRespawnLocation(Bukkit.getWorld("world").getSpawnLocation());
 			playerData.setItems();
-		} else if (playerData.getRealm().equalsIgnoreCase("kitPvP")) {
+		} else if (playerData.getRealm() == Realm.KITPVP) {
 			GameHandling gh = mainInstance.getGameInstance();
 			KitPvP game = null;
 			
@@ -223,7 +224,7 @@ public class PlayerHandling implements Listener {
 				playerData.setItems();
 				game.setPlayerKit(ply, game.getPlayerKit(ply));
 			}
-		} else if (playerData.getRealm().equalsIgnoreCase("stepSpleef")) {
+		} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
 			GameHandling gh = mainInstance.getGameInstance();
 			
 			for (StepSpleef gm : gh.getStepSpleefGames()) {
@@ -320,9 +321,9 @@ public class PlayerHandling implements Listener {
 		event.setDeathMessage("");
 		PlayerData playerData = playersData.get(killed.getName());
 		
-		if (playerData.getRealm().equalsIgnoreCase("hub")) {			
+		if (playerData.getRealm() == Realm.HUB) {			
 			event.getDrops().clear();
-		} else if (playerData.getRealm().equalsIgnoreCase("kitPvP")) {
+		} else if (playerData.getRealm() == Realm.KITPVP) {
 			event.getDrops().clear();
 			
 			for(KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
@@ -338,7 +339,7 @@ public class PlayerHandling implements Listener {
 					}
 				}
 			}
-		} else if (playerData.getRealm().equalsIgnoreCase("stepSpleef")) {
+		} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
 			event.getDrops().clear();
 			
 			for(StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
@@ -376,12 +377,12 @@ public class PlayerHandling implements Listener {
 	//Handle potion splashes
 	@EventHandler
     public void onPotionSpash(PotionSplashEvent event){
-		Player ply = (Player)event.getEntity();
+		Entity ply = event.getEntity();
 		
 		if (ply instanceof Player) {
 			for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-				if (game.isInServer(ply)) {
-					if (game.isInGraceBounds(ply)) {
+				if (game.isInServer((Player)ply)) {
+					if (game.isInGraceBounds((Player)ply)) {
 						event.setCancelled(true);
 					}
 				}
@@ -454,13 +455,13 @@ public class PlayerHandling implements Listener {
 					PlayerData playerData = playersData.get(ply.getName());
 					
 					//Remove player from game
-					if (playerData.getRealm().equalsIgnoreCase("kitPvP")) {						
+					if (playerData.getRealm() == Realm.KITPVP) {						
 						for(KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 							if (game.isInServer(ply)) {
 								game.playerLeave(ply,true,true);
 							}
 						}
-					} else if (playerData.getRealm().equalsIgnoreCase("stepspleef")) {						
+					} else if (playerData.getRealm() == Realm.STEPSPLEEF) {						
 						for(StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
 							if (game.isInServer(ply)) {
 								game.playerLeave(ply,true,true);

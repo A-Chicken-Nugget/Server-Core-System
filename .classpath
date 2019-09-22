@@ -6,9 +6,5 @@
 	<classpathentry kind="lib" path="D:/eclipse-jars/Multiverse-Core-4.0.0.jar"/>
 	<classpathentry kind="lib" path="D:/eclipse-jars/spigot-1.14.4.jar"/>
 	<classpathentry kind="lib" path="D:/eclipse-jars/worldedit-bukkit-7.0.0.jar"/>
-	<classpathentry kind="lib" path="F:/Eclipse Jars/ActionBarAPI-1.5.4.jar"/>
-	<classpathentry kind="lib" path="F:/Eclipse Jars/Multiverse-Core-4.0.0.jar"/>
-	<classpathentry kind="lib" path="F:/Eclipse Jars/spigot-1.14.4.jar"/>
-	<classpathentry kind="lib" path="F:/Eclipse Jars/worldedit-bukkit-7.0.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
