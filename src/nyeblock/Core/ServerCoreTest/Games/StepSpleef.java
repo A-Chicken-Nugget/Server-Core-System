@@ -27,14 +27,13 @@ import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class StepSpleef {
 	//Instances needed to run the game
 	private Main mainInstance;
 	private PlayerHandling playerHandling;
 	//Game info
-	private Realm type = Realm.STEPSPLEEF;
+	private String type;
 	private String worldName;
 	private int duration;
 	private long startTime;
@@ -60,9 +59,10 @@ public class StepSpleef {
 	
 //	private ArrayList<Entity> test = new ArrayList<>();
 	
-	public StepSpleef(Main mainInstance, String worldName, int duration, int maxPlayers) {
+	public StepSpleef(Main mainInstance, String type, String worldName, int duration, int maxPlayers) {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.type = type;
 		this.worldName = worldName;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
@@ -99,6 +99,8 @@ public class StepSpleef {
 	}
 	//Kick everyone in the game
 	public void kickEveryone() {
+		ghostFactory.clearGhosts();
+		ghostFactory.close();
 		mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
 		
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
@@ -226,7 +228,7 @@ public class StepSpleef {
 			if (emptyCount != 0) {
 				emptyCount = 0;
 			}
-			if (players.size() > 1 && !active) {
+			if (players.size() > 0 && !active) {
 				if (readyCount == 0) {
 					messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 					soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
@@ -256,9 +258,6 @@ public class StepSpleef {
 				mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
 				mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
 				
-				//Remove ghosts
-				ghostFactory.clearGhosts();
-				ghostFactory.close();
 				//Delete world from server
 				mainInstance.getMultiverseInstance().deleteWorld(worldName);
 				//Remove game from games array
@@ -269,7 +268,7 @@ public class StepSpleef {
 	//Scoreboard code
 	public void setScoreboard() {
 		//Check if player has won
-		if (playersInGame.size() == 1) {
+		if (playersInGame.size() == 3) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 //					gameBegun = false;
@@ -421,10 +420,6 @@ public class StepSpleef {
 		Vector randSpawn = getRandomSpawnPoint();
 		ply.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
-		//If game is active, make the player a spectator
-		if (gameBegun) {
-			ghostFactory.addGhost(ply);
-		}
 		
 //		test.add(Bukkit.getWorld(worldName).spawnEntity(Bukkit.getWorld(worldName).getSpawnLocation(), EntityType.CHICKEN));
 //		test.add(Bukkit.getWorld(worldName).spawnEntity(Bukkit.getWorld(worldName).getSpawnLocation(), EntityType.CHICKEN));
@@ -445,7 +440,6 @@ public class StepSpleef {
 			}
 		}
 		players.removeAll(playersToRemove);
-		ghostFactory.removeGhost(ply);
 		
 		if (showLeaveMessage) {
 			if (!active) {				
@@ -456,9 +450,9 @@ public class StepSpleef {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
+			playerData.setRealm("hub",true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
+			mainInstance.getGameInstance().joinGame(ply, "hub");
 		}
 	}
 }

@@ -15,8 +15,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.Enums;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class HubMenu {
 	//Give the player this item
@@ -67,9 +65,9 @@ public class HubMenu {
 	}
 	public void clickItem(Player ply, String item, Main mainInstance) {
 		if (item.equalsIgnoreCase("kitPvP")) {
-			mainInstance.getGameInstance().joinGame(ply, Realm.KITPVP);
+			mainInstance.getGameInstance().joinGame(ply, "kitPvP");
 		} else if (item.equalsIgnoreCase("stepSpleef")) {
-			mainInstance.getGameInstance().joinGame(ply, Realm.STEPSPLEEF);
+			mainInstance.getGameInstance().joinGame(ply, "stepSpleef");
 		}
 	}
 }

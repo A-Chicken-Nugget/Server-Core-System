@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="D:/eclipse-jars/ActionBarAPI-1.5.4.jar"/>
-	<classpathentry kind="lib" path="D:/eclipse-jars/Multiverse-Core-4.0.0.jar"/>
-	<classpathentry kind="lib" path="D:/eclipse-jars/spigot-1.14.4.jar"/>
-	<classpathentry kind="lib" path="D:/eclipse-jars/worldedit-bukkit-7.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Ian/Desktop/New folder/ActionBarAPI-1.5.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Ian/Desktop/New folder/Multiverse-Core-4.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Ian/Desktop/New folder/spigot-1.14.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Ian/Desktop/New folder/worldedit-bukkit-7.0.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

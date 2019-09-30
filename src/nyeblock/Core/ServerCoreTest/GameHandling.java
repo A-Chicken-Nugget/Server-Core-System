@@ -16,7 +16,6 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Games.GameMapInfo;
 import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class GameHandling implements Listener {
 	private Main mainInstance;
@@ -50,9 +49,9 @@ public class GameHandling implements Listener {
 	}
 	
 	//Remove game from list
-	public void removeGame(Realm realm,String worldName) {
+	public void removeGame(String realm,String worldName) {
 		
-		if (realm == Realm.KITPVP) {			
+		if (realm.equalsIgnoreCase("kitpvp")) {			
 			ArrayList<KitPvP> worldsToRemove = new ArrayList<>();
 			
 			for(KitPvP game : kitPvpGames) {
@@ -61,7 +60,7 @@ public class GameHandling implements Listener {
 				}
 			}
 			kitPvpGames.removeAll(worldsToRemove);
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (realm.equalsIgnoreCase("stepspleef")) {
 			ArrayList<StepSpleef> worldsToRemove = new ArrayList<>();
 			
 			for(StepSpleef game : stepSpleefGames) {
@@ -73,14 +72,14 @@ public class GameHandling implements Listener {
 		}
 	}
 	//Remove player from a game
-	public void removePlayerFromGame(Player ply,Realm realm) {
-		if (realm == Realm.KITPVP) {
+	public void removePlayerFromGame(Player ply,String realm) {
+		if (realm.equalsIgnoreCase("kitPvP")) {
 			for (KitPvP game : kitPvpGames) {
 				if (game.isInServer(ply)) {
 					game.playerLeave(ply,true,false);
 				}
 			}
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (realm.equalsIgnoreCase("stepSpleef")) {
 			for (StepSpleef game : stepSpleefGames) {
 				if (game.isInServer(ply)) {
 					game.playerLeave(ply,true,false);
@@ -89,10 +88,10 @@ public class GameHandling implements Listener {
 		}
 	}
 	//Handles the player joining games
-	public void joinGame(Player ply, Realm realm) {
-		if (realm == Realm.HUB) {
+	public void joinGame(Player ply, String game) {
+		if (game.equals("hub")) {
 			ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
-		} else if (realm == Realm.KITPVP) {
+		} else if (game.equals("kitPvP")) {
 			KitPvP gameToJoin = null;
 			
 			//Loop through active games to find one for the player
@@ -109,19 +108,19 @@ public class GameHandling implements Listener {
 			}
 			//If no games are found, create one
 			if (gameToJoin == null) {
-				ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+				ply.sendMessage(ChatColor.YELLOW + "No " + game + " worlds found! Creating a new one for you...");
 				String worldName = "kitPvP_" + UUID.randomUUID();
-				gameToJoin = new KitPvP(mainInstance,worldName,300,15); //900
+				gameToJoin = new KitPvP(mainInstance,game,worldName,300,15); //900
 				kitPvpGames.add(gameToJoin);
 				
 				//Create void world
 				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
 				
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,game,true});
 			} else {
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),game,false});
 			}
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (game.equals("stepSpleef")) {
 			StepSpleef gameToJoin = null;
 			
 			//Loop through active games to find one for the player
@@ -138,23 +137,23 @@ public class GameHandling implements Listener {
 			}
 			//If no games are found, create one
 			if (gameToJoin == null) {
-				ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+				ply.sendMessage(ChatColor.YELLOW + "No " + game + " worlds found! Creating a new one for you...");
 				String worldName = "stepSpleef_" + UUID.randomUUID();
-				gameToJoin = new StepSpleef(mainInstance,worldName,300,15);
+				gameToJoin = new StepSpleef(mainInstance,game,worldName,300,15);
 				stepSpleefGames.add(gameToJoin);
 				
 				//Create void world
 				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
 				
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,game,true});
 			} else {
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),game,false});
 			}
 		}
 	} 
-	public void checkWorld(Player ply, String worldName, Realm realm, Boolean setData) {
+	public void checkWorld(Player ply, String worldName, String realm, Boolean setData) {
 		if (Bukkit.getWorld(worldName) != null) {
-			if (realm == Realm.KITPVP) {
+			if (realm.equals("kitPvP")) {
 				for(KitPvP game : kitPvpGames) {
 					if (game.getWorldName().equalsIgnoreCase(worldName)) {
 						if (setData) {
@@ -197,7 +196,7 @@ public class GameHandling implements Listener {
 						playerData.setRealm(realm,true,true);
 					}
 				}
-			} else if (realm == Realm.STEPSPLEEF) {
+			} else if (realm.equals("stepSpleef")) {
 				for(StepSpleef game : stepSpleefGames) {
 					if (game.getWorldName().equalsIgnoreCase(worldName)) {
 						if (setData) {

@@ -5,17 +5,15 @@ import java.util.HashMap;
 
 import org.bukkit.util.Vector;
 
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-
 public class GameMapInfo {
 	@SuppressWarnings("serial")
 	//Get vectors for specific maps used in games
-	public ArrayList<HashMap<String,Vector>> getMapInfo(Realm realm,String name) {
+	public ArrayList<HashMap<String,Vector>> getMapInfo(String game,String name) {
 		ArrayList<HashMap<String,Vector>> mapInfo = null;
 		
-		if (realm == Realm.KITPVP) {
+		if (game.equalsIgnoreCase("kitPvP")) {
 			//kitPvP_first
-			if (name.equalsIgnoreCase("first")) {
+			if (name.equalsIgnoreCase("kitPvP_first")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
 					add(new HashMap<String,Vector>() {{
@@ -33,7 +31,7 @@ public class GameMapInfo {
 					}});
 				}};
 			//kitPvP_grassland
-			} else if (name.equalsIgnoreCase("grassland")) {
+			} else if (name.equalsIgnoreCase("kitPvP_grassland")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
 					add(new HashMap<String,Vector>() {{
@@ -51,9 +49,9 @@ public class GameMapInfo {
 					}});
 				}};
 			}
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (game.equalsIgnoreCase("stepSpleef")) {
 			//stepSpleef_first
-			if (name.equalsIgnoreCase("first")) {
+			if (name.equalsIgnoreCase("stepSpleef_first")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
 					add(new HashMap<String,Vector>() {{
