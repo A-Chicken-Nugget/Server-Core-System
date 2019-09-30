@@ -4,25 +4,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.Team;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
+@SuppressWarnings("unused")
 public class PlayerData {
 	private Main mainInstance;
 	private Player player;
@@ -30,14 +31,16 @@ public class PlayerData {
 	private int xp;
 	private double timePlayed;
 	private String ip;
-	private int userGroup;
+	private UserGroup userGroup;
 	private PermissionAttachment permissions;
 	private Realm realm = Realm.HUB;
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
+	private Team team;
 	
-	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, int userGroup) {
+	@SuppressWarnings("deprecation")
+	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
 		this.mainInstance = mainInstance;
 		this.player = ply;
 		permissions = new PermissionAttachment(mainInstance, ply);
@@ -48,6 +51,7 @@ public class PlayerData {
 		this.userGroup = userGroup;
 		ScoreboardManager sbm = Bukkit.getScoreboardManager();
 		board = sbm.getNewScoreboard();
+		team = board.registerNewTeam("user");
 		objective = board.registerNewObjective("scoreboard", "");
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
@@ -67,6 +71,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.dropItems", false);
 			permissions.setPermission("nyeblock.showRunningParticles", true);
+//			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
 		} else if (realm == Realm.KITPVP) {
 			permissions.setPermission("nyeblock.breakBlocks", false);
 			permissions.setPermission("nyeblock.useInventory", false);
@@ -134,6 +139,10 @@ public class PlayerData {
 			player.getInventory().setItem(8, returnToHub.give());
 		}
 	}
+//	//Set scoreboard team
+//	public void setScoreboardTeam(String team) {
+//		for
+//	}
 	//Set a players realm
 	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems) {
 		this.realm = realm;
@@ -152,6 +161,10 @@ public class PlayerData {
 	//Get the players current realm
 	public Realm getRealm() {
 		return realm;
+	}
+	//Gets the players user group
+	public UserGroup getUserGroup() {
+		return userGroup;
 	}
 	//Get the value of a specific permission
 	public boolean getPermission(String permission) {

@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -25,33 +24,21 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
-public class StepSpleef {
-	//Instances needed to run the game
-	private Main mainInstance;
-	private PlayerHandling playerHandling;
+public class StepSpleef extends GameBase {
 	//Game info
-	private Realm type = Realm.STEPSPLEEF;
-	private String worldName;
 	private int duration;
 	private long startTime;
-	private String map;
-	private int maxPlayers;
 	private boolean active = false;
 	private boolean gameBegun = false;
 	//Player data
-	private ArrayList<Player> players = new ArrayList<>();
 	private ArrayList<Player> playersInGame = new ArrayList<>();
-	//Game points
-	private ArrayList<Vector> spawns = new ArrayList<>();
 	//Block history
 	private HashMap<Vector,Long> blocksToDelete = new HashMap<>();
 	//Etc
 	private long countdownStart;
-	private int emptyCount = 0;
 	private int readyCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
@@ -64,6 +51,7 @@ public class StepSpleef {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
+		realm = Realm.STEPSPLEEF;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		
@@ -79,7 +67,9 @@ public class StepSpleef {
 		ghostFactory = new GhostFactory(mainInstance);
 	}
 	
-	//Check/give players snowballs
+	/**
+    * Checks/gives players snowballs
+    */
 	public void giveSnowballs() { 
 		for (Player ply : players) {
 			if (ply.getInventory().getItem(0) != null) {
@@ -91,13 +81,17 @@ public class StepSpleef {
 			}
 		}
 	}
-	//Delete snowballs
+	/**
+    * Remove snowballs from players inventories
+    */
 	public void clearSnowballs() {
 		for (Player ply : players) {
 			ply.getInventory().clear(0);
 		}
 	}
-	//Kick everyone in the game
+	/**
+    * Kick everyone in the game
+    */
 	public void kickEveryone() {
 		mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
 		
@@ -107,6 +101,9 @@ public class StepSpleef {
 			playerLeave(ply,false,true);
 		}
 	}
+	/**
+    * Manages count down timer
+    */
 	public void countDown() {
 		long timeLeft = (6-((System.currentTimeMillis() / 1000L)-countdownStart));
 		
@@ -126,6 +123,9 @@ public class StepSpleef {
 			}
 		}
 	}
+	/**
+    * Add blocks to be deleted that the player stepped on
+    */
 	public void manageBlocks() {
 		if (gameBegun) {
 			//Add blocks to be deleted
@@ -191,7 +191,9 @@ public class StepSpleef {
 			}
 		}
 	}
-	//Main code
+	/**
+    * Run main checks for the game
+    */
 	public void mainFunctions() {
 		//Set player gamemodes
 		for(Player ply : players) {
@@ -262,11 +264,13 @@ public class StepSpleef {
 				//Delete world from server
 				mainInstance.getMultiverseInstance().deleteWorld(worldName);
 				//Remove game from games array
-				mainInstance.getGameInstance().removeGame(type,worldName);
+				mainInstance.getGameInstance().removeGame(realm,worldName);
 			}
 		}
 	}
-	//Scoreboard code
+	/**
+    * Set the players scoreboard
+    */
 	public void setScoreboard() {
 		//Check if player has won
 		if (playersInGame.size() == 1) {
@@ -321,37 +325,9 @@ public class StepSpleef {
 			}
 		}
 	}
-	//Print a title to all players in the game
-	@SuppressWarnings("deprecation")
-	public void titleToAll(String top, String bottom) {
-		for(Player ply : players) {
-			ply.sendTitle(top, bottom);
-		}
-	}
-	//Play sound to all players in the game
-	public void soundToAll(Sound sound, float pitch) {
-		for(Player ply : players) {
-			ply.playSound(ply.getLocation(), sound, 10, pitch);
-		}
-	}
-	//Print a message in chat to all players in the game
-	public void messageToAll(String message) {
-		for(Player ply : players) {
-			ply.sendMessage(message);
-		}
-	}
-	//Check if a player is in this game
-	public boolean isInServer(Player ply) {
-		boolean found = false;
-		
-		for(Player player : players) {
-			if (ply.getName().equalsIgnoreCase(player.getName())) {
-				found = true;
-			}
-		}
-		return found;
-	}
-	//Check if a player is in this game
+	/**
+    * Check if a player is in the game
+    */
 	public boolean isInRound(Player ply) {
 		boolean found = false;
 		
@@ -362,45 +338,16 @@ public class StepSpleef {
 		}
 		return found;
 	}
-	//Get the status of the game
+	/**
+    * Get the status of the game
+    */
 	public boolean isGameActive() {
 		return !endStarted;
 	}
-	//Get the current player count
-	public boolean getRoundActive() {
-		return gameBegun;
-	}
-	//Get the current player count
-	public int getPlayerCount() {
-		return players.size();
-	}
-	//Get the max amount of players
-	public int getMaxPlayers() {
-		return maxPlayers;
-	}
-	//Get the world name
-	public String getWorldName() {
-		return worldName;
-	}
-	//Get a random spawn point
-	public Vector getRandomSpawnPoint() {
-		Vector vector = Bukkit.getWorld(worldName).getSpawnLocation().getDirection();
-		
-		if (spawns.size() > 0) {
-			Random r = new Random();
-			vector = spawns.get(r.nextInt(spawns.size()));
-		}
-		return vector;
-	}
-	//Set the game map
-	public void setMap(String map) {
-		this.map = map;
-	}
-	//Set the game spawn points
-	public void setSpawnPoints(ArrayList<Vector> spawns) {
-		this.spawns = spawns;
-	}
-	//When a player has died
+	/**
+    * Handle when a player died
+    */
+	@SuppressWarnings("serial")
 	public void playerDeath(Player killed) {
 		playersInGame.removeAll(new ArrayList<Player>() {{
 			add(killed);
@@ -410,7 +357,9 @@ public class StepSpleef {
 		killed.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
 		messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
 	}
-	//When a player joins the game
+	/**
+    * Handle when a player joins the game
+    */
 	@SuppressWarnings("deprecation")
 	public void playerJoin(Player ply) {
 		if (!active) {			
@@ -435,16 +384,19 @@ public class StepSpleef {
 //			ent.setInvulnerable(true);
 //		}
 	}
-	//When a player leaves the game
+	/**
+    * Handle when a player leaves the game
+    */
+	@SuppressWarnings("serial")
 	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
 		//Remove player from players list
-		ArrayList<Player> playersToRemove = new ArrayList<Player>();
-		for(Player player : players) {
-			if (player.getName().equalsIgnoreCase(ply.getName())) {
-				playersToRemove.add(ply);
-			}
-		}
-		players.removeAll(playersToRemove);
+		players.removeAll(new ArrayList<Player>() {{
+			add(ply);
+		}});
+		//Remove player from the current game
+		playersInGame.removeAll(new ArrayList<Player>() {{
+			add(ply);
+		}});
 		ghostFactory.removeGhost(ply);
 		
 		if (showLeaveMessage) {

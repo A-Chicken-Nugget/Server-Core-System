@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -31,28 +30,19 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
-public class KitPvP {
-	//Instances needed to run the game
-	private Main mainInstance;
-	private PlayerHandling playerHandling;
+@SuppressWarnings("deprecation")
+public class KitPvP extends GameBase {
 	//Game info
-	private Realm realm = Realm.KITPVP;
-	private String worldName;
 	private int duration;
 	private long startTime;
-	private String map;
-	private int maxPlayers;
 	//Player data
-	private ArrayList<Player> players = new ArrayList<>();
 	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private HashMap<String,String> playerKits = new HashMap<>();
 	private HashMap<String,Boolean> playerInGraceBounds = new HashMap<>();
 	//Game points
 	private Vector safeZonePoint1;
 	private Vector safeZonePoint2;
-	private ArrayList<Vector> spawns = new ArrayList<>();
 	//Etc
-	private int emptyCount = 0;
 	private boolean endStarted = false;
 	private ArrayList<String> top5 = new ArrayList<>();
 	
@@ -64,6 +54,7 @@ public class KitPvP {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
+		realm = Realm.KITPVP;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		startTime = System.currentTimeMillis() / 1000L;
@@ -248,39 +239,6 @@ public class KitPvP {
 		}
 	}
 	/**
-    * Kicks everyone from the game
-    */
-	public void kickEveryone() {
-		ArrayList<Player> tempPlayers = new ArrayList<>(players);
-		
-		for (Player ply : tempPlayers) {			
-			playerLeave(ply,false,true);
-		}
-	}
-	/**
-    * Sends a message in chat to all players in the game
-    * @param message - the message to send.
-    */
-	public void messageToAll(String message) {
-		for(Player ply : players) {
-			ply.sendMessage(message);
-		}
-	}
-	/**
-    * Checks to see if the provided player is in the game
-    * @param player - the player to check for.
-    */
-	public boolean isInServer(Player ply) {
-		boolean found = false;
-		
-		for(Player player : players) {
-			if (ply.getName().equalsIgnoreCase(player.getName())) {
-				found = true;
-			}
-		}
-		return found;
-	}
-	/**
     * Checks to see if the provided player is in the grace zone
     * @param player - the player to check for.
     */
@@ -301,40 +259,9 @@ public class KitPvP {
 		return playerKits.get(ply.getName());
 	}
 	/**
-    * Get the current amount of players in the game
-    */
-	public int getPlayerCount() {
-		return players.size();
-	}
-	/**
-    * Get the max amount of players the game can have
-    */
-	public int getMaxPlayers() {
-		return maxPlayers;
-	}
-	/**
-    * Get the world name
-    */
-	public String getWorldName() {
-		return worldName;
-	}
-	/**
-    * Get a random spawn point for the game
-    */
-	public Vector getRandomSpawnPoint() {
-		Vector vector = Bukkit.getWorld(worldName).getSpawnLocation().getDirection();
-		
-		if (spawns.size() > 0) {
-			Random r = new Random();
-			vector = spawns.get(r.nextInt(spawns.size()));
-		}
-		return vector;
-	}
-	/**
     * Set a specific players kit
     * @param player - the player to set the kit for.
     */
-	@SuppressWarnings("deprecation")
 	public void setPlayerKit(Player ply, String kit) {
 		ply.getInventory().clear(0);
 		ply.getInventory().clear(1);
@@ -443,20 +370,6 @@ public class KitPvP {
 		playerKits.put(ply.getName(), kit);
 	}
 	/**
-    * Set the map for the game
-    * @param map - the map to set.
-    */
-	public void setMap(String map) {
-		this.map = map;
-	}
-	/**
-    * Set the spawn points for the game
-    * @param spawns - an array list of spawn vectors.
-    */
-	public void setSpawnPoints(ArrayList<Vector> spawns) {
-		this.spawns = spawns;
-	}
-	/**
     * Set the grace zone bounds
     * @param bound 1 - a vector for bound 1.
     * @param bound 2 - a vector for bound 2.
@@ -490,7 +403,6 @@ public class KitPvP {
     * Handles when a player joins the game
     * @param player - the player who joined the game.
     */
-	@SuppressWarnings("deprecation")
 	public void playerJoin(Player ply) {
 		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
 		//Add player to players array
@@ -509,12 +421,12 @@ public class KitPvP {
     * @param bool - should a leave message be shown?
     * @param bool - should the player be moved to the hub?
     */
+	@SuppressWarnings("serial")
 	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
 		//Remove player from players list
-		ArrayList<Player> playersToRemove = new ArrayList<Player>() {{
+		players.removeAll(new ArrayList<Player>() {{
 			add(ply);
-		}};
-		players.removeAll(playersToRemove);
+		}});
 		
 		//Remove player from hashmaps
 		playerKills.remove(ply.getName());
