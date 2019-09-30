@@ -12,6 +12,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
  
+@SuppressWarnings("deprecation")
 public class GhostFactory {
     private static final String GHOST_TEAM_NAME = "Ghosts";
     private static final long UPDATE_DELAY = 5L;
@@ -45,7 +46,7 @@ public class GhostFactory {
  
     private void createTask(Plugin plugin) {
         task = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
-            @Override
+			@Override
             public void run() {
                 for (OfflinePlayer ghostPlayer : getGhosts()) {
                     Player player = ghostPlayer.getPlayer();

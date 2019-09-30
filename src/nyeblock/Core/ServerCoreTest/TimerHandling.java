@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -19,8 +18,6 @@ public class TimerHandling {
 		if (timers.get(name) == null) {
 			for (Method method : classInstance.getClass().getMethods()) {
 				if (method.getName().equalsIgnoreCase(methodToRun)) {
-					TimerHandling baseInstance = this;
-					
 					timesRan.put(name, 0);
 					BukkitTask task = Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"), new Runnable() {
 						@Override

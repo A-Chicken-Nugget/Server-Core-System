@@ -23,7 +23,6 @@ public class Enums {
 			return name;
 		}
 	}
-	
 	//Chest Value Enums
 	public enum ChestValue {
 		SHIT(1, "Shit"),
@@ -43,7 +42,32 @@ public class Enums {
 		public int getValue() {
 			return value;
 		}
-		
+	//User group enums
+	public enum UserGroup {
+		USER(1,"User"),
+		ADMIN(2,"Admin");
+
+		private int value;  
+		private String name;
+
+		private UserGroup(int value, String name) {
+			this.value = value;
+			this.name = name;
+		}
+
+		public static UserGroup fromInt(int userGroup) {
+			UserGroup userGrp = null;
+			
+			for (UserGroup group : UserGroup.values()) {
+				if (group.getValue() == userGroup) {
+					userGrp = group;
+				}
+			}
+			return userGrp;
+		}
+		public int getValue() {
+			return value;
+		}
 		public String toString() {
 			return name;
 		}

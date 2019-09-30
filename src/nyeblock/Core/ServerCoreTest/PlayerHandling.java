@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
@@ -14,13 +13,10 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -37,16 +33,11 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.util.Vector;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
@@ -58,21 +49,19 @@ import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
-	private BukkitTask scoreboard = null;
-	private HashMap<UUID,BukkitTask> playerTimers = new HashMap<UUID,BukkitTask>();
 	private HashMap<String, PlayerData> playersData = new HashMap<String, PlayerData>();
 	private boolean worldsChecked = false;
 	
-	public PlayerHandling() {
-	}
 	public PlayerHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
 		
 		//Timer ran every second
-		scoreboard = Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"), new Runnable() {
+		Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"), new Runnable() {
 			@Override
             public void run() {
         		//Manage hub weather/time
@@ -156,19 +145,18 @@ public class PlayerHandling implements Listener {
 		//Remove default join message
 		event.setJoinMessage("");
 		
-		//Setup player data/permissions
-//		ArrayList<HashMap<String,String>> query = mainInstance.getDatabaseInstance().selectQuery("SELECT * FROM users", 6);
-//		if (query.size() > 0) {
-//			for (HashMap<String,String> row : query) {
-//				System.out.println("Row:");
-//				for (Map.Entry<String,String> rowData : row.entrySet()) {
-//					System.out.print(rowData.getKey() + " : " + rowData.getValue());
-//				}
-//			}
-//		} else {
-////			mainInstance.getDatabaseInstance().updateQuery("INSERT INTO users (name,ip) VALUES ('" + ply.getName() + "','" + ply.getAddress() + "')");
-//		}
-		PlayerData playerData = new PlayerData(mainInstance,ply,0,0,0.0,ply.getAddress().getHostName(),1,"hub");
+		//Setup player data. If they don't have a profile in the database, create one.
+		PlayerData playerData = null;
+		ArrayList<HashMap<String,String>> query = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 6, false);
+		if (query.size() > 0) {
+			HashMap<String,String> queryData = query.get(0);
+
+			playerData = new PlayerData(mainInstance,ply,Integer.parseInt(queryData.get("points")),0,Double.parseDouble(queryData.get("timePlayed")),ply.getAddress().getHostName(),UserGroup.fromInt(Integer.parseInt(queryData.get("userGroup"))));
+		} 
+		else {
+			mainInstance.getDatabaseInstance().query("INSERT INTO users (name,ip) VALUES ('" + ply.getName() + "','" + ply.getAddress() + "')",0,true);
+			playerData = new PlayerData(mainInstance,ply,0,0,0.0,ply.getAddress().getHostName(),UserGroup.USER);
+		} 
 		playersData.put(ply.getName(), playerData);
 		
 		ply.teleport(Bukkit.getWorld("world").getSpawnLocation());

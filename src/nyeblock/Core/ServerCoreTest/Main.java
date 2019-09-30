@@ -2,6 +2,8 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.io.File;
 
+//import java.io.File;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -28,22 +30,22 @@ public class Main extends JavaPlugin {
 		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.510, 113, -11.445));
 		Bukkit.getWorld("world").loadChunk(-10, 113);
 		//Handle config file
-//		File configFile = new File(this.getDataFolder(), "config.yml");
-//		if (configFile.exists()) {
-//			FileConfiguration config = this.getConfig();
-//			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
-//		} else {
-//			FileConfiguration config = this.getConfig();
-//			config.addDefault("mysql.host","host");
-//			config.addDefault("mysql.database","database");
-//			config.addDefault("mysql.port",3306);
-//			config.addDefault("mysql.username", "user");
-//			config.addDefault("mysql.password", "password");
-//			config.options().copyDefaults(true);
-//			this.saveConfig();
-//			
-//			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
-//		}
+		File configFile = new File(this.getDataFolder(), "config.yml");
+		if (configFile.exists()) {
+			FileConfiguration config = this.getConfig();
+			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
+		} else {
+			FileConfiguration config = this.getConfig();
+			config.addDefault("mysql.host","host");
+			config.addDefault("mysql.database","database");
+			config.addDefault("mysql.port",3306);
+			config.addDefault("mysql.username", "user");
+			config.addDefault("mysql.password", "password");
+			config.options().copyDefaults(true);
+			this.saveConfig();
+			
+			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
+		}
 		
 		getServer().getPluginManager().registerEvents(playerHandling, this);
 		getServer().getPluginManager().registerEvents(gameHandling, this);
