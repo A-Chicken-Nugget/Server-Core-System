@@ -156,7 +156,7 @@ public class PlayerHandling implements Listener {
 		else {
 			mainInstance.getDatabaseInstance().query("INSERT INTO users (name,ip) VALUES ('" + ply.getName() + "','" + ply.getAddress() + "')",0,true);
 			playerData = new PlayerData(mainInstance,ply,0,0,0.0,ply.getAddress().getHostName(),UserGroup.USER);
-		}
+		} 
 		playersData.put(ply.getName(), playerData);
 		
 		ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
