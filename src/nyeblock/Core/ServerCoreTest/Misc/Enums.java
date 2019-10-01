@@ -22,7 +22,7 @@ public class Enums {
 		public String toString() {
 			return name;
 		}
-	}
+	} 
 	//User group enums
 	public enum UserGroup {
 		USER(1,"User"),
