@@ -24,7 +24,7 @@ public class NyeChest {
 	}
 	
 	public Block createChest() {
-		Location 
+		return null; //just set it to null so no errors m80
 	}
 	
 	//Getters

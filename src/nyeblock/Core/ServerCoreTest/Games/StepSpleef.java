@@ -24,15 +24,12 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
 
 public class StepSpleef extends GameBase {
 	//Game info
-<<<<<<< HEAD
-=======
-	private String type;
 	private String worldName;
->>>>>>> refs/heads/Bian
 	private int duration;
 	private long startTime;
 	private boolean active = false;
@@ -51,10 +48,9 @@ public class StepSpleef extends GameBase {
 	
 //	private ArrayList<Entity> test = new ArrayList<>();
 	
-	public StepSpleef(Main mainInstance, String type, String worldName, int duration, int maxPlayers) {
+	public StepSpleef(Main mainInstance, String worldName, int duration, int maxPlayers) {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
-		this.type = type;
 		this.worldName = worldName;
 		realm = Realm.STEPSPLEEF;
 		this.duration = duration;
@@ -390,7 +386,6 @@ public class StepSpleef extends GameBase {
 	@SuppressWarnings("serial")
 	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
 		//Remove player from players list
-<<<<<<< HEAD
 		players.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
@@ -399,15 +394,6 @@ public class StepSpleef extends GameBase {
 			add(ply);
 		}});
 		ghostFactory.removeGhost(ply);
-=======
-		ArrayList<Player> playersToRemove = new ArrayList<Player>();
-		for(Player player : players) {
-			if (player.getName().equalsIgnoreCase(ply.getName())) {
-				playersToRemove.add(ply);
-			}
-		}
-		players.removeAll(playersToRemove);
->>>>>>> refs/heads/Bian
 		
 		if (showLeaveMessage) {
 			if (!active) {				
@@ -418,9 +404,9 @@ public class StepSpleef extends GameBase {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm("hub",true,true);
+			playerData.setRealm(Realm.HUB,true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, "hub");
+			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
 		}
 	}
 }

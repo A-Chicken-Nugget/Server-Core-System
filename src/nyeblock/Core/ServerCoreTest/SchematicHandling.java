@@ -24,9 +24,11 @@ import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.session.ClipboardHolder;
 
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+
 public class SchematicHandling {
 	//Create a schematic in a world based on the game
-	public String setSchematic(String game, String worldName) {
+	public String setSchematic(Realm realm, String worldName) {
 		String schemToUse = null;
 		ArrayList<File> schems = new ArrayList<File>();
 		schems.addAll(Arrays.asList(new File(Bukkit.getPluginManager().getPlugin("WorldEdit").getDataFolder().getAbsolutePath() + "\\schematics").listFiles()));
@@ -37,14 +39,14 @@ public class SchematicHandling {
 		for(File file : schems) {
 			String[] gamemode = file.getName().split(Pattern.quote("_"));
 			
-			if (gamemode[0].equalsIgnoreCase(game)) {
+			if (Integer.parseInt(gamemode[0]) == realm.getValue()) {
 				validSchems.add(file);
 			}
 		}
 		schem = validSchems.get(new Random().nextInt(validSchems.size()));
 		
 		String[] mapName = schem.getName().split(Pattern.quote("."));
-		System.out.println("[Core]: Creating new " + game + " game. Using map " + mapName[0]);
+		System.out.println("[Core]: Creating new " + realm.toString() + " game. Using map " + mapName[0]);
 		
 		ClipboardFormat format = ClipboardFormats.findByFile(schem);
 		ClipboardReader reader = null;

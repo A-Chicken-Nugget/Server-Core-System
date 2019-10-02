@@ -6,10 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="C:/Users/Ian/Desktop/New folder/ActionBarAPI-1.5.4.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Ian/Desktop/New folder/Multiverse-Core-4.0.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Ian/Desktop/New folder/spigot-1.14.4.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Ian/Desktop/New folder/worldedit-bukkit-7.0.0.jar"/>
 	<classpathentry kind="lib" path="L:/Eclipse Jars/ActionBarAPI-1.5.4.jar"/>
 	<classpathentry kind="lib" path="L:/Eclipse Jars/Multiverse-Core-4.0.0.jar"/>
 	<classpathentry kind="lib" path="L:/Eclipse Jars/spigot-1.14.4.jar"/>
