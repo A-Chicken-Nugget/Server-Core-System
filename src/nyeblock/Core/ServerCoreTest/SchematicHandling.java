@@ -45,8 +45,9 @@ public class SchematicHandling {
 		}
 		schem = validSchems.get(new Random().nextInt(validSchems.size()));
 		
-		String[] mapName = schem.getName().split(Pattern.quote("."));
-		System.out.println("[Core]: Creating new " + realm.toString() + " game. Using map " + mapName[0]);
+		String[] removeExtension = schem.getName().split(Pattern.quote("."));
+		String[] mapName = removeExtension[0].split("_");
+		System.out.println("[Core]: Creating new " + realm.toString() + " game. Using map " + mapName[1]);
 		
 		ClipboardFormat format = ClipboardFormats.findByFile(schem);
 		ClipboardReader reader = null;
@@ -72,7 +73,7 @@ public class SchematicHandling {
 		    try {
 		        Operations.complete(operation);
 		        editSession.flushSession();
-		        schemToUse = mapName[0];
+		        schemToUse = mapName[1];
 
 		    } catch (WorldEditException e) {
 		        e.printStackTrace();

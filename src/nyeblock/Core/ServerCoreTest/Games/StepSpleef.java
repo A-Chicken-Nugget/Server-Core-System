@@ -29,7 +29,6 @@ import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
 
 public class StepSpleef extends GameBase {
 	//Game info
-	private String worldName;
 	private int duration;
 	private long startTime;
 	private boolean active = false;
@@ -231,7 +230,7 @@ public class StepSpleef extends GameBase {
 			if (emptyCount != 0) {
 				emptyCount = 0;
 			}
-			if (players.size() > 0 && !active) {
+			if (players.size() > 1 && !active) {
 				if (readyCount == 0) {
 					messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 					soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
@@ -273,7 +272,7 @@ public class StepSpleef extends GameBase {
     */
 	public void setScoreboard() {
 		//Check if player has won
-		if (playersInGame.size() == 3) {
+		if (playersInGame.size() == 1) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 //					gameBegun = false;
