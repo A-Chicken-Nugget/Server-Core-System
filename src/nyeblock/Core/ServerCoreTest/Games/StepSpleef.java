@@ -25,10 +25,14 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class StepSpleef extends GameBase {
 	//Game info
+<<<<<<< HEAD
+=======
+	private String type;
+	private String worldName;
+>>>>>>> refs/heads/Bian
 	private int duration;
 	private long startTime;
 	private boolean active = false;
@@ -47,9 +51,10 @@ public class StepSpleef extends GameBase {
 	
 //	private ArrayList<Entity> test = new ArrayList<>();
 	
-	public StepSpleef(Main mainInstance, String worldName, int duration, int maxPlayers) {
+	public StepSpleef(Main mainInstance, String type, String worldName, int duration, int maxPlayers) {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.type = type;
 		this.worldName = worldName;
 		realm = Realm.STEPSPLEEF;
 		this.duration = duration;
@@ -93,6 +98,8 @@ public class StepSpleef extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
+		ghostFactory.clearGhosts();
+		ghostFactory.close();
 		mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
 		
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
@@ -228,7 +235,7 @@ public class StepSpleef extends GameBase {
 			if (emptyCount != 0) {
 				emptyCount = 0;
 			}
-			if (players.size() > 1 && !active) {
+			if (players.size() > 0 && !active) {
 				if (readyCount == 0) {
 					messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 					soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
@@ -258,9 +265,6 @@ public class StepSpleef extends GameBase {
 				mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
 				mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
 				
-				//Remove ghosts
-				ghostFactory.clearGhosts();
-				ghostFactory.close();
 				//Delete world from server
 				mainInstance.getMultiverseInstance().deleteWorld(worldName);
 				//Remove game from games array
@@ -273,7 +277,7 @@ public class StepSpleef extends GameBase {
     */
 	public void setScoreboard() {
 		//Check if player has won
-		if (playersInGame.size() == 1) {
+		if (playersInGame.size() == 3) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 //					gameBegun = false;
@@ -370,10 +374,6 @@ public class StepSpleef extends GameBase {
 		Vector randSpawn = getRandomSpawnPoint();
 		ply.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
-		//If game is active, make the player a spectator
-		if (gameBegun) {
-			ghostFactory.addGhost(ply);
-		}
 		
 //		test.add(Bukkit.getWorld(worldName).spawnEntity(Bukkit.getWorld(worldName).getSpawnLocation(), EntityType.CHICKEN));
 //		test.add(Bukkit.getWorld(worldName).spawnEntity(Bukkit.getWorld(worldName).getSpawnLocation(), EntityType.CHICKEN));
@@ -390,6 +390,7 @@ public class StepSpleef extends GameBase {
 	@SuppressWarnings("serial")
 	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
 		//Remove player from players list
+<<<<<<< HEAD
 		players.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
@@ -398,6 +399,15 @@ public class StepSpleef extends GameBase {
 			add(ply);
 		}});
 		ghostFactory.removeGhost(ply);
+=======
+		ArrayList<Player> playersToRemove = new ArrayList<Player>();
+		for(Player player : players) {
+			if (player.getName().equalsIgnoreCase(ply.getName())) {
+				playersToRemove.add(ply);
+			}
+		}
+		players.removeAll(playersToRemove);
+>>>>>>> refs/heads/Bian
 		
 		if (showLeaveMessage) {
 			if (!active) {				
@@ -408,9 +418,9 @@ public class StepSpleef extends GameBase {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
+			playerData.setRealm("hub",true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
+			mainInstance.getGameInstance().joinGame(ply, "hub");
 		}
 	}
 }

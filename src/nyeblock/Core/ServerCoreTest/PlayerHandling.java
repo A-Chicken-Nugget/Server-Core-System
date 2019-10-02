@@ -49,8 +49,11 @@ import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
+<<<<<<< HEAD
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+=======
+>>>>>>> refs/heads/Bian
 
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
@@ -145,6 +148,7 @@ public class PlayerHandling implements Listener {
 		//Remove default join message
 		event.setJoinMessage("");
 		
+<<<<<<< HEAD
 		//Setup player data. If they don't have a profile in the database, create one.
 		PlayerData playerData = null;
 		ArrayList<HashMap<String,String>> query = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 6, false);
@@ -157,6 +161,21 @@ public class PlayerHandling implements Listener {
 			mainInstance.getDatabaseInstance().query("INSERT INTO users (name,ip) VALUES ('" + ply.getName() + "','" + ply.getAddress() + "')",0,true);
 			playerData = new PlayerData(mainInstance,ply,0,0,0.0,ply.getAddress().getHostName(),UserGroup.USER);
 		}
+=======
+		//Setup player data/permissions
+//		ArrayList<HashMap<String,String>> query = mainInstance.getDatabaseInstance().selectQuery("SELECT * FROM users", 6);
+//		if (query.size() > 0) {
+//			for (HashMap<String,String> row : query) {
+//				System.out.println("Row:");
+//				for (Map.Entry<String,String> rowData : row.entrySet()) {
+//					System.out.print(rowData.getKey() + " : " + rowData.getValue());
+//				}
+//			}
+//		} else {
+////			mainInstance.getDatabaseInstance().updateQuery("INSERT INTO users (name,ip) VALUES ('" + ply.getName() + "','" + ply.getAddress() + "')");
+//		}
+		PlayerData playerData = new PlayerData(mainInstance,ply,0,0,0.0,ply.getAddress().getHostName(),1,"hub");
+>>>>>>> refs/heads/Bian
 		playersData.put(ply.getName(), playerData);
 		
 		ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
@@ -193,10 +212,10 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		PlayerData playerData = playersData.get(ply.getName());
 		
-		if (playerData.getRealm() == Realm.HUB) {
+		if (playerData.getRealm().equalsIgnoreCase("hub")) {
 			event.setRespawnLocation(Bukkit.getWorld("world").getSpawnLocation());
 			playerData.setItems();
-		} else if (playerData.getRealm() == Realm.KITPVP) {
+		} else if (playerData.getRealm().equalsIgnoreCase("kitPvP")) {
 			GameHandling gh = mainInstance.getGameInstance();
 			KitPvP game = null;
 			
@@ -211,7 +230,7 @@ public class PlayerHandling implements Listener {
 				playerData.setItems();
 				game.setPlayerKit(ply, game.getPlayerKit(ply));
 			}
-		} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
+		} else if (playerData.getRealm().equalsIgnoreCase("stepSpleef")) {
 			GameHandling gh = mainInstance.getGameInstance();
 			
 			for (StepSpleef gm : gh.getStepSpleefGames()) {
@@ -308,9 +327,9 @@ public class PlayerHandling implements Listener {
 		event.setDeathMessage("");
 		PlayerData playerData = playersData.get(killed.getName());
 		
-		if (playerData.getRealm() == Realm.HUB) {			
+		if (playerData.getRealm().equalsIgnoreCase("hub")) {			
 			event.getDrops().clear();
-		} else if (playerData.getRealm() == Realm.KITPVP) {
+		} else if (playerData.getRealm().equalsIgnoreCase("kitPvP")) {
 			event.getDrops().clear();
 			
 			for(KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
@@ -326,7 +345,7 @@ public class PlayerHandling implements Listener {
 					}
 				}
 			}
-		} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
+		} else if (playerData.getRealm().equalsIgnoreCase("stepSpleef")) {
 			event.getDrops().clear();
 			
 			for(StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
@@ -364,12 +383,12 @@ public class PlayerHandling implements Listener {
 	//Handle potion splashes
 	@EventHandler
     public void onPotionSpash(PotionSplashEvent event){
-		Entity ply = event.getEntity();
+		Player ply = (Player)event.getEntity();
 		
 		if (ply instanceof Player) {
 			for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-				if (game.isInServer((Player)ply)) {
-					if (game.isInGraceBounds((Player)ply)) {
+				if (game.isInServer(ply)) {
+					if (game.isInGraceBounds(ply)) {
 						event.setCancelled(true);
 					}
 				}
@@ -442,13 +461,13 @@ public class PlayerHandling implements Listener {
 					PlayerData playerData = playersData.get(ply.getName());
 					
 					//Remove player from game
-					if (playerData.getRealm() == Realm.KITPVP) {						
+					if (playerData.getRealm().equalsIgnoreCase("kitPvP")) {						
 						for(KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 							if (game.isInServer(ply)) {
 								game.playerLeave(ply,true,true);
 							}
 						}
-					} else if (playerData.getRealm() == Realm.STEPSPLEEF) {						
+					} else if (playerData.getRealm().equalsIgnoreCase("stepspleef")) {						
 						for(StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
 							if (game.isInServer(ply)) {
 								game.playerLeave(ply,true,true);

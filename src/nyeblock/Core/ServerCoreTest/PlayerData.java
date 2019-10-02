@@ -20,8 +20,11 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+<<<<<<< HEAD
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+=======
+>>>>>>> refs/heads/Bian
 
 @SuppressWarnings("unused")
 public class PlayerData {
@@ -33,14 +36,18 @@ public class PlayerData {
 	private String ip;
 	private UserGroup userGroup;
 	private PermissionAttachment permissions;
-	private Realm realm = Realm.HUB;
+	private String realm;
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
 	private Team team;
 	
+<<<<<<< HEAD
 	@SuppressWarnings("deprecation")
 	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
+=======
+	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, int userGroup, String realm) {
+>>>>>>> refs/heads/Bian
 		this.mainInstance = mainInstance;
 		this.player = ply;
 		permissions = new PermissionAttachment(mainInstance, ply);
@@ -49,6 +56,7 @@ public class PlayerData {
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
+		this.realm = realm;
 		ScoreboardManager sbm = Bukkit.getScoreboardManager();
 		board = sbm.getNewScoreboard();
 		team = board.registerNewTeam("user");
@@ -62,7 +70,7 @@ public class PlayerData {
 	
 	//Set player permissions depending on their realm
 	public void setPermissions() {
-		if (realm == Realm.HUB) {
+		if (realm.equals("hub")) {
 			permissions.setPermission("nyeblock.breakBlocks", false);
 			permissions.setPermission("nyeblock.useInventory", false);
 			permissions.setPermission("nyeblock.canDamage", false);
@@ -71,8 +79,12 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.dropItems", false);
 			permissions.setPermission("nyeblock.showRunningParticles", true);
+<<<<<<< HEAD
 //			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
 		} else if (realm == Realm.KITPVP) {
+=======
+		} else if (realm.equals("kitPvP")) {
+>>>>>>> refs/heads/Bian
 			permissions.setPermission("nyeblock.breakBlocks", false);
 			permissions.setPermission("nyeblock.useInventory", false);
 			permissions.setPermission("nyeblock.canDamage", true);
@@ -81,7 +93,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.dropItems", false);
 			permissions.setPermission("nyeblock.showRunningParticles", true);
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (realm.equals("stepSpleef")) {
 			permissions.setPermission("nyeblock.breakBlocks", false);
 			permissions.setPermission("nyeblock.useInventory", false);
 			permissions.setPermission("nyeblock.canDamage", false);
@@ -100,13 +112,13 @@ public class PlayerData {
 	public void setItems() {
 		player.getInventory().clear();
 		
-		if (realm == Realm.HUB) {
+		if (realm.equals("hub")) {
 			//Menu
 			HubMenu hubMenu = new HubMenu();
 			ItemStack hm = hubMenu.give();
 			player.getInventory().setItem(4, hm);
 			player.getInventory().setHeldItemSlot(4);
-		} else if (realm == Realm.KITPVP) {
+		} else if (realm.equals("kitPvP")) {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
@@ -133,7 +145,7 @@ public class PlayerData {
 			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			player.getInventory().setArmorContents(armor);
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (realm.equalsIgnoreCase("stepspleef")) {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
@@ -144,7 +156,7 @@ public class PlayerData {
 //		for
 //	}
 	//Set a players realm
-	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems) {
+	public void setRealm(String realm, boolean updatePermissions, boolean updateItems) {
 		this.realm = realm;
 		if (updatePermissions) {			
 			setPermissions();
@@ -159,7 +171,7 @@ public class PlayerData {
 		}
 	}
 	//Get the players current realm
-	public Realm getRealm() {
+	public String getRealm() {
 		return realm;
 	}
 	//Gets the players user group
