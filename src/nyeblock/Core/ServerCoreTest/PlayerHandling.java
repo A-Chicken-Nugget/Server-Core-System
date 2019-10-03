@@ -46,6 +46,7 @@ import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Games.KitPvP;
+import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
@@ -132,9 +133,11 @@ public class PlayerHandling implements Listener {
 	//Keep the players food bar at 100%
 	@EventHandler
 	public void onFoodChange(FoodLevelChangeEvent event) {
-	  if (event.getFoodLevel() < 20) {
-		  event.setFoodLevel(20);
-	  }
+		if (!getPlayerData((Player)event.getEntity()).getPermission("nyeblock.canLoseHunger")) {			
+			if (event.getFoodLevel() < 20) {
+				event.setFoodLevel(20);
+			}
+		}
 	}
 	//Handle when the player joins the server
 	@EventHandler
@@ -230,14 +233,13 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		PlayerData playerData = playersData.get(ply.getName());
 		
-		if (ply.hasPermission("nyeblock.dropItems")) {
-			if (!playerData.getPermission("nyeblock.dropItems")) {
+		if (ply.hasPermission("nyeblock.canDropItems")) {
+			if (!playerData.getPermission("nyeblock.canDropItems")) {
 				event.setCancelled(true);
 			}
 		} else {
 			event.setCancelled(true);
 		}
-		event.setCancelled(true);
 	}
 	//Handle when a block is broken
 	@EventHandler
@@ -246,8 +248,8 @@ public class PlayerHandling implements Listener {
 		PlayerData playerData = playersData.get(ply.getName());
 		
 		//Check if the player has the proper permission to break blocks
-		if (ply.hasPermission("nyeblock.breakBlocks")) {
-			if (!playerData.getPermission("nyeblock.breakBlocks")) {
+		if (ply.hasPermission("nyeblock.canBreakBlocks")) {
+			if (!playerData.getPermission("nyeblock.canBreakBlocks")) {
 				event.setCancelled(true);
 			}
 		} else {
@@ -290,7 +292,7 @@ public class PlayerHandling implements Listener {
 				event.setCancelled(true);
 			} else {
 				if (event.getCause() == DamageCause.FALL) {						
-					if (!playerData.getPermission("nyeblock.takeFallDamage") || playerData.getPermission("nyeblock.tempNoDamageOnFall")) {
+					if (!playerData.getPermission("nyeblock.canTakeFallDamage") || playerData.getPermission("nyeblock.tempNoDamageOnFall")) {
 						playerData.setPermission("nyeblock.tempNoDamageOnFall",false);
 						event.setCancelled(true);
 					}
@@ -407,16 +409,16 @@ public class PlayerHandling implements Listener {
 				
 				if (item != null) {				
 					event.getView().close();
-					KitSelector selectKit = new KitSelector();
+					KitSelector selectKit = new KitSelector(getPlayerData(ply).getRealm());
 					selectKit.clickItem(ply, item.getLocalizedName(), mainInstance);
 				}
 			}
 		}
 		//Block inventory move
-		if (ply.hasPermission("nyeblock.useInventory")) {
+		if (ply.hasPermission("nyeblock.canUseInventory")) {
 			PlayerData playerData = playersData.get(ply.getName());
 			
-			if (!playerData.getPermission("nyeblock.useInventory")) {
+			if (!playerData.getPermission("nyeblock.canUseInventory")) {
 				event.setCancelled(true);
 			}
 		} else {
@@ -454,12 +456,30 @@ public class PlayerHandling implements Listener {
 								game.playerLeave(ply,true,true);
 							}
 						}
+					} else if (playerData.getRealm() == Realm.SKYWARS) {
+						for(SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
+							if (game.isInServer(ply)) {
+								game.playerLeave(ply,true,true);
+							}
+						}
 					}
 				} else if (item.getLocalizedName().equals("kit_selector")) {
-					for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-						if (game.isInServer(ply)) {
-							if (game.isInGraceBounds(ply)) {							
-								KitSelector selectKit = new KitSelector();
+					PlayerData playerData = playersData.get(ply.getName());
+					
+					if (playerData.getRealm() == Realm.KITPVP) {						
+						for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
+							if (game.isInServer(ply)) {
+								if (game.isInGraceBounds(ply)) {							
+									KitSelector selectKit = new KitSelector(Realm.KITPVP);
+									
+									selectKit.openMenu(ply, mainInstance);
+								}
+							}
+						}
+					} else if (playerData.getRealm() == Realm.SKYWARS) {
+						for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
+							if (game.isInServer(ply)) {							
+								KitSelector selectKit = new KitSelector(Realm.SKYWARS);
 								
 								selectKit.openMenu(ply, mainInstance);
 							}

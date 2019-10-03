@@ -43,7 +43,6 @@ public class StepSpleef extends GameBase {
 	private boolean endStarted = false;
 	private long lastNumber = 0;
 	private GhostFactory ghostFactory;
-	DecimalFormat df = new DecimalFormat("#.##");
 	
 //	private ArrayList<Entity> test = new ArrayList<>();
 	

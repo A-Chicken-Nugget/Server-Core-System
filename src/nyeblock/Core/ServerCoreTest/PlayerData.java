@@ -63,33 +63,43 @@ public class PlayerData {
 	//Set player permissions depending on their realm
 	public void setPermissions() {
 		if (realm == Realm.HUB) {
-			permissions.setPermission("nyeblock.breakBlocks", false);
-			permissions.setPermission("nyeblock.useInventory", false);
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canUseInventory", false);
 			permissions.setPermission("nyeblock.canDamage", false);
 			permissions.setPermission("nyeblock.canBeDamaged", false);
-			permissions.setPermission("nyeblock.takeFallDamage", false);
+			permissions.setPermission("nyeblock.canTakeFallDamage", false);
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-			permissions.setPermission("nyeblock.dropItems", false);
-			permissions.setPermission("nyeblock.showRunningParticles", true);
+			permissions.setPermission("nyeblock.canDropItems", false);
+			permissions.setPermission("nyeblock.canLoseHunger", false);
+//			permissions.setPermission("nyeblock.showRunningParticles", true);
 //			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
 		} else if (realm == Realm.KITPVP) {
-			permissions.setPermission("nyeblock.breakBlocks", false);
-			permissions.setPermission("nyeblock.useInventory", false);
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canUseInventory", false);
 			permissions.setPermission("nyeblock.canDamage", true);
 			permissions.setPermission("nyeblock.canBeDamaged", true);
-			permissions.setPermission("nyeblock.takeFallDamage", true);
+			permissions.setPermission("nyeblock.canTakeFallDamage", true);
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.dropItems", false);
-			permissions.setPermission("nyeblock.showRunningParticles", true);
+			permissions.setPermission("nyeblock.canLoseHunger", false);
 		} else if (realm == Realm.STEPSPLEEF) {
-			permissions.setPermission("nyeblock.breakBlocks", false);
-			permissions.setPermission("nyeblock.useInventory", false);
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canUseInventory", false);
 			permissions.setPermission("nyeblock.canDamage", false);
 			permissions.setPermission("nyeblock.canBeDamaged", true);
-			permissions.setPermission("nyeblock.takeFallDamage", false);
+			permissions.setPermission("nyeblock.canTakeFallDamage", false);
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-			permissions.setPermission("nyeblock.dropItems", false);
-			permissions.setPermission("nyeblock.showRunningParticles", true);
+			permissions.setPermission("nyeblock.canDropItems", false);
+			permissions.setPermission("nyeblock.canLoseHunger", false);
+		} else if (realm == Realm.SKYWARS) {
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canUseInventory", false);
+			permissions.setPermission("nyeblock.canDamage", true);
+			permissions.setPermission("nyeblock.canBeDamaged", true);
+			permissions.setPermission("nyeblock.canTakeFallDamage", true);
+			permissions.setPermission("nyeblock.tempNoDamageOnFall", true);
+			permissions.setPermission("nyeblock.canDropItems", false);
+			permissions.setPermission("nyeblock.canLoseHunger", false);
 		}
 	}
 	//Set a specific player permission
@@ -111,7 +121,7 @@ public class PlayerData {
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
 			//Select kit
-			KitSelector selectKit = new KitSelector();
+			KitSelector selectKit = new KitSelector(Realm.KITPVP);
 			player.getInventory().setItem(7, selectKit.give());
 			//Sword
 			ItemStack sword = new ItemStack(Material.IRON_SWORD);
@@ -134,6 +144,13 @@ public class PlayerData {
 			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			player.getInventory().setArmorContents(armor);
 		} else if (realm == Realm.STEPSPLEEF) {
+			//Return to hub
+			ReturnToHub returnToHub = new ReturnToHub();
+			player.getInventory().setItem(8, returnToHub.give());
+		} else if (realm == Realm.SKYWARS) {
+			//Select kit
+			KitSelector selectKit = new KitSelector(Realm.SKYWARS);
+			player.getInventory().setItem(4, selectKit.give());
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
