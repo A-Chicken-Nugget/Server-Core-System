@@ -42,10 +42,20 @@ public class HubMenu {
 		kitPvpMetaLore.add(ChatColor.YELLOW + "highest kills wins. Select up to 4 kits.");
 		kitPvpMeta.setLore(kitPvpMetaLore);
 		kitPvp.setItemMeta(kitPvpMeta);
+		//Sky wars
+		ItemStack skyWars = new ItemStack(Material.GRASS_BLOCK);
+		ItemMeta skyWarsMeta = skyWars.getItemMeta();
+		skyWarsMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Sky Wars (Alpha)");
+		skyWarsMeta.setLocalizedName("skyWars");
+		skyWarsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+		ArrayList<String> skyWarsMetaLore = new ArrayList<String>();
+		skyWarsMetaLore.add(ChatColor.YELLOW + "In development.");
+		skyWarsMeta.setLore(skyWarsMetaLore);
+		skyWars.setItemMeta(skyWarsMeta);
 		//Step Spleef
 		ItemStack stepSpleef = new ItemStack(Material.IRON_BOOTS);
 		ItemMeta stepSpleefMeta = stepSpleef.getItemMeta();
-		stepSpleefMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef (Alpha)");
+		stepSpleefMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef (Beta)");
 		stepSpleefMeta.setLocalizedName("stepSpleef");
 		stepSpleefMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 		ArrayList<String> stepSpleefMetaLore = new ArrayList<String>();
@@ -56,8 +66,9 @@ public class HubMenu {
 		stepSpleefMeta.setLore(stepSpleefMetaLore);
 		stepSpleef.setItemMeta(stepSpleefMeta);
 		
-		menu.setItem(3, kitPvp);
-		menu.setItem(5, stepSpleef);
+		menu.setItem(2, kitPvp);
+		menu.setItem(4, skyWars);
+		menu.setItem(6, stepSpleef);
 		
 		ply.openInventory(menu);
 	}
@@ -66,6 +77,8 @@ public class HubMenu {
 			mainInstance.getGameInstance().joinGame(ply, Realm.KITPVP);
 		} else if (item.equalsIgnoreCase("stepSpleef")) {
 			mainInstance.getGameInstance().joinGame(ply, Realm.STEPSPLEEF);
+		} else if (item.equalsIgnoreCase("skyWars")) {
+			mainInstance.getGameInstance().joinGame(ply, Realm.SKYWARS);
 		}
 	}
 }
