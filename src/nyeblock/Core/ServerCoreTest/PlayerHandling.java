@@ -129,6 +129,15 @@ public class PlayerHandling implements Listener {
 	    	}
 	    }
 	    event.getRecipients().removeAll(playersToRemove);
+	    
+	    SkyWars game = null;
+	    GameHandling gh = mainInstance.getGameInstance();
+		
+		for (SkyWars gm : gh.getSkyWarsGames()) {
+			if (gm.isInServer(event.getPlayer())) {
+				gm.addPlayer();
+			}
+		}
 	}
 	//Keep the players food bar at 100%
 	@EventHandler
@@ -218,6 +227,17 @@ public class PlayerHandling implements Listener {
 			GameHandling gh = mainInstance.getGameInstance();
 			
 			for (StepSpleef gm : gh.getStepSpleefGames()) {
+				if (gm.isInServer(ply)) {
+					Vector randSpawn = gm.getRandomSpawnPoint();
+					event.setRespawnLocation(new Location(Bukkit.getWorld(ply.getWorld().getName()),randSpawn.getX(), randSpawn.getY(), randSpawn.getZ()));
+					playerData.setItems();
+					ply.setAllowFlight(true);
+				}
+			}
+		} else if (playerData.getRealm() == Realm.SKYWARS) {
+			GameHandling gh = mainInstance.getGameInstance();
+			
+			for (SkyWars gm : gh.getSkyWarsGames()) {
 				if (gm.isInServer(ply)) {
 					Vector randSpawn = gm.getRandomSpawnPoint();
 					event.setRespawnLocation(new Location(Bukkit.getWorld(ply.getWorld().getName()),randSpawn.getX(), randSpawn.getY(), randSpawn.getZ()));
@@ -334,6 +354,20 @@ public class PlayerHandling implements Listener {
 			for(StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
 				if (game.isInServer(killed)) {						
 					game.playerDeath(killed);
+				}
+			}
+		} else if (playerData.getRealm() == Realm.SKYWARS) {
+			for(SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
+				if (game.isInServer(killed)) {						
+					if (attacker instanceof Player) {						
+						game.playerDeath(killed, attacker);
+						for (int i = 0; i < 10; i++) {							
+							attacker.playEffect(killed.getLocation(), Effect.SMOKE, 1);
+						}
+						attacker.playSound(attacker.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
+					} else {
+						game.playerDeath(killed, null);
+					}
 				}
 			}
 		}

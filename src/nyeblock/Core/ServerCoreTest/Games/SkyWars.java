@@ -23,6 +23,8 @@ import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.util.Vector;
 
+import com.connorlinfoot.actionbarapi.ActionBarAPI;
+
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
@@ -44,6 +46,7 @@ public class SkyWars extends GameBase {
 	//Etc
 	private long countdownStart;
 	private int readyCount = 0;
+	private int messageCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
 	private GhostFactory ghostFactory;
@@ -160,19 +163,28 @@ public class SkyWars extends GameBase {
 			if (emptyCount != 0) {
 				emptyCount = 0;
 			}
-			if (players.size() > 0 && !active) {
-				if (readyCount == 0) {
-					messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
-					soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
-				} else {
-					if (readyCount >= 5) {
-						active = true;
-						countdownStart = System.currentTimeMillis() / 1000L;
-
-						mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
+			if (!active) {
+				if (players.size() >= 5) {					
+					if (readyCount == 0) {
+						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
+						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
+					} else {
+						if (readyCount >= 5) {
+							active = true;
+							countdownStart = System.currentTimeMillis() / 1000L;
+							
+							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
+						}
 					}
+					readyCount++;
+				} else {
+					if (messageCount >= 10) {
+						messageCount = 0;
+						
+						messageToAll(ChatColor.YELLOW + "Waiting for more players...");
+					}
+					messageCount++;
 				}
-				readyCount++;
 			}
 		} else {
 			emptyCount++;
@@ -189,6 +201,11 @@ public class SkyWars extends GameBase {
 			}
 		}
 	}
+	
+	public void addPlayer() {
+		players.add(players.get(0));
+	}
+	
 	/**
     * Set the players scoreboard
     */
@@ -378,7 +395,16 @@ public class SkyWars extends GameBase {
     * Handle when a player died
     */
 	@SuppressWarnings("serial")
-	public void playerDeath(Player killed) {
+	public void playerDeath(Player killed,Player killer) {
+		if (killer != null) {
+			//Update the killers kill count
+			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
+			ActionBarAPI.sendActionBar(killer,ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName(), 40);
+			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
+		} else {
+			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has died!");
+		}
+		
 		//Remove player from players array
 		playersInGame.removeAll(new ArrayList<Player>() {{
 			add(killed);
@@ -387,7 +413,6 @@ public class SkyWars extends GameBase {
 		
 		Vector randSpawn = getRandomSpawnPoint();
 		killed.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
-		messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
 	}
 	/**
     * Handle when a player joins the game
