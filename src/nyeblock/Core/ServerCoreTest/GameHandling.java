@@ -95,95 +95,108 @@ public class GameHandling implements Listener {
 	}
 	//Handles the player joining games
 	public void joinGame(Player ply, Realm realm) {
-		if (realm == Realm.HUB) {
-			ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
-		} else if (realm == Realm.KITPVP) {
-			KitPvP gameToJoin = null;
-			
-			//Loop through active games to find one for the player
-			for(KitPvP currentGame : kitPvpGames) {
-				if (!currentGame.isGameOver()) {					
-					if (gameToJoin != null) {
-						if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+		PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
+		PlayerData pd = ph.getPlayerData(ply);
+		
+		if (!pd.isQueuingGame()) {
+			if (realm == Realm.HUB) {
+				ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
+			} else if (realm == Realm.KITPVP) {
+				pd.setQueuingStatus(true);
+				KitPvP gameToJoin = null;
+				
+				//Loop through active games to find one for the player
+				for(KitPvP currentGame : kitPvpGames) {
+					if (!currentGame.isGameOver()) {					
+						if (gameToJoin != null) {
+							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+								gameToJoin = currentGame;
+							}
+						} else {
 							gameToJoin = currentGame;
 						}
-					} else {
-						gameToJoin = currentGame;
 					}
 				}
-			}
-			//If no games are found, create one
-			if (gameToJoin == null) {
-				ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-				String worldName = "kitPvP_" + UUID.randomUUID();
-				gameToJoin = new KitPvP(mainInstance,worldName,300,15); //900
-				kitPvpGames.add(gameToJoin);
+				//If no games are found, create one
+				if (gameToJoin == null) {
+					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+					String worldName = "kitPvP_" + UUID.randomUUID();
+					gameToJoin = new KitPvP(mainInstance,worldName,300,15); //900
+					kitPvpGames.add(gameToJoin);
+					
+					//Create void world
+					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
+					
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+				}
+			} else if (realm == Realm.STEPSPLEEF) {
+				pd.setQueuingStatus(true);
+				StepSpleef gameToJoin = null;
 				
-				//Create void world
-				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
-				
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
-			} else {
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
-			}
-		} else if (realm == Realm.STEPSPLEEF) {
-			StepSpleef gameToJoin = null;
-			
-			//Loop through active games to find one for the player
-			for(StepSpleef currentGame : stepSpleefGames) {
-				if (currentGame.isGameActive()) {	
-					if (gameToJoin != null) {
-						if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+				//Loop through active games to find one for the player
+				for(StepSpleef currentGame : stepSpleefGames) {
+					if (currentGame.isGameActive()) {	
+						if (gameToJoin != null) {
+							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+								gameToJoin = currentGame;
+							}
+						} else {
 							gameToJoin = currentGame;
 						}
-					} else {
-						gameToJoin = currentGame;
 					}
 				}
-			}
-			//If no games are found, create one
-			if (gameToJoin == null) {
-				ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-				String worldName = "stepSpleef_" + UUID.randomUUID();
-				gameToJoin = new StepSpleef(mainInstance,worldName,300,15);
-				stepSpleefGames.add(gameToJoin);
+				//If no games are found, create one
+				if (gameToJoin == null) {
+					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+					String worldName = "stepSpleef_" + UUID.randomUUID();
+					gameToJoin = new StepSpleef(mainInstance,worldName,300,15);
+					stepSpleefGames.add(gameToJoin);
+					
+					//Create void world
+					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
+					
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+				}
+			} else if (realm == Realm.SKYWARS) {
+				pd.setQueuingStatus(true);
+				SkyWars gameToJoin = null;
 				
-				//Create void world
-				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
-				
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
-			} else {
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
-			}
-		} else if (realm == Realm.SKYWARS) {
-			SkyWars gameToJoin = null;
-			
-			//Loop through active games to find one for the player
-			for(SkyWars currentGame : skyWarsGames) {
-				if (!currentGame.isGameActive()) {					
-					if (gameToJoin != null) {
-						if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+				//Loop through active games to find one for the player
+				for(SkyWars currentGame : skyWarsGames) {
+					if (!currentGame.isGameActive()) {					
+						if (gameToJoin != null) {
+							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+								gameToJoin = currentGame;
+							}
+						} else {
 							gameToJoin = currentGame;
 						}
-					} else {
-						gameToJoin = currentGame;
 					}
 				}
+				//If no games are found, create one
+				if (gameToJoin == null) {
+					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+					String worldName = "skyWars_" + UUID.randomUUID();
+					gameToJoin = new SkyWars(mainInstance,worldName,300,8); //900
+					skyWarsGames.add(gameToJoin);
+					
+					//Create void world
+					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
+					
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+				}
 			}
-			//If no games are found, create one
-			if (gameToJoin == null) {
-				ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-				String worldName = "skyWars_" + UUID.randomUUID();
-				gameToJoin = new SkyWars(mainInstance,worldName,300,8); //900
-				skyWarsGames.add(gameToJoin);
-				
-				//Create void world
-				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
-				
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
-			} else {
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
-			}
+		} else {
+			ply.sendMessage(ChatColor.YELLOW + "Unable to queue for a game.");
 		}
 	} 
 	public void checkWorld(Player ply, String worldName, Realm realm, Boolean setData) {
@@ -229,6 +242,7 @@ public class GameHandling implements Listener {
 						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
 						PlayerData playerData = ph.getPlayerData(ply);
 						playerData.setRealm(realm,true,true);
+						playerData.setQueuingStatus(false);
 					}
 				}
 			} else if (realm == Realm.STEPSPLEEF) {
@@ -264,6 +278,7 @@ public class GameHandling implements Listener {
 						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
 						PlayerData playerData = ph.getPlayerData(ply);
 						playerData.setRealm(realm,true,true);
+						playerData.setQueuingStatus(false);
 					}
 				}
 			} else if (realm == Realm.SKYWARS) {
@@ -297,6 +312,7 @@ public class GameHandling implements Listener {
 						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
 						PlayerData playerData = ph.getPlayerData(ply);
 						playerData.setRealm(realm,true,true);
+						playerData.setQueuingStatus(false);
 					}
 				}
 			}

@@ -129,15 +129,6 @@ public class PlayerHandling implements Listener {
 	    	}
 	    }
 	    event.getRecipients().removeAll(playersToRemove);
-	    
-	    SkyWars game = null;
-	    GameHandling gh = mainInstance.getGameInstance();
-		
-		for (SkyWars gm : gh.getSkyWarsGames()) {
-			if (gm.isInServer(event.getPlayer())) {
-				gm.addPlayer();
-			}
-		}
 	}
 	//Keep the players food bar at 100%
 	@EventHandler
@@ -399,10 +390,11 @@ public class PlayerHandling implements Listener {
 	}
 	//Handle potion splashes
 	@EventHandler
-    public void onPotionSpash(PotionSplashEvent event){
-		Player ply = (Player)event.getEntity();
+    public void onPotionSpash(PotionSplashEvent event) {
 		
-		if (ply instanceof Player) {
+		if (event.getEntity() instanceof Player) {
+			Player ply = (Player)event.getEntity();
+			
 			for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 				if (game.isInServer(ply)) {
 					if (game.isInGraceBounds(ply)) {

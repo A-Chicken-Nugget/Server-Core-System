@@ -17,6 +17,7 @@ import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 
 import net.md_5.bungee.api.ChatColor;
+import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
@@ -34,6 +35,7 @@ public class PlayerData {
 	private UserGroup userGroup;
 	private PermissionAttachment permissions;
 	private Realm realm = Realm.HUB;
+	private boolean queuingGame = false;
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
@@ -148,9 +150,19 @@ public class PlayerData {
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
 		} else if (realm == Realm.SKYWARS) {
-			//Select kit
-			KitSelector selectKit = new KitSelector(Realm.SKYWARS);
-			player.getInventory().setItem(4, selectKit.give());
+			GameHandling gh = mainInstance.getGameInstance();
+			
+			for (SkyWars game : gh.getSkyWarsGames()) {
+				if (game.isInServer(player)) {
+					if (game.isGameActive()) {
+					} else {
+						//Select kit
+						KitSelector selectKit = new KitSelector(Realm.SKYWARS);
+						player.getInventory().setItem(4, selectKit.give());
+					}
+				}
+			}
+			
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
@@ -174,6 +186,14 @@ public class PlayerData {
 		{
 		    player.removePotionEffect(effect.getType());
 		}
+	}
+	//Set the players queuing status
+	public void setQueuingStatus(boolean status) {
+		queuingGame = status;
+	}
+	//Get the players queuing status
+	public boolean isQueuingGame() {
+		return queuingGame;
 	}
 	//Get the players current realm
 	public Realm getRealm() {

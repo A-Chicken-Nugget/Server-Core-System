@@ -1,6 +1,5 @@
 package nyeblock.Core.ServerCoreTest.Games;
 
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -42,7 +41,6 @@ public class StepSpleef extends GameBase {
 	private int readyCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
-	private GhostFactory ghostFactory;
 	
 //	private ArrayList<Entity> test = new ArrayList<>();
 	
@@ -62,8 +60,6 @@ public class StepSpleef extends GameBase {
 		mainInstance.getTimerInstance().createTimer("blocks_" + worldName, .1, 0, "manageBlocks", this, null);
 		//Snow ball timer
 		mainInstance.getTimerInstance().createTimer("snowballs_" + worldName, 1, 0, "giveSnowballs", this, null);
-		
-		ghostFactory = new GhostFactory(mainInstance);
 	}
 	
 	/**
@@ -92,13 +88,14 @@ public class StepSpleef extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
-		ghostFactory.clearGhosts();
-		ghostFactory.close();
-		mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
-		
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
+			//Unhide all players who might be hidden for certain players
+			for (Player player : tempPlayers) {					
+				player.showPlayer(ply);
+			}
+			
 			playerLeave(ply,false,true);
 		}
 	}
