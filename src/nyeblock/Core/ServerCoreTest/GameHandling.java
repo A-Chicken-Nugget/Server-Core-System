@@ -138,7 +138,7 @@ public class GameHandling implements Listener {
 				
 				//Loop through active games to find one for the player
 				for(StepSpleef currentGame : stepSpleefGames) {
-					if (!currentGame.isGameOver()) {	
+					if (currentGame.isGameActive()) {	
 						if (gameToJoin != null) {
 							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
 								gameToJoin = currentGame;

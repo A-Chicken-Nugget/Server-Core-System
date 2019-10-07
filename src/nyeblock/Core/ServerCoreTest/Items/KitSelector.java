@@ -26,10 +26,10 @@ public class KitSelector {
 	
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.EMERALD);
-		ItemMeta itemMeta = item.getItemMeta();
-		itemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Select Kit" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
-		itemMeta.setLocalizedName("kit_selector");
-		item.setItemMeta(itemMeta);
+		ItemMeta shopMeta = item.getItemMeta();
+		shopMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Select Kit" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		shopMeta.setLocalizedName("kit_selector");
+		item.setItemMeta(shopMeta);
 		
 		return item;
 	}

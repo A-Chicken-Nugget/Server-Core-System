@@ -26,7 +26,6 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
 
-@SuppressWarnings("deprecation")
 public class StepSpleef extends GameBase {
 	//Game info
 	private int duration;
@@ -35,13 +34,11 @@ public class StepSpleef extends GameBase {
 	private boolean gameBegun = false;
 	//Player data
 	private ArrayList<Player> playersInGame = new ArrayList<>();
-	private ArrayList<Player> playersSpectating = new ArrayList<>();
 	//Block history
 	private HashMap<Vector,Long> blocksToDelete = new HashMap<>();
 	//Etc
 	private long countdownStart;
 	private int readyCount = 0;
-	private int messageCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
 	
@@ -196,20 +193,6 @@ public class StepSpleef extends GameBase {
     * Run main checks for the game
     */
 	public void mainFunctions() {
-		//Set compass targets
-		for (Player ply : playersSpectating) {
-			PlayerData pd = playerHandling.getPlayerData(ply);
-			String key = pd.getCustomDataKey("player_selector_index");
-			int currentIndex = Integer.parseInt((key == null ? "0" : key));
-			
-			if (playersInGame.size() > currentIndex) {
-				ply.setCompassTarget(playersInGame.get(currentIndex).getLocation());
-			} else {
-				if (playersInGame.size() > 0) {
-					ply.setCompassTarget(playersInGame.get(0).getLocation());
-				}
-			}
-		}
 		//Set player gamemodes
 		for(Player ply : players) {
 			if (!active) {
@@ -243,35 +226,26 @@ public class StepSpleef extends GameBase {
 			if (emptyCount != 0) {
 				emptyCount = 0;
 			}
-			if (!active) {				
-				if (players.size() > 1) {
-					if (readyCount == 0) {
-						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
-						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
-					} else {
-						if (readyCount >= 4) {
-							active = true;
-							countdownStart = System.currentTimeMillis() / 1000L;
-							
-							for(Player ply : players) {
-								Vector spawn = getRandomSpawnPoint();
-								ply.setVelocity(new Vector(0,0,0));
-								ply.teleport(new Location(Bukkit.getWorld(ply.getWorld().getName()),spawn.getX(),spawn.getY(),spawn.getZ()));
-							}
-							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
-							mainInstance.getTimerInstance().deleteTimer("snowballs_" + worldName);
-							clearSnowballs();
-						}
-					}
-					readyCount++;
+			if (players.size() > 1 && !active) {
+				if (readyCount == 0) {
+					messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
+					soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
 				} else {
-					if (messageCount >= 20) {
-						messageCount = 0;
-						
-						messageToAll(ChatColor.YELLOW + "Waiting for more players...");
+					if (readyCount >= 4) {
+						active = true;
+						countdownStart = System.currentTimeMillis() / 1000L;
+
+						for(Player ply : players) {
+							Vector spawn = getRandomSpawnPoint();
+							ply.setVelocity(new Vector(0,0,0));
+							ply.teleport(new Location(Bukkit.getWorld(ply.getWorld().getName()),spawn.getX(),spawn.getY(),spawn.getZ()));
+						}
+						mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
+						mainInstance.getTimerInstance().deleteTimer("snowballs_" + worldName);
+						clearSnowballs();
 					}
-					messageCount++;
 				}
+				readyCount++;
 			}
 		} else {
 			emptyCount++;
@@ -297,6 +271,7 @@ public class StepSpleef extends GameBase {
 		if (playersInGame.size() == 1) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
+//					gameBegun = false;
 					endStarted = true;
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
@@ -359,62 +334,28 @@ public class StepSpleef extends GameBase {
 		return found;
 	}
 	/**
-    * Get the end status of the game
-    */
-	public boolean isGameOver() {
-		return endStarted;
-	}
-	/**
     * Get the status of the game
     */
 	public boolean isGameActive() {
-		return gameBegun;
-	}
-	/**
-    * Get players in the current game
-    */
-	public ArrayList<Player> getPlayersInGame() {
-		return playersInGame;
+		return !endStarted;
 	}
 	/**
     * Handle when a player died
     */
 	@SuppressWarnings("serial")
 	public void playerDeath(Player killed) {
-		boolean isSpectating = playersSpectating.contains(killed);
-		
-		//Remove player from the current game
 		playersInGame.removeAll(new ArrayList<Player>() {{
 			add(killed);
 		}});
-		
-		//Setup player to spectate
-		if (!isSpectating) {	
-			playersSpectating.add(killed);
-			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
-			
-			//Unhide spectators
-			for (Player ply : playersSpectating) {
-				killed.showPlayer(ply);
-			}
-			
-			//Hide player from players in the active game
-			for (Player ply : playersInGame) {
-				ply.hidePlayer(killed);
-			}
-		}
-		
-		//Find a random spawn
+		ghostFactory.addGhost(killed);
 		Vector randSpawn = getRandomSpawnPoint();
 		killed.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
-		
-		if (!isSpectating) {			
-			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
-		}
+		messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
 	}
 	/**
     * Handle when a player joins the game
     */
+	@SuppressWarnings("deprecation")
 	public void playerJoin(Player ply) {
 		if (!active) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
@@ -443,16 +384,11 @@ public class StepSpleef extends GameBase {
 		players.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
-		
 		//Remove player from the current game
 		playersInGame.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
-		
-		//Remove player from spectating list
-		playersSpectating.removeAll(new ArrayList<Player>() {{
-			add(ply);
-		}});
+		ghostFactory.removeGhost(ply);
 		
 		if (showLeaveMessage) {
 			if (!active) {				
@@ -466,11 +402,6 @@ public class StepSpleef extends GameBase {
 			playerData.setRealm(Realm.HUB,true,true);
 			//Move player to hub
 			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
-		}
-		
-		//Unhide player from all players in the game
-		for (Player player : players) {
-			player.showPlayer(ply);
 		}
 	}
 }
