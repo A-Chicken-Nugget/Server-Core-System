@@ -396,7 +396,7 @@ public class SkyWars extends GameBase {
 	/**
     * Handle when a player died
     */
-	@SuppressWarnings({ "serial", "deprecation" })
+	@SuppressWarnings("serial")
 	public void playerDeath(Player killed,Player killer) {		
 		boolean isSpectating = playersSpectating.contains(killed);
 		
