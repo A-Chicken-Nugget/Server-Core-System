@@ -11,6 +11,7 @@ import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -30,6 +31,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -37,6 +39,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.tags.CustomItemTagContainer;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.util.Vector;
 
@@ -267,7 +270,6 @@ public class PlayerHandling implements Listener {
 			event.setCancelled(true);
 		}
 	}
-
 	//Handle when a player is damaged by an entity
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
@@ -323,7 +325,7 @@ public class PlayerHandling implements Listener {
 		
 		if (playerData.getRealm() == Realm.HUB) {			
 			event.getDrops().clear();
-		} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
+		} else if (playerData.getRealm() == Realm.KITPVP) {
 			event.getDrops().clear();
 			
 			for(KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
@@ -343,7 +345,7 @@ public class PlayerHandling implements Listener {
 			event.getDrops().clear();
 			
 			for(StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
-				if (game.isInServer(killed)) {						
+				if (game.isInServer(killed)) {	
 					game.playerDeath(killed);
 				}
 			}
@@ -458,14 +460,17 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		
 		if (event.getAction().toString().matches("RIGHT_CLICK_AIR|RIGHT_CLICK_BLOCK")) {
-			ItemMeta item = ply.getItemInHand().getItemMeta();
+			ItemStack item = ply.getItemInHand();
+			ItemMeta itemMeta = item.getItemMeta();
 			
-			if (item != null) {				
-				if (item.getLocalizedName().equals("hub_menu")) {
+			if (item != null) {			
+				String itemName = itemMeta.getLocalizedName();
+				
+				if (itemName.equals("hub_menu")) {
 					HubMenu hubMenu = new HubMenu();
 					
 					hubMenu.openMenu(ply);
-				} else if (item.getLocalizedName().equals("return_to_hub")) {
+				} else if (itemName.equals("return_to_hub")) {
 					event.setCancelled(true);
 					PlayerData playerData = playersData.get(ply.getName());
 					
@@ -489,7 +494,7 @@ public class PlayerHandling implements Listener {
 							}
 						}
 					}
-				} else if (item.getLocalizedName().equals("kit_selector")) {
+				} else if (itemName.equals("kit_selector")) {
 					PlayerData playerData = playersData.get(ply.getName());
 					
 					if (playerData.getRealm() == Realm.KITPVP) {						
@@ -511,7 +516,39 @@ public class PlayerHandling implements Listener {
 							}
 						}
 					}
-				} else if (item.getLocalizedName().equals("kitpvp_wizard_fireball")) {
+				} else if (itemName.equals("player_selector")) {
+					PlayerData playerData = playersData.get(ply.getName());
+					
+					if (playerData.getRealm() == Realm.STEPSPLEEF) {
+						int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
+						String worldName = playerData.getCustomDataKey("player_world");
+						
+						for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
+							if (game.getWorldName().equalsIgnoreCase(worldName)) {
+								ArrayList<Player> playersInGame = game.getPlayersInGame();
+								
+								if (playersInGame.size() > currentIndex + 1) {
+									Player playerToSpec = playersInGame.get(currentIndex + 1);
+									
+									ply.teleport(playerToSpec);
+									itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: " + ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName() + ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+									playerData.setCustomDataKey("player_selector_index", String.valueOf(currentIndex + 1));
+								} else {
+									if (playersInGame.size() > 0) {
+										Player playerToSpec = playersInGame.get(0);
+										
+										ply.teleport(playerToSpec);
+										itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: " + ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName() + ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+										playerData.setCustomDataKey("player_selector_index", "0");
+									} else {
+										itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
+									}
+								}
+							}
+						}
+						item.setItemMeta(itemMeta);
+					}
+				} else if (itemName.equals("kitpvp_wizard_fireball")) {
 					for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 						if (game.isInServer(ply)) {
 							if (!game.isInGraceBounds(ply)) {							

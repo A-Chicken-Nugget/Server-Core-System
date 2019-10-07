@@ -1,10 +1,15 @@
 package nyeblock.Core.ServerCoreTest;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -15,11 +20,14 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Games.SkyWars;
+import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
+import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
@@ -36,6 +44,7 @@ public class PlayerData {
 	private PermissionAttachment permissions;
 	private Realm realm = Realm.HUB;
 	private boolean queuingGame = false;
+	private HashMap<String,String> customData = new HashMap<>();
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
@@ -146,6 +155,18 @@ public class PlayerData {
 			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			player.getInventory().setArmorContents(armor);
 		} else if (realm == Realm.STEPSPLEEF) {
+			GameHandling gh = mainInstance.getGameInstance();
+			
+			for (StepSpleef game : gh.getStepSpleefGames()) {
+				if (game.isInServer(player)) {
+					if (game.isGameActive()) {
+						//Select player
+						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.STEPSPLEEF,player);
+						player.getInventory().setItem(4, selectPlayer.give());
+					}
+				}
+			}
+			
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
@@ -190,6 +211,21 @@ public class PlayerData {
 	//Set the players queuing status
 	public void setQueuingStatus(boolean status) {
 		queuingGame = status;
+	}
+	//Set custom data to the custom data array
+	public void setCustomDataKey(String key, String value) {
+		customData.put(key, value);
+	}
+	//Get custom data from the custom data array
+	public String getCustomDataKey(String name) {
+		String value = null;
+		
+		for (Map.Entry<String, String> entry : customData.entrySet()) {
+			if (entry.getKey().equalsIgnoreCase(name)) {
+				value = entry.getValue();
+			}
+		}
+		return value;
 	}
 	//Get the players queuing status
 	public boolean isQueuingGame() {
