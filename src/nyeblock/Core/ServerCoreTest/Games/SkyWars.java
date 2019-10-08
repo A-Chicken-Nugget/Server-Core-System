@@ -2,6 +2,7 @@ package nyeblock.Core.ServerCoreTest.Games;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -23,6 +25,8 @@ import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.util.Vector;
 
+import com.connorlinfoot.actionbarapi.ActionBarAPI;
+
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
@@ -30,6 +34,7 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
+@SuppressWarnings("deprecation")
 public class SkyWars extends GameBase {
 	//Game info
 	private int duration;
@@ -40,13 +45,14 @@ public class SkyWars extends GameBase {
 	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private HashMap<String,String> playerKits = new HashMap<>();
 	private HashMap<Integer,String> playerSpots = new HashMap<>();
+	private ArrayList<Player> playersSpectating = new ArrayList<>();
 	private ArrayList<Player> playersInGame = new ArrayList<>();
 	//Etc
 	private long countdownStart;
 	private int readyCount = 0;
+	private int messageCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
-	private GhostFactory ghostFactory;
 	
 	//
 	// CONSTRUCTOR
@@ -64,8 +70,6 @@ public class SkyWars extends GameBase {
 		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", this, null);
 		//Main functions timer
 		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", this, null);
-		
-		ghostFactory = new GhostFactory(mainInstance);
 	}
 	
 	//
@@ -76,13 +80,14 @@ public class SkyWars extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
-		ghostFactory.clearGhosts();
-		ghostFactory.close();
-		mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
-		
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
+			//Unhide all players who might be hidden for certain players
+			for (Player player : tempPlayers) {					
+				player.showPlayer(ply);
+			}
+			
 			playerLeave(ply,false,true);
 		}
 	}
@@ -160,19 +165,28 @@ public class SkyWars extends GameBase {
 			if (emptyCount != 0) {
 				emptyCount = 0;
 			}
-			if (players.size() > 0 && !active) {
-				if (readyCount == 0) {
-					messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
-					soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
-				} else {
-					if (readyCount >= 5) {
-						active = true;
-						countdownStart = System.currentTimeMillis() / 1000L;
-
-						mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
+			if (!active) {
+				if (players.size() >= 2) {					
+					if (readyCount == 0) {
+						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
+						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
+					} else {
+						if (readyCount >= 5) {
+							active = true;
+							countdownStart = System.currentTimeMillis() / 1000L;
+							
+							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
+						}
 					}
+					readyCount++;
+				} else {
+					if (messageCount >= 20) {
+						messageCount = 0;
+						
+						messageToAll(ChatColor.YELLOW + "Waiting for more players...");
+					}
+					messageCount++;
 				}
-				readyCount++;
 			}
 		} else {
 			emptyCount++;
@@ -194,10 +208,9 @@ public class SkyWars extends GameBase {
     */
 	public void setScoreboard() {
 		//Check if player has won
-		if (playersInGame.size() == 2) {
+		if (playersInGame.size() == 5 && active) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
-//						gameBegun = false;
 					endStarted = true;
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
@@ -262,10 +275,16 @@ public class SkyWars extends GameBase {
 		return found;
 	}
 	/**
+    * Get the close status of the game
+    */
+	public boolean isGameClosed() {
+		return endStarted;
+	}
+	/**
     * Get the status of the game
     */
 	public boolean isGameActive() {
-		return !endStarted;
+		return gameBegun;
 	}
 	/**
     * Get a specific players kit
@@ -378,21 +397,57 @@ public class SkyWars extends GameBase {
     * Handle when a player died
     */
 	@SuppressWarnings("serial")
-	public void playerDeath(Player killed) {
+	public void playerDeath(Player killed,Player killer) {		
+		boolean isSpectating = playersSpectating.contains(killed);
+		
+		//Add player to ghost mode
+		if (!isSpectating) {			
+			playersSpectating.add(killed);
+			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
+			
+			//Unhide spectators
+			for (Player ply : playersSpectating) {
+				killed.showPlayer(ply);
+			}
+			
+			//Hide player from players in the active game
+			for (Player ply : playersInGame) {
+				ply.hidePlayer(killed);
+			}
+			
+			//Set permissions
+			PlayerData pd = playerHandling.getPlayerData(killed);
+			pd.setPermission("nyeblock.canBreakBlocks", false);
+			pd.setPermission("nyeblock.canUseInventory", false);
+			pd.setPermission("nyeblock.canDamage", false);
+			pd.setPermission("nyeblock.canBeDamaged", false);
+			pd.setPermission("nyeblock.canDropItems", false);
+			pd.setPermission("nyeblock.canLoseHunger", false);
+		}
+		
+		if (killer != null) {
+			//Update the killers kill count
+			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
+			ActionBarAPI.sendActionBar(killer,ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName(), 40);
+			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
+		} else {
+			if (!isSpectating) {
+				messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has died!");
+			}
+		}
+		
 		//Remove player from players array
 		playersInGame.removeAll(new ArrayList<Player>() {{
 			add(killed);
 		}});
-		ghostFactory.addGhost(killed);
 		
+		//Set random spawn
 		Vector randSpawn = getRandomSpawnPoint();
 		killed.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
-		messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
 	}
 	/**
     * Handle when a player joins the game
     */
-	@SuppressWarnings("deprecation")
 	public void playerJoin(Player ply) {
 		if (!active) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
@@ -404,9 +459,11 @@ public class SkyWars extends GameBase {
 		playerKits.put(ply.getName(),"default");
 		
 		//Find available spot for player
+		boolean foundSpot = false;
 		for (int i = 0; i < 8; i++) {
-			if (playerSpots.get(i) == null) {
+			if (!foundSpot && !playerSpots.containsKey(i)) {
 				playerSpots.put(i,ply.getName());
+				foundSpot = true;
 				
 				Vector spawn = spawns.get(i);
 				ply.teleport(new Location(Bukkit.getWorld(worldName),spawn.getX(),spawn.getY(),spawn.getZ()));				
@@ -428,9 +485,11 @@ public class SkyWars extends GameBase {
 		playersInGame.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
-		if (!ghostFactory.isClosed()) {			
-			ghostFactory.removeGhost(ply);
-		}
+		
+		//Remove player from spectating list
+		playersSpectating.removeAll(new ArrayList<Player>() {{
+			add(ply);
+		}});
 		
 		//Remove player from the spots list
 		Iterator<Map.Entry<Integer, String>> itr = playerSpots.entrySet().iterator();
@@ -455,6 +514,11 @@ public class SkyWars extends GameBase {
 			playerData.setRealm(Realm.HUB,true,true);
 			//Move player to hub
 			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
+		}
+		
+		//Unhide player from all players in the game
+		for (Player player : players) {
+			player.showPlayer(ply);
 		}
 	}
 }

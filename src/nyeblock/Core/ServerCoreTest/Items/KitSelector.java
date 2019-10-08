@@ -26,10 +26,10 @@ public class KitSelector {
 	
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.EMERALD);
-		ItemMeta shopMeta = item.getItemMeta();
-		shopMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Select Kit" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
-		shopMeta.setLocalizedName("kit_selector");
-		item.setItemMeta(shopMeta);
+		ItemMeta itemMeta = item.getItemMeta();
+		itemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Select Kit" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		itemMeta.setLocalizedName("kit_selector");
+		item.setItemMeta(itemMeta);
 		
 		return item;
 	}
@@ -218,11 +218,14 @@ public class KitSelector {
 		}
 	}
 	public void clickItem(Player ply, String item, Main mainInstance) {
+		boolean kitChanged = false;
+		
 		if (realm == Realm.KITPVP) {
 			if (item.equalsIgnoreCase("knight")) {
 				for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 					if (game.isInServer(ply)) {
 						if (!game.getPlayerKit(ply).equalsIgnoreCase("knight")) {
+							kitChanged = true;
 							game.setPlayerKit(ply, "knight");
 							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 						}
@@ -232,6 +235,7 @@ public class KitSelector {
 				for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 					if (game.isInServer(ply)) {
 						if (!game.getPlayerKit(ply).equalsIgnoreCase("brawler")) {
+							kitChanged = true;
 							game.setPlayerKit(ply, "brawler");
 							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 						}
@@ -241,6 +245,7 @@ public class KitSelector {
 				for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 					if (game.isInServer(ply)) {
 						if (!game.getPlayerKit(ply).equalsIgnoreCase("archer")) {
+							kitChanged = true;
 							game.setPlayerKit(ply, "archer");
 							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 						}
@@ -250,6 +255,7 @@ public class KitSelector {
 				for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 					if (game.isInServer(ply)) {
 						if (!game.getPlayerKit(ply).equalsIgnoreCase("wizard")) {
+							kitChanged = true;
 							game.setPlayerKit(ply, "wizard");
 							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 						}
@@ -261,6 +267,7 @@ public class KitSelector {
 				for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
 					if (game.isInServer(ply)) {
 						if (!game.getPlayerKit(ply).equalsIgnoreCase("default")) {
+							kitChanged = true;
 							game.setPlayerKit(ply, "default");
 							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 						}
@@ -268,6 +275,8 @@ public class KitSelector {
 				}
 			}
 		}
-		ply.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + item + ChatColor.RESET + ChatColor.YELLOW + " kit!");
+		if (kitChanged) {			
+			ply.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + item + ChatColor.RESET + ChatColor.YELLOW + " kit!");
+		}
 	}
 }
