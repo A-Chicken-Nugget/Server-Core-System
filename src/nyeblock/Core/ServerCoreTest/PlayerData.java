@@ -31,6 +31,7 @@ import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Misc.PlayerTabList;
 
 @SuppressWarnings("unused")
 public class PlayerData {
@@ -45,6 +46,7 @@ public class PlayerData {
 	private Realm realm = Realm.HUB;
 	private boolean queuingGame = false;
 	private HashMap<String,String> customData = new HashMap<>();
+	private PlayerTabList tabList;
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
@@ -60,6 +62,8 @@ public class PlayerData {
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
+		tabList = new PlayerTabList(ply,ply.getWorld().getPlayers().size());
+		tabList.initTable();
 		ScoreboardManager sbm = Bukkit.getScoreboardManager();
 		board = sbm.getNewScoreboard();
 		team = board.registerNewTeam("user");
@@ -176,6 +180,9 @@ public class PlayerData {
 			for (SkyWars game : gh.getSkyWarsGames()) {
 				if (game.isInServer(player)) {
 					if (game.isGameActive()) {
+						//Select player
+						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.SKYWARS,player);
+						player.getInventory().setItem(4, selectPlayer.give());
 					} else {
 						//Select kit
 						KitSelector selectKit = new KitSelector(Realm.SKYWARS);
@@ -215,6 +222,25 @@ public class PlayerData {
 	//Set custom data to the custom data array
 	public void setCustomDataKey(String key, String value) {
 		customData.put(key, value);
+	}
+	//Set the title of the players scoreboard
+	public void setObjectiveName(String name) {
+		for (String s : board.getEntries()) {			
+			board.resetScores(s);
+		}
+		objective.setDisplayName(name);
+	}
+	//Update the player tab text
+	public void updateTabList(HashMap<Integer,String> items) {
+		for (Map.Entry<Integer, String> entry : items.entrySet()) {
+			tabList.updateSlot(entry.getKey(),entry.getValue(),true);
+		}
+	}
+	//Update the players scoreboard text
+	public void updateObjectiveScores(HashMap<Integer,String> scores) {
+		for (Map.Entry<Integer, String> entry : scores.entrySet()) {
+			Miscellaneous.updateScore(objective, entry.getKey(), entry.getValue());
+		}
 	}
 	//Get custom data from the custom data array
 	public String getCustomDataKey(String name) {
@@ -257,18 +283,5 @@ public class PlayerData {
 	//Get the players current scoreboard objective
 	public Objective getObjective() {
 		return objective;
-	}
-	//Set the title of the players scoreboard
-	public void setObjectiveName(String name) {
-		for (String s : board.getEntries()) {			
-			board.resetScores(s);
-		}
-		objective.setDisplayName(name);
-	}
-	//Update the players scoreboard text
-	public void updateObjectiveScores(HashMap<Integer,String> scores) {
-		for (Map.Entry<Integer, String> entry : scores.entrySet()) {
-			Miscellaneous.updateScore(objective, entry.getKey(), entry.getValue());
-		}
 	}
 }

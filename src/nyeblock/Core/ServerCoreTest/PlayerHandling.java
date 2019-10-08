@@ -74,6 +74,8 @@ public class PlayerHandling implements Listener {
         		if (hub.hasStorm()) {
         			hub.setStorm(false);
         		}
+        		HashMap<Integer,String> tabItems = new HashMap<Integer,String>();
+        		int i = 0;
         		//Update players scoreboard
         		for (Player ply : Bukkit.getOnlinePlayers()) {
         			if (ply.getWorld().getName().equalsIgnoreCase("world")) {
@@ -90,13 +92,22 @@ public class PlayerHandling implements Listener {
         				scores.put(2, ChatColor.RESET.toString());
         				scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
         				
+        				tabItems.put(i,ply.getName());
+        				
         				pd.updateObjectiveScores(scores);
         				
         				//Update gamemode
         				if (ply.getGameMode() != GameMode.ADVENTURE) {
 							ply.setGameMode(GameMode.ADVENTURE);
 						}
+        				
+        				i++;
         			}
+        		}
+        		for (Player ply : Bukkit.getOnlinePlayers()) {
+        			PlayerData pd = getPlayerData(ply);
+        			
+        			pd.updateTabList(tabItems);
         		}
             }
         }, 0, 10);
@@ -150,8 +161,8 @@ public class PlayerHandling implements Listener {
 		
 		//Remove default join message
 		event.setJoinMessage("");
-		
 		//Setup player data. If they don't have a profile in the database, create one.
+		
 		PlayerData playerData = null;
 		ArrayList<HashMap<String,String>> query = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 6, false);
 		if (query.size() > 0) {
@@ -518,11 +529,10 @@ public class PlayerHandling implements Listener {
 					}
 				} else if (itemName.equals("player_selector")) {
 					PlayerData playerData = playersData.get(ply.getName());
+					int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
+					String worldName = playerData.getCustomDataKey("player_world");
 					
 					if (playerData.getRealm() == Realm.STEPSPLEEF) {
-						int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
-						String worldName = playerData.getCustomDataKey("player_world");
-						
 						for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
 							if (game.getWorldName().equalsIgnoreCase(worldName)) {
 								ArrayList<Player> playersInGame = game.getPlayersInGame();
@@ -546,8 +556,32 @@ public class PlayerHandling implements Listener {
 								}
 							}
 						}
-						item.setItemMeta(itemMeta);
+					} else if (playerData.getRealm() == Realm.SKYWARS) {
+						for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
+							if (game.getWorldName().equalsIgnoreCase(worldName)) {
+								ArrayList<Player> playersInGame = game.getPlayersInGame();
+								
+								if (playersInGame.size() > currentIndex + 1) {
+									Player playerToSpec = playersInGame.get(currentIndex + 1);
+									
+									ply.teleport(playerToSpec);
+									itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: " + ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName() + ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+									playerData.setCustomDataKey("player_selector_index", String.valueOf(currentIndex + 1));
+								} else {
+									if (playersInGame.size() > 0) {
+										Player playerToSpec = playersInGame.get(0);
+										
+										ply.teleport(playerToSpec);
+										itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: " + ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName() + ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+										playerData.setCustomDataKey("player_selector_index", "0");
+									} else {
+										itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
+									}
+								}
+							}
+						}
 					}
+					item.setItemMeta(itemMeta);
 				} else if (itemName.equals("kitpvp_wizard_fireball")) {
 					for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
 						if (game.isInServer(ply)) {

@@ -132,6 +132,20 @@ public class SkyWars extends GameBase {
     * Run main checks for the game
     */
 	public void mainFunctions() {
+		//Set compass targets
+		for (Player ply : playersSpectating) {
+			PlayerData pd = playerHandling.getPlayerData(ply);
+			String key = pd.getCustomDataKey("player_selector_index");
+			int currentIndex = Integer.parseInt((key == null ? "0" : key));
+			
+			if (playersInGame.size() > currentIndex) {
+				ply.setCompassTarget(playersInGame.get(currentIndex).getLocation());
+			} else {
+				if (playersInGame.size() > 0) {
+					ply.setCompassTarget(playersInGame.get(0).getLocation());
+				}
+			}
+		}
 		//Set player gamemodes
 		for(Player ply : players) {
 			if (!active) {
@@ -292,6 +306,12 @@ public class SkyWars extends GameBase {
     */
 	public String getPlayerKit(Player ply) {
 		return playerKits.get(ply.getName());
+	}
+	/**
+    * Get players in the current game
+    */
+	public ArrayList<Player> getPlayersInGame() {
+		return playersInGame;
 	}
 	/**
     * Set a specific players kit

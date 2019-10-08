@@ -15,6 +15,7 @@ import nyeblock.Core.ServerCoreTest.GameHandling;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
@@ -33,6 +34,12 @@ public class PlayerSelector {
 		GameHandling gh = mainInstance.getGameInstance();
 		if (realm == Realm.STEPSPLEEF) {
 			for (StepSpleef game : gh.getStepSpleefGames()) {
+				if (game.isInServer(player)) {
+					players = game.getPlayersInGame();
+				}
+			}
+		} else if (realm == Realm.SKYWARS) {
+			for (SkyWars game : gh.getSkyWarsGames()) {
 				if (game.isInServer(player)) {
 					players = game.getPlayersInGame();
 				}
