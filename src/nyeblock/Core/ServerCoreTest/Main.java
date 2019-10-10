@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
+import com.onarandombox.MultiverseCore.api.MultiverseCoreConfig;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 
 public class Main extends JavaPlugin {
@@ -26,9 +27,11 @@ public class Main extends JavaPlugin {
 		gameHandling = new GameHandling(this);
 		multiverse = (MultiverseCore) getServer().getPluginManager().getPlugin("Multiverse-Core");
 		timerHandling = new TimerHandling();
+		
 		//Set spawn point for hub world
 		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.510, 113, -11.445));
 		Bukkit.getWorld("world").loadChunk(-10, 113);
+		
 		//Handle config file
 		File configFile = new File(this.getDataFolder(), "config.yml");
 		if (configFile.exists()) {
@@ -46,6 +49,8 @@ public class Main extends JavaPlugin {
 			
 			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
 		}
+		
+		multiverse.getMVConfig().setPrefixChat(false);
 		
 		getServer().getPluginManager().registerEvents(playerHandling, this);
 		getServer().getPluginManager().registerEvents(gameHandling, this);

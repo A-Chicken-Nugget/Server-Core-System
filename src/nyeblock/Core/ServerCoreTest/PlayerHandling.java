@@ -11,7 +11,6 @@ import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -31,16 +30,18 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.tags.CustomItemTagContainer;
 import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
@@ -56,13 +57,27 @@ import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
+@SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
 	private HashMap<String, PlayerData> playersData = new HashMap<String, PlayerData>();
+	private World world = Bukkit.getWorld("world");
 	private boolean worldsChecked = false;
+	//Scoreboard
+	private Scoreboard board;
+	private Objective objective;
+	private Team team;
 	
 	public PlayerHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
+		
+		//Scoreboard stuff
+		board = Bukkit.getScoreboardManager().getNewScoreboard();
+		team = board.registerNewTeam("default");
+		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
 		
 		//Timer ran every second
 		Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"), new Runnable() {
@@ -74,40 +89,34 @@ public class PlayerHandling implements Listener {
         		if (hub.hasStorm()) {
         			hub.setStorm(false);
         		}
-        		HashMap<Integer,String> tabItems = new HashMap<Integer,String>();
-        		int i = 0;
+        		
         		//Update players scoreboard
-        		for (Player ply : Bukkit.getOnlinePlayers()) {
-        			if (ply.getWorld().getName().equalsIgnoreCase("world")) {
-        				PlayerData pd = getPlayerData(ply);
-        				HashMap<Integer,String> scores = new HashMap<Integer,String>();
-        				
-        				if (!ply.getScoreboard().getObjective(DisplaySlot.SIDEBAR).getDisplayName().equalsIgnoreCase(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)")) {						
-        					pd.setObjectiveName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
-        				}
-        				
-        				scores.put(5, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-        				scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-        				scores.put(3, ChatColor.YELLOW + "Players online: " + ChatColor.GREEN + playersData.size());
-        				scores.put(2, ChatColor.RESET.toString());
-        				scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
-        				
-        				tabItems.put(i,ply.getName());
-        				
-        				pd.updateObjectiveScores(scores);
-        				
-        				//Update gamemode
-        				if (ply.getGameMode() != GameMode.ADVENTURE) {
-							ply.setGameMode(GameMode.ADVENTURE);
-						}
-        				
-        				i++;
-        			}
-        		}
-        		for (Player ply : Bukkit.getOnlinePlayers()) {
-        			PlayerData pd = getPlayerData(ply);
-        			
-        			pd.updateTabList(tabItems);
+        		for (Player ply : world.getPlayers()) {
+    				PlayerData pd = getPlayerData(ply);
+    				HashMap<Integer,String> scores = new HashMap<Integer,String>();
+    				
+    				if (!ply.getScoreboard().getObjective(DisplaySlot.SIDEBAR).getDisplayName().equalsIgnoreCase(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)")) {						
+    					pd.setObjectiveName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
+    					
+    					//Set players scoreboard
+    					pd.setScoreboard(board,objective);
+    					
+    					//Add player to team
+    					team.addPlayer(ply);
+    				}
+    				
+    				scores.put(5, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+    				scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
+    				scores.put(3, ChatColor.YELLOW + "Players online: " + ChatColor.GREEN + playersData.size());
+    				scores.put(2, ChatColor.RESET.toString());
+    				scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
+    				
+    				pd.updateObjectiveScores(scores);
+    				
+    				//Update gamemode
+    				if (ply.getGameMode() != GameMode.ADVENTURE) {
+						ply.setGameMode(GameMode.ADVENTURE);
+					}
         		}
             }
         }, 0, 10);
@@ -134,8 +143,12 @@ public class PlayerHandling implements Listener {
 	//Only allow players on the same world to talk to each other
 	@EventHandler
 	public void onPlayerChat(AsyncPlayerChatEvent event){
-	    String playerWorld = event.getPlayer().getWorld().getName();
+		Player ply = event.getPlayer();
+	    String playerWorld = ply.getWorld().getName();
 	    ArrayList<Player> playersToRemove = new ArrayList<Player>();
+	    PlayerData playerData = playersData.get(ply.getName());
+	    
+	    event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ": " + event.getMessage());
 	    
 	    for(Player player : event.getRecipients()) {
 	    	if (!playerWorld.equalsIgnoreCase(player.getWorld().getName())) {
@@ -159,10 +172,17 @@ public class PlayerHandling implements Listener {
     {
 		Player ply = event.getPlayer();
 		
+		//Set health/food level
+		ply.setHealth(ply.getHealth() - 0.0001);
+		ply.setFoodLevel(20);
+		
+		//Add player to team
+		team.addPlayer(ply);
+		
 		//Remove default join message
 		event.setJoinMessage("");
-		//Setup player data. If they don't have a profile in the database, create one.
 		
+		//Setup player data. If they don't have a profile in the database, create one.
 		PlayerData playerData = null;
 		ArrayList<HashMap<String,String>> query = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 6, false);
 		if (query.size() > 0) {
@@ -173,15 +193,25 @@ public class PlayerHandling implements Listener {
 		else {
 			mainInstance.getDatabaseInstance().query("INSERT INTO users (name,ip) VALUES ('" + ply.getName() + "','" + ply.getAddress() + "')",0,true);
 			playerData = new PlayerData(mainInstance,ply,0,0,0.0,ply.getAddress().getHostName(),UserGroup.USER);
+			
+			//Let everyone know this is a new player
+			for (Player player : world.getPlayers()) {
+				player.sendMessage(ChatColor.YELLOW + "Welcome " + ChatColor.BOLD + ply.getName() + ChatColor.RESET.toString() + ChatColor.YELLOW + " for their first time on the server!");
+			}
 		}
 		playersData.put(ply.getName(), playerData);
 		
+		//Set players scoreboard
+		playerData.setScoreboard(board,objective);
+		
+		//Teleport to main worlds spawn location
 		ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
 		
+		//Check if there are any undeleted worlds that weren't deleted on the previous server shutdown
 		if (!worldsChecked) {
 			worldsChecked = true;
-			//Delete undeleted game worlds
 			MultiverseCore mv = mainInstance.getMultiverseInstance();
+			
 			for(MultiverseWorld world : mv.getMVWorldManager().getMVWorlds()) {
 				if (!world.getName().toString().matches("world|world_nether|world_the_end")) {
 					MVWorldManager wm = mv.getMVWorldManager();
@@ -325,7 +355,6 @@ public class PlayerHandling implements Listener {
 		}
 	}
 	//Handle when a player has died
-	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		Player killed = event.getEntity();
@@ -417,15 +446,15 @@ public class PlayerHandling implements Listener {
 			}
 		}
     }
-//	@EventHandler
-//    public void onPlayerMove(PlayerMoveEvent event) {
-//		Player ply = event.getPlayer();
-//		PlayerData playerData = playersData.get(ply.getName());
-//		
-//        if (!playerData.getPermission("nyeblock.showRunningParticles")) {
-//        	
-//        }
-//    }
+	@EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+		Player ply = event.getPlayer();
+		PlayerData playerData = playersData.get(ply.getName());
+		
+        if (!playerData.getPermission("nyeblock.showRunningParticles")) {
+        	
+        }
+    }
 	//Handle when an item is moved in an inventory menu
 	@EventHandler
 	public void onPlayerInventoryMove(InventoryClickEvent event) {
@@ -465,7 +494,6 @@ public class PlayerHandling implements Listener {
 		}
 	}
 	//Handle when a player uses an item
-	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void onPlayerUse(PlayerInteractEvent event) {
 		Player ply = event.getPlayer();
@@ -474,7 +502,7 @@ public class PlayerHandling implements Listener {
 			ItemStack item = ply.getItemInHand();
 			ItemMeta itemMeta = item.getItemMeta();
 			
-			if (item != null) {			
+			if (item != null && itemMeta != null) {			
 				String itemName = itemMeta.getLocalizedName();
 				
 				if (itemName.equals("hub_menu")) {

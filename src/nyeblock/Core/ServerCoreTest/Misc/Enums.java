@@ -1,5 +1,7 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
+import org.bukkit.ChatColor;
+
 public class Enums {
 	//Realm enums
 	public enum Realm {
@@ -25,15 +27,17 @@ public class Enums {
 	} 
 	//User group enums
 	public enum UserGroup {
-		USER(1,"User"),
-		ADMIN(2,"Admin");
+		USER(1,"User","[" + ChatColor.WHITE + "User" + ChatColor.RESET + "]"),
+		ADMIN(2,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]");
 
 		private int value;  
 		private String name;
+		private String tag;
 
-		private UserGroup(int value, String name) {
+		private UserGroup(int value, String name, String tag) {
 			this.value = value;
 			this.name = name;
+			this.tag = tag;
 		}
 
 		public static UserGroup fromInt(int userGroup) {
@@ -51,6 +55,9 @@ public class Enums {
 		}
 		public String toString() {
 			return name;
+		}
+		public String getTag() {
+			return tag;
 		}
 	}
 	

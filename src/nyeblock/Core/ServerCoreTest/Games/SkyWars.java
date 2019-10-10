@@ -23,6 +23,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import com.connorlinfoot.actionbarapi.ActionBarAPI;
@@ -53,6 +56,10 @@ public class SkyWars extends GameBase {
 	private int messageCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
+	//Scoreboard
+	private Scoreboard board;
+	private Objective objective;
+	private Objective healthTag;
 	
 	//
 	// CONSTRUCTOR
@@ -65,6 +72,17 @@ public class SkyWars extends GameBase {
 		realm = Realm.SKYWARS;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
+		
+		//Scoreboard stuff
+		board = Bukkit.getScoreboardManager().getNewScoreboard();
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
+		
+		//Healthtag stuff
+		healthTag = board.registerNewObjective("healthtag", "health");
+		healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
+		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
 		
 		//Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", this, null);
@@ -148,6 +166,8 @@ public class SkyWars extends GameBase {
 		}
 		//Set player gamemodes
 		for(Player ply : players) {
+			ply.setHealth(ply.getHealth());
+			
 			if (!active) {
 				if (ply.getGameMode() != GameMode.SURVIVAL) {
 					ply.setGameMode(GameMode.SURVIVAL);
@@ -222,7 +242,7 @@ public class SkyWars extends GameBase {
     */
 	public void setScoreboard() {
 		//Check if player has won
-		if (playersInGame.size() == 5 && active) {
+		if (playersInGame.size() == 1 && active) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 					endStarted = true;
@@ -472,6 +492,9 @@ public class SkyWars extends GameBase {
 		if (!active) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
 		}
+		
+		//Set players scoreboard
+		playerHandling.getPlayerData(ply).setScoreboard(board,objective);
 		
 		//Add player to arrays
 		players.add(ply);

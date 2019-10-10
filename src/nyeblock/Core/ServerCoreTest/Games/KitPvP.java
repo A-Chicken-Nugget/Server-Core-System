@@ -19,6 +19,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import com.connorlinfoot.actionbarapi.ActionBarAPI;
@@ -45,6 +48,11 @@ public class KitPvP extends GameBase {
 	//Etc
 	private boolean endStarted = false;
 	private ArrayList<String> top5 = new ArrayList<>();
+	//Scoreboard
+	private Scoreboard board;
+	private Objective objective;
+	private Objective healthTag;
+	private Team team;
 	
 	//
 	// CONSTRUCTOR
@@ -58,6 +66,19 @@ public class KitPvP extends GameBase {
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		startTime = System.currentTimeMillis() / 1000L;
+		
+		//Scoreboard stuff
+		board = Bukkit.getScoreboardManager().getNewScoreboard();
+		team = board.registerNewTeam("default");
+		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
+		
+		//Healthtag stuff
+		healthTag = board.registerNewObjective("healthtag", "health");
+		healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
+		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
 		
 		//Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", this, null);
@@ -95,7 +116,7 @@ public class KitPvP extends GameBase {
 	/**
     * Sets the kitpvp scoreboard
     */
-	public void setScoreboard() {
+	public void setScoreboard() {		
 		//Get top 5 players with the most kills
 		HashMap<String,Integer> tempPlayerKills = new HashMap<String,Integer>(playerKills);
 		
@@ -121,7 +142,9 @@ public class KitPvP extends GameBase {
 		}					
 		//Update players scoreboard
 		for(Player ply : players)
-		{       				
+		{       	
+			ply.setHealth(ply.getHealth());
+			
 			int pos = 1;
 			int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
 			PlayerData pd = playerHandling.getPlayerData(ply);
@@ -404,16 +427,27 @@ public class KitPvP extends GameBase {
     * @param player - the player who joined the game.
     */
 	public void playerJoin(Player ply) {
+		//Set players scoreboard
+		playerHandling.getPlayerData(ply).setScoreboard(board,objective);
+		
+		//Add player to team
+		team.addPlayer(ply);
+		
 		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
-		//Add player to players array
+		
+		//Add player to arrays
 		players.add(ply);
-		//Set the players kills to 0
 		playerKills.put(ply.getName(), 0);
 		playerKits.put(ply.getName(),"knight");
 		playerInGraceBounds.put(ply.getName(), true);
+		
+		//Teleport to random spawn
 		Vector randSpawn = getRandomSpawnPoint();
 		ply.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
+		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to KitPvP",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
+		
+		ply.setHealth(ply.getHealth());
 	}
 	/**
     * Handles when a player leaves the game

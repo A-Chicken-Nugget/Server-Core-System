@@ -17,6 +17,9 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
@@ -44,6 +47,9 @@ public class StepSpleef extends GameBase {
 	private int messageCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
+	//Scoreboard
+	private Scoreboard board;
+	private Objective objective;
 	
 //	private ArrayList<Entity> test = new ArrayList<>();
 	
@@ -54,6 +60,12 @@ public class StepSpleef extends GameBase {
 		realm = Realm.STEPSPLEEF;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
+		
+		//Scoreboard stuff
+		board = Bukkit.getScoreboardManager().getNewScoreboard();
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
 		
 		//Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", this, null);
@@ -381,36 +393,38 @@ public class StepSpleef extends GameBase {
     */
 	@SuppressWarnings("serial")
 	public void playerDeath(Player killed) {
-		boolean isSpectating = playersSpectating.contains(killed);
-		
-		//Remove player from the current game
-		playersInGame.removeAll(new ArrayList<Player>() {{
-			add(killed);
-		}});
-		
-		//Setup player to spectate
-		if (!isSpectating) {	
-			playersSpectating.add(killed);
-			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
+		if (gameBegun) {			
+			boolean isSpectating = playersSpectating.contains(killed);
 			
-			//Unhide spectators
-			for (Player ply : playersSpectating) {
-				killed.showPlayer(ply);
+			//Remove player from the current game
+			playersInGame.removeAll(new ArrayList<Player>() {{
+				add(killed);
+			}});
+			
+			//Setup player to spectate
+			if (!isSpectating) {	
+				playersSpectating.add(killed);
+				killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
+				
+				//Unhide spectators
+				for (Player ply : playersSpectating) {
+					killed.showPlayer(ply);
+				}
+				
+				//Hide player from players in the active game
+				for (Player ply : playersInGame) {
+					ply.hidePlayer(killed);
+				}
 			}
 			
-			//Hide player from players in the active game
-			for (Player ply : playersInGame) {
-				ply.hidePlayer(killed);
+			if (!isSpectating) {			
+				messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
 			}
 		}
 		
 		//Find a random spawn
 		Vector randSpawn = getRandomSpawnPoint();
 		killed.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
-		
-		if (!isSpectating) {			
-			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
-		}
 	}
 	/**
     * Handle when a player joins the game
@@ -419,10 +433,17 @@ public class StepSpleef extends GameBase {
 		if (!active) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
 		}
+		
+		//Set players scoreboard
+		playerHandling.getPlayerData(ply).setScoreboard(board,objective);
+		
 		//Add player to players array
 		players.add(ply);
+		
+		//Teleport player to random spawn
 		Vector randSpawn = getRandomSpawnPoint();
 		ply.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
+		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
 		
 //		test.add(Bukkit.getWorld(worldName).spawnEntity(Bukkit.getWorld(worldName).getSpawnLocation(), EntityType.CHICKEN));

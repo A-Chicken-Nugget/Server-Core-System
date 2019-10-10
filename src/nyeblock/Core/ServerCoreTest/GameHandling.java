@@ -101,6 +101,10 @@ public class GameHandling implements Listener {
 		if (!pd.isQueuingGame()) {
 			if (realm == Realm.HUB) {
 				ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
+				
+				if (ply.getOpenInventory() != null) {					
+					ply.closeInventory();
+				}
 			} else if (realm == Realm.KITPVP) {
 				pd.setQueuingStatus(true);
 				KitPvP gameToJoin = null;

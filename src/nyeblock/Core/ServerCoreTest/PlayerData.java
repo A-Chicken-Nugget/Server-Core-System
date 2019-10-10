@@ -31,7 +31,6 @@ import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
-import nyeblock.Core.ServerCoreTest.Misc.PlayerTabList;
 
 @SuppressWarnings("unused")
 public class PlayerData {
@@ -46,13 +45,10 @@ public class PlayerData {
 	private Realm realm = Realm.HUB;
 	private boolean queuingGame = false;
 	private HashMap<String,String> customData = new HashMap<>();
-	private PlayerTabList tabList;
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
-	private Team team;
 	
-	@SuppressWarnings("deprecation")
 	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
 		this.mainInstance = mainInstance;
 		this.player = ply;
@@ -62,15 +58,6 @@ public class PlayerData {
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
-		tabList = new PlayerTabList(ply,ply.getWorld().getPlayers().size());
-		tabList.initTable();
-		ScoreboardManager sbm = Bukkit.getScoreboardManager();
-		board = sbm.getNewScoreboard();
-		team = board.registerNewTeam("user");
-		objective = board.registerNewObjective("scoreboard", "");
-		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
-		ply.setScoreboard(board);
 		setPermissions();
 		setItems();
 	}
@@ -86,8 +73,6 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
-//			permissions.setPermission("nyeblock.showRunningParticles", true);
-//			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
 		} else if (realm == Realm.KITPVP) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -196,10 +181,6 @@ public class PlayerData {
 			player.getInventory().setItem(8, returnToHub.give());
 		}
 	}
-//	//Set scoreboard team
-//	public void setScoreboardTeam(String team) {
-//		for
-//	}
 	//Set a players realm
 	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems) {
 		this.realm = realm;
@@ -223,18 +204,18 @@ public class PlayerData {
 	public void setCustomDataKey(String key, String value) {
 		customData.put(key, value);
 	}
+	//Set the players scoreboard
+	public void setScoreboard(Scoreboard scoreboard, Objective objective) {
+		board = scoreboard;
+		this.objective = objective;
+		player.setScoreboard(board);
+	}
 	//Set the title of the players scoreboard
 	public void setObjectiveName(String name) {
 		for (String s : board.getEntries()) {			
 			board.resetScores(s);
 		}
 		objective.setDisplayName(name);
-	}
-	//Update the player tab text
-	public void updateTabList(HashMap<Integer,String> items) {
-		for (Map.Entry<Integer, String> entry : items.entrySet()) {
-			tabList.updateSlot(entry.getKey(),entry.getValue(),true);
-		}
 	}
 	//Update the players scoreboard text
 	public void updateObjectiveScores(HashMap<Integer,String> scores) {
@@ -275,13 +256,5 @@ public class PlayerData {
 			}
 		}
 		return value;
-	}
-	//Get the title of the players scoreboard
-	public String getObjectiveName() {
-		return objective.getName();
-	}
-	//Get the players current scoreboard objective
-	public Objective getObjective() {
-		return objective;
 	}
 }
