@@ -20,7 +20,6 @@ import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
@@ -30,7 +29,6 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings("deprecation")
@@ -49,8 +47,6 @@ public class KitPvP extends GameBase {
 	private boolean endStarted = false;
 	private ArrayList<String> top5 = new ArrayList<>();
 	//Scoreboard
-	private Scoreboard board;
-	private Objective objective;
 	private Objective healthTag;
 	private Team team;
 	
@@ -75,7 +71,7 @@ public class KitPvP extends GameBase {
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
 		
-		//Healthtag stuff
+		//Healthtag stuff 
 		healthTag = board.registerNewObjective("healthtag", "health");
 		healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
 		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
@@ -142,9 +138,7 @@ public class KitPvP extends GameBase {
 		}					
 		//Update players scoreboard
 		for(Player ply : players)
-		{       	
-			ply.setHealth(ply.getHealth());
-			
+		{    
 			int pos = 1;
 			int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
 			PlayerData pd = playerHandling.getPlayerData(ply);
@@ -204,11 +198,11 @@ public class KitPvP extends GameBase {
 								&& loc.getBlockY() <= safeZonePoint2.getBlockY()
 								&& loc.getBlockZ() >= safeZonePoint1.getBlockZ() 
 								&& loc.getBlockZ() <= safeZonePoint2.getBlockZ()) {
-							PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-							PlayerData pdata = ph.getPlayerData(ply);
+							PlayerData pdata = playerHandling.getPlayerData(ply);
 							
 							if (!playerInGraceBounds.get(ply.getName())) {        								
 								playerInGraceBounds.put(ply.getName(), true);
+								team.addPlayer(ply);
 							}
 							if (pdata != null) {     
 								if (!pdata.getPermission("nyeblock.tempNoDamageOnFall")) {
@@ -222,11 +216,11 @@ public class KitPvP extends GameBase {
 								}
 							}
 						} else {
-							PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-							PlayerData pdata = ph.getPlayerData(ply);
+							PlayerData pdata = playerHandling.getPlayerData(ply);
 							
 							if (playerInGraceBounds.get(ply.getName())) {        								
 								playerInGraceBounds.put(ply.getName(), false);
+								team.removePlayer(ply);
 							}
 							if (pdata != null) {
 								if (!pdata.getPermission("nyeblock.canBeDamaged")) {
@@ -475,6 +469,11 @@ public class KitPvP extends GameBase {
 			}
 		}
 		top5.removeAll(plyToRemove);
+		
+		//Remove player from team
+		if (team.hasPlayer(ply)) {			
+			team.removePlayer(ply);
+		}
 		
 		if (showLeaveMessage) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");

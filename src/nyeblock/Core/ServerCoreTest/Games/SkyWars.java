@@ -2,7 +2,6 @@ package nyeblock.Core.ServerCoreTest.Games;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,20 +11,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.potion.Potion;
-import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import com.connorlinfoot.actionbarapi.ActionBarAPI;
@@ -34,7 +25,6 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings("deprecation")
@@ -57,8 +47,6 @@ public class SkyWars extends GameBase {
 	private boolean endStarted = false;
 	private long lastNumber = 0;
 	//Scoreboard
-	private Scoreboard board;
-	private Objective objective;
 	private Objective healthTag;
 	
 	//
@@ -166,8 +154,6 @@ public class SkyWars extends GameBase {
 		}
 		//Set player gamemodes
 		for(Player ply : players) {
-			ply.setHealth(ply.getHealth());
-			
 			if (!active) {
 				if (ply.getGameMode() != GameMode.SURVIVAL) {
 					ply.setGameMode(GameMode.SURVIVAL);

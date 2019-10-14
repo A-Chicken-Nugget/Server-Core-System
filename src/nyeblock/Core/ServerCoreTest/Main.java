@@ -6,16 +6,18 @@ import java.io.File;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
-import com.onarandombox.MultiverseCore.api.MultiverseCoreConfig;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 
 public class Main extends JavaPlugin {
 	private PlayerHandling playerHandling;
+	private CommandHandling commandHandling;
 	private GameHandling gameHandling;
 	private MultiverseCore multiverse;
 	private DatabaseHandling databaseHandling;
@@ -24,6 +26,7 @@ public class Main extends JavaPlugin {
 	//When this plugin is enabled, initialize important classes
 	public void onEnable() {
 		playerHandling = new PlayerHandling(this);
+		commandHandling = new CommandHandling(this);
 		gameHandling = new GameHandling(this);
 		multiverse = (MultiverseCore) getServer().getPluginManager().getPlugin("Multiverse-Core");
 		timerHandling = new TimerHandling();
@@ -54,6 +57,9 @@ public class Main extends JavaPlugin {
 		
 		getServer().getPluginManager().registerEvents(playerHandling, this);
 		getServer().getPluginManager().registerEvents(gameHandling, this);
+		
+		this.getCommand("setpermission").setExecutor((CommandExecutor)commandHandling);
+		this.getCommand("setpermission").setTabCompleter((TabCompleter)commandHandling);
 	}
 	public void onDisable() {
 		MultiverseCore mv = multiverse;
@@ -70,6 +76,9 @@ public class Main extends JavaPlugin {
 	}
 	public PlayerHandling getPlayerHandlingInstance() {
 		return playerHandling;
+	}
+	public CommandHandling getCommandHandling() {
+		return commandHandling;
 	}
 	public MultiverseCore getMultiverseInstance() {
 		return multiverse;

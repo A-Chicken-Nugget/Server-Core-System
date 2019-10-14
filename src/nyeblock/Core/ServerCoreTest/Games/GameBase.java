@@ -6,6 +6,8 @@ import java.util.Random;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.util.Vector;
 
 import nyeblock.Core.ServerCoreTest.Main;
@@ -27,6 +29,9 @@ public abstract class GameBase {
 	protected ArrayList<Vector> spawns = new ArrayList<>();
 	//Etc
 	protected int emptyCount = 0;
+	//Scoreboard
+	protected Scoreboard board;
+	protected Objective objective;
 	
 	/**
     * Sends a message in chat to all players in the game

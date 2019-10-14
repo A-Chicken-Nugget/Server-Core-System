@@ -17,9 +17,6 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
@@ -27,7 +24,6 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
 
 @SuppressWarnings("deprecation")
 public class StepSpleef extends GameBase {
@@ -47,9 +43,6 @@ public class StepSpleef extends GameBase {
 	private int messageCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
-	//Scoreboard
-	private Scoreboard board;
-	private Objective objective;
 	
 //	private ArrayList<Entity> test = new ArrayList<>();
 	

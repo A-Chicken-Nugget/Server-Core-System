@@ -209,12 +209,10 @@ public class PlayerData {
 		board = scoreboard;
 		this.objective = objective;
 		player.setScoreboard(board);
+		player.setHealth(player.getHealth() - 0.0001);
 	}
 	//Set the title of the players scoreboard
 	public void setObjectiveName(String name) {
-		for (String s : board.getEntries()) {			
-			board.resetScores(s);
-		}
 		objective.setDisplayName(name);
 	}
 	//Update the players scoreboard text
@@ -256,5 +254,9 @@ public class PlayerData {
 			}
 		}
 		return value;
+	}
+	//Get the players scoreboard
+	public Scoreboard getScoreboard() {
+		return board;
 	}
 }

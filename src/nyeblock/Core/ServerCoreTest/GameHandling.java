@@ -205,6 +205,8 @@ public class GameHandling implements Listener {
 	} 
 	public void checkWorld(Player ply, String worldName, Realm realm, Boolean setData) {
 		if (Bukkit.getWorld(worldName) != null) {
+			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+			
 			if (realm == Realm.KITPVP) {
 				for(KitPvP game : kitPvpGames) {
 					if (game.getWorldName().equalsIgnoreCase(worldName)) {
@@ -243,8 +245,6 @@ public class GameHandling implements Listener {
 						//Join game
 						game.playerJoin(ply);
 						//Set player data
-						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-						PlayerData playerData = ph.getPlayerData(ply);
 						playerData.setRealm(realm,true,true);
 						playerData.setQueuingStatus(false);
 					}
@@ -279,8 +279,6 @@ public class GameHandling implements Listener {
 						//Join game
 						game.playerJoin(ply);
 						//Set player data
-						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-						PlayerData playerData = ph.getPlayerData(ply);
 						playerData.setRealm(realm,true,true);
 						playerData.setQueuingStatus(false);
 					}
@@ -313,13 +311,13 @@ public class GameHandling implements Listener {
 						//Join game
 						game.playerJoin(ply);
 						//Set player data
-						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-						PlayerData playerData = ph.getPlayerData(ply);
 						playerData.setRealm(realm,true,true);
 						playerData.setQueuingStatus(false);
 					}
 				}
 			}
+			
+			mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
 			mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
 		}
 	}

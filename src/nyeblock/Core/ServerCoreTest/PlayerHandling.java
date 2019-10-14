@@ -11,6 +11,7 @@ import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -54,10 +55,11 @@ import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
+import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation","serial"})
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
 	private HashMap<String, PlayerData> playersData = new HashMap<String, PlayerData>();
@@ -67,6 +69,7 @@ public class PlayerHandling implements Listener {
 	private Scoreboard board;
 	private Objective objective;
 	private Team team;
+	private TextAnimation boardAnim;
 	
 	public PlayerHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
@@ -75,9 +78,27 @@ public class PlayerHandling implements Listener {
 		board = Bukkit.getScoreboardManager().getNewScoreboard();
 		team = board.registerNewTeam("default");
 		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-		objective = board.registerNewObjective("scoreboard", "");
+		objective = board.registerNewObjective("hub_scoreboard", "");
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
+		boardAnim = new TextAnimation("Hub board animation",new ArrayList<String>() {{
+			add("§7NyeBlock");
+			add("§bN§7yeBlock"); 
+			add("§bNy§7eBlock");
+			add("§bNye§7Block");
+			add("§bNyeB§7lock");
+			add("§bNyeBl§7ock");
+			add("§bNyeBlo§7ck");
+			add("§bNyeBloc§7k");
+			add("§bNyeBlock");
+			add("§7N§byeBlock"); 
+			add("§7Ny§beBlock");
+			add("§7Nye§bBlock");
+			add("§7NyeB§block");
+			add("§7NyeBl§bock");
+			add("§7NyeBlo§bck");
+			add("§7NyeBloc§bk");
+		}},300);
 		
 		//Timer ran every second
 		Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"), new Runnable() {
@@ -95,8 +116,14 @@ public class PlayerHandling implements Listener {
     				PlayerData pd = getPlayerData(ply);
     				HashMap<Integer,String> scores = new HashMap<Integer,String>();
     				
-    				if (!ply.getScoreboard().getObjective(DisplaySlot.SIDEBAR).getDisplayName().equalsIgnoreCase(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)")) {						
+    				if (!ply.getScoreboard().getObjective(DisplaySlot.SIDEBAR).getName().equalsIgnoreCase("hub_scoreboard")) {
+    					//Update scoreboard name
     					pd.setObjectiveName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
+    					
+    					//Clear scoreboard
+    					for (String s : board.getEntries()) {			
+    						board.resetScores(s);
+    					}
     					
     					//Set players scoreboard
     					pd.setScoreboard(board,objective);
@@ -104,6 +131,8 @@ public class PlayerHandling implements Listener {
     					//Add player to team
     					team.addPlayer(ply);
     				}
+    				
+    				pd.setObjectiveName(boardAnim.getMessage());
     				
     				scores.put(5, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
     				scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
@@ -119,7 +148,7 @@ public class PlayerHandling implements Listener {
 					}
         		}
             }
-        }, 0, 10);
+        }, 0, 7);
 	}
 	
 	//Get a specific players player data
@@ -132,6 +161,10 @@ public class PlayerHandling implements Listener {
 			}
 		}
 		return plyData;
+	}
+	//Remove player from scoreboard team
+	public void removeFromTeam(Player ply) {
+		team.removePlayer(ply);
 	}
 	//Prevent mob spawn
 	@EventHandler()
@@ -173,11 +206,11 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		
 		//Set health/food level
-		ply.setHealth(ply.getHealth() - 0.0001);
+		ply.setHealth(20);
 		ply.setFoodLevel(20);
 		
 		//Add player to team
-		team.addPlayer(ply);
+		team.addPlayer((OfflinePlayer)ply);
 		
 		//Remove default join message
 		event.setJoinMessage("");
