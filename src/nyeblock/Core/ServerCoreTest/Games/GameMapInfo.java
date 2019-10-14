@@ -71,7 +71,7 @@ public class GameMapInfo {
 			}
 		} else if (realm == Realm.STEPSPLEEF) {
 			//stepSpleef_first
-			if (name.equalsIgnoreCase("first")) {
+			if (name.equalsIgnoreCase("concrete")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
 					add(new HashMap<String,Vector>() {{
