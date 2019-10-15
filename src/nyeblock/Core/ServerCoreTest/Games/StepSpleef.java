@@ -136,47 +136,32 @@ public class StepSpleef extends GameBase {
 		if (gameBegun) {
 			//Add blocks to be deleted
 			for (Player ply : playersInGame) {
-//				BoundingBox boundingBox = ply.getBoundingBox();
-//				
-//				Location test = new Location(Bukkit.getWorld(worldName),boundingBox.getMinX(),boundingBox.getMinY(),boundingBox.getMinZ()).subtract(0, 1, 0);
-//				Location test2 = new Location(Bukkit.getWorld(worldName),boundingBox.getMaxX(),boundingBox.getMinY(),boundingBox.getMaxZ()).subtract(0, 1, 0);
-//				
-//				if (test.getBlock().getType() != Material.AIR) {
-//					blocksToDelete.put(test.getBlock(), (System.currentTimeMillis() / 1000L));
-//				}
-//				if (test2.getBlock().getType() != Material.AIR) {
-//					blocksToDelete.put(test2.getBlock(), (System.currentTimeMillis() / 1000L));
-//				}
-				
-//				test.get(0).teleport(new Location(Bukkit.getWorld(worldName),boundingBox.getMinX(),boundingBox.getMinY(),boundingBox.getMinZ()));
-//				test.get(1).teleport(new Location(Bukkit.getWorld(worldName),boundingBox.getMaxX(),boundingBox.getMinY(),boundingBox.getMaxZ()));
-				
-//				for (Block block : Miscellaneous.getBlocksBelow(ply)) {
-//					blocksToDelete.put(block, (System.currentTimeMillis() / 1000L));
-//				}
-				
-				Location loc = ply.getLocation().subtract(0,.5,0);
-				Vector locs[] = {loc.toVector().add(new Vector(1, 0, 0)),loc.toVector().subtract(new Vector(1, 0, 0)),loc.toVector().add(new Vector(0, 0, 1)),loc.toVector().subtract(new Vector(0, 0, 1))};
-				Location closestLoc = null;
-				
-				for (int i = 0; i < 4; i++) {
-					Location lc = locs[i].toLocation(Bukkit.getWorld(worldName));
-//					test.get(i).teleport(lc);
+				for (double startSub = .10; startSub < 1.1; startSub += .1) {
+					Location loc = ply.getLocation().subtract(0,.1,0);
+					Vector locs[] = {loc.toVector().add(new Vector(startSub, 0, 0)),loc.toVector().subtract(new Vector(startSub, 0, 0)),loc.toVector().add(new Vector(0, 0, startSub)),loc.toVector().subtract(new Vector(0, 0, startSub))};
+					Location closestLoc = null;
 					
-					if (closestLoc != null) {
-						if (loc.distance(closestLoc) > loc.distance(lc) && lc.getBlock().getType() != Material.AIR) {
-							closestLoc = lc;
-						}
-					} else {
-						if (lc.getBlock().getType() != Material.AIR) {							
-							closestLoc = lc;
+					for (int i = 0; i < 4; i++) {
+						Location lc = locs[i].toLocation(Bukkit.getWorld(worldName));
+						
+						if (closestLoc != null) {
+							if (loc.distance(closestLoc) > loc.distance(lc) && lc.getBlock().getType() != Material.AIR) {
+								closestLoc = lc;
+							}
+						} else {
+							if (lc.getBlock().getType() != Material.AIR) {							
+								closestLoc = lc;
+							}
 						}
 					}
-				}
-				
-				blocksToDelete.put(loc.toVector(), (System.currentTimeMillis() / 1000L));
-				if (closestLoc != null) {		
-					blocksToDelete.put(closestLoc.toVector(), (System.currentTimeMillis() / 1000L));
+					
+					blocksToDelete.put(loc.toVector(), (System.currentTimeMillis() / 1000L));
+					if (closestLoc != null) {		
+						if (!blocksToDelete.containsKey(closestLoc.toVector())) {						
+							blocksToDelete.put(closestLoc.toVector(), (System.currentTimeMillis() / 1000L));
+						}
+						break;
+					}
 				}
 			}
 			//Delete blocks that are over .5 seconds old
@@ -186,12 +171,8 @@ public class StepSpleef extends GameBase {
 				Map.Entry<Vector, Long> entry = itr.next();
 				if ((System.currentTimeMillis() / 1000L) - entry.getValue() >= 1) {
 					Vector vec = entry.getKey();
-					Block block = Bukkit.getWorld(worldName).getBlockAt(new Location(Bukkit.getWorld(worldName),vec.getX(),vec.getY(),vec.getZ()));
-//					Block block = entry.getKey();
 					
-					if (block.getType() != Material.AIR) {
-						block.setType(Material.AIR);
-					}
+					Bukkit.getWorld(worldName).getBlockAt(new Location(Bukkit.getWorld(worldName),vec.getX(),vec.getY(),vec.getZ())).setType(Material.AIR);
 					itr.remove();
 				}
 			}
@@ -249,7 +230,7 @@ public class StepSpleef extends GameBase {
 				emptyCount = 0;
 			}
 			if (!active) {				
-				if (players.size() > 1) {
+				if (players.size() > 0) {
 					if (readyCount == 0) {
 						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
@@ -299,7 +280,7 @@ public class StepSpleef extends GameBase {
     */
 	public void setScoreboard() {
 		//Check if player has won
-		if (playersInGame.size() == 1) {
+		if (playersInGame.size() == 2) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 					endStarted = true;
