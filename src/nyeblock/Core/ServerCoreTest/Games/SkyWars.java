@@ -155,9 +155,9 @@ public class SkyWars extends GameBase {
 		//Set player gamemodes
 		for(Player ply : players) {
 			if (!active) {
-				if (ply.getGameMode() != GameMode.SURVIVAL) {
-					ply.setGameMode(GameMode.SURVIVAL);
-				}
+//				if (ply.getGameMode() != GameMode.SURVIVAL) {
+//					ply.setGameMode(GameMode.SURVIVAL);
+//				}
 			} else {
 				if (gameBegun && ply.getGameMode() == GameMode.SURVIVAL) {
 					boolean isPlaying = false;
@@ -203,7 +203,7 @@ public class SkyWars extends GameBase {
 					if (messageCount >= 20) {
 						messageCount = 0;
 						
-						messageToAll(ChatColor.YELLOW + "Waiting for more players...");
+//						messageToAll(ChatColor.YELLOW + "Waiting for more players...");
 					}
 					messageCount++;
 				}

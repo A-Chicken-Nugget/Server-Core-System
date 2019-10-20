@@ -40,9 +40,6 @@ public class KitPvP extends GameBase {
 	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private HashMap<String,String> playerKits = new HashMap<>();
 	private HashMap<String,Boolean> playerInGraceBounds = new HashMap<>();
-	//Game points
-	private Vector safeZonePoint1;
-	private Vector safeZonePoint2;
 	//Etc
 	private boolean endStarted = false;
 	private ArrayList<String> top5 = new ArrayList<>();

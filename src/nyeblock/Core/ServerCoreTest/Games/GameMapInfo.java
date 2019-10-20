@@ -70,7 +70,7 @@ public class GameMapInfo {
 				}};
 			}
 		} else if (realm == Realm.STEPSPLEEF) {
-			//stepSpleef_first
+			//first
 			if (name.equalsIgnoreCase("concrete")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
@@ -87,7 +87,7 @@ public class GameMapInfo {
 				}};
 			} 
 		} else if (realm == Realm.SKYWARS) {
-			//stepSpleef_first
+			//first
 			if (name.equalsIgnoreCase("first")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
@@ -102,6 +102,7 @@ public class GameMapInfo {
 						put("spawn_8", new Vector(-38.550,75,6.414));
 					}});
 				}};
+			//nether
 			} else if (name.equalsIgnoreCase("nether")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
