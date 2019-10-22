@@ -2,6 +2,7 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
 
+import org.apache.commons.lang.math.IntRange;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -15,28 +16,11 @@ import net.minecraft.server.v1_14_R1.AxisAlignedBB;
 import net.minecraft.server.v1_14_R1.EntityPlayer;
 
 public class Miscellaneous {
-	//Check if a player is within 2 locations
-	public static boolean playerInArea(Vector loc1, Vector loc2){
-        int x1,x2,y1,y2,z1,z2;
-        x1 = loc1.getX() > loc2.getX() ? (int) loc2.getX() : (int) loc1.getX();
-        y1 = loc1.getY() > loc2.getY() ? (int) loc2.getY() : (int) loc1.getY();
-        z1 = loc1.getZ() > loc2.getZ() ? (int) loc2.getZ() : (int) loc1.getZ();
-       
-        x2 = ((int) loc1.getX()) == x1 ? (int) loc2.getX() : (int) loc1.getX();
-        y2 = ((int) loc1.getY()) == y1 ? (int) loc2.getY() : (int) loc1.getY();
-        z2 = ((int) loc1.getZ()) == z1 ? (int) loc2.getZ() : (int) loc1.getZ();
-               
-        for (int x = x1; x <= x2; x++){
-            for (int y = y1; y <= y2; y++){
-                for (int z = z1; z <= z2; z++){
-                    for (Player p : Bukkit.getOnlinePlayers()){
-                        if (p.getLocation().getBlock().getLocation() == new Location(loc1.getWorld(),x,y,z)) return true;
-                    }
-                }
-            }
-        }
-       
-        return false;
+	//Check if a player is within 2 location vectors
+	public static boolean playerInArea(Vector loc, Vector l1, Vector l2){
+        return new IntRange(l1.getX(), l2.getX()).containsDouble(loc.getX())
+                && new IntRange(l1.getY(), l2.getY()).containsDouble(loc.getY())
+                &&  new IntRange(l1.getZ(), l2.getZ()).containsDouble(loc.getZ());
     }
 	//Used for the player scoreboards. If there is a change on a scoreboard row, update it
 	public static void updateScore(Objective o, int score, String name) {

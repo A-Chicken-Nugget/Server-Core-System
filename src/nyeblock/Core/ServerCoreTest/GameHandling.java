@@ -125,7 +125,7 @@ public class GameHandling implements Listener {
 				if (gameToJoin == null) {
 					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
 					String worldName = "kitPvP_" + UUID.randomUUID();
-					gameToJoin = new KitPvP(mainInstance,worldName,300,15); //900
+					gameToJoin = new KitPvP(mainInstance,worldName,30,15); //900
 					kitPvpGames.add(gameToJoin);
 					
 					//Create void world

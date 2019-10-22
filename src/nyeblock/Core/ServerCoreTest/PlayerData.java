@@ -80,7 +80,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canBeDamaged", true);
 			permissions.setPermission("nyeblock.canTakeFallDamage", true);
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-			permissions.setPermission("nyeblock.dropItems", false);
+			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 		} else if (realm == Realm.STEPSPLEEF) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);

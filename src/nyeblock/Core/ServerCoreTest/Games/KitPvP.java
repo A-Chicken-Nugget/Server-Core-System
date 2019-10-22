@@ -89,6 +89,16 @@ public class KitPvP extends GameBase {
 	//
 	
 	/**
+    * Kick everyone in the game
+    */
+	public void kickEveryone() {
+		ArrayList<Player> tempPlayers = new ArrayList<>(players);
+		
+		for (Player ply : tempPlayers) {
+			playerLeave(ply,false,true);
+		}
+	}
+	/**
     * Checks if the server is empty, if it is for 10 seconds then delete timers and world
     */
 	public void checkForDeletion() {
@@ -195,9 +205,7 @@ public class KitPvP extends GameBase {
 						PlayerData pdata = playerHandling.getPlayerData(ply);
 						
 						//Check if player is in the grace bounds
-						System.out.println(safeZonePoint1 + " : " + safeZonePoint2);
-						if (Miscellaneous.playerInArea(safeZonePoint1, safeZonePoint2)) {
-							System.out.println("In bounds");
+						if (Miscellaneous.playerInArea(loc.toVector(), safeZonePoint1, safeZonePoint2)) {
 							if (!playerInGraceBounds.get(ply.getName())) {        								
 								playerInGraceBounds.put(ply.getName(), true);
 								team.addPlayer(ply);
@@ -214,7 +222,6 @@ public class KitPvP extends GameBase {
 								}
 							}
 						} else {
-							System.out.println("Outside bounds");
 							if (playerInGraceBounds.get(ply.getName())) {        								
 								playerInGraceBounds.put(ply.getName(), false);
 								team.removePlayer(ply);
@@ -234,7 +241,7 @@ public class KitPvP extends GameBase {
 		}
 		//Check when the game has ended and determine winner
 		if ((duration-((System.currentTimeMillis() / 1000L)-startTime)) < 0) {
-			if (!endStarted) {
+			if (!endStarted && players.size() > 0) {
 				endStarted = true;
 				int top = Collections.max(playerKills.values());
 				
@@ -382,21 +389,6 @@ public class KitPvP extends GameBase {
 			ply.getInventory().setItem(3, regen.toItemStack(1));
 		}
 		playerKits.put(ply.getName(), kit);
-	}
-	/**
-    * Set the grace zone bounds
-    * @param bound 1 - a vector for bound 1.
-    * @param bound 2 - a vector for bound 2.
-    */
-	public void setSafeZoneBounds(Vector p1, Vector p2) {
-		int x1 = Math.min(p1.getBlockX(), p2.getBlockX());
-		int y1 = Math.min(p1.getBlockY(), p2.getBlockY());
-		int z1 = Math.min(p1.getBlockZ(), p2.getBlockZ());
-		int x2 = Math.max(p1.getBlockX(), p2.getBlockX());
-		int y2 = Math.max(p1.getBlockY(), p2.getBlockY());
-		int z2 = Math.max(p1.getBlockZ(), p2.getBlockZ());
-		this.safeZonePoint1 = new Vector( x1, y1, z1);
-		this.safeZonePoint2 = new Vector( x2, y2, z2);
 	}
 	/**
     * Handles when a player dies in the game
