@@ -14,8 +14,8 @@ public class GameMapInfo {
 		ArrayList<HashMap<String,Vector>> mapInfo = null;
 		
 		if (realm == Realm.KITPVP) {
-			//first
-			if (name.equalsIgnoreCase("first")) {
+			//concrete
+			if (name.equalsIgnoreCase("concrete")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
 					add(new HashMap<String,Vector>() {{
@@ -44,7 +44,7 @@ public class GameMapInfo {
 					}});
 					//Grace area
 					add(new HashMap<String,Vector>() {{
-						put("graceBound1", new Vector(-71,85,24));
+						put("graceBound1", new Vector(-95,97,23));
 					}});
 					add(new HashMap<String,Vector>() {{
 						put("graceBound2", new Vector(-94,102,46));
@@ -70,7 +70,7 @@ public class GameMapInfo {
 				}};
 			}
 		} else if (realm == Realm.STEPSPLEEF) {
-			//first
+			//concrete
 			if (name.equalsIgnoreCase("concrete")) {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points

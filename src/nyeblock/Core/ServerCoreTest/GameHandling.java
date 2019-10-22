@@ -131,10 +131,10 @@ public class GameHandling implements Listener {
 					//Create void world
 					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
 					
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
 				}
 			} else if (realm == Realm.STEPSPLEEF) {
 				pd.setQueuingStatus(true);
@@ -162,10 +162,10 @@ public class GameHandling implements Listener {
 					//Create void world
 					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
 					
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
 				}
 			} else if (realm == Realm.SKYWARS) {
 				pd.setQueuingStatus(true);
@@ -193,10 +193,10 @@ public class GameHandling implements Listener {
 					//Create void world
 					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
 					
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
 				}
 			}
 		} else {

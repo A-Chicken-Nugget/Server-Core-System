@@ -29,7 +29,9 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.SchematicHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 @SuppressWarnings("deprecation")
 public class KitPvP extends GameBase {
@@ -52,6 +54,8 @@ public class KitPvP extends GameBase {
 	//
 	
 	public KitPvP(Main mainInstance, String worldName, int duration, int maxPlayers) {
+		super(mainInstance,worldName);
+		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
@@ -74,10 +78,10 @@ public class KitPvP extends GameBase {
 		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
 		
 		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", this, null);
+		mainInstance.getTimerInstance().createTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", false, null, this);
 		
 		//Delete timer
-		mainInstance.getTimerInstance().createTimer("delete_" + worldName, 1, 0, "checkForDeletion", this, null);
+		mainInstance.getTimerInstance().createTimer("delete_" + worldName, 1, 0, "checkForDeletion", false, null, this);
 	}
 	
 	//
@@ -187,16 +191,13 @@ public class KitPvP extends GameBase {
 				for(Player ply : players) {
 					Location loc = ply.getLocation();
 					
-					//Check if player is in the grace bounds
 					if(ply.getLocation() != null) {
-						if (loc.getBlockX() >= safeZonePoint1.getBlockX() 
-								&& loc.getBlockX() <= safeZonePoint2.getBlockX()
-								&& loc.getBlockY() >= safeZonePoint1.getBlockY() 
-								&& loc.getBlockY() <= safeZonePoint2.getBlockY()
-								&& loc.getBlockZ() >= safeZonePoint1.getBlockZ() 
-								&& loc.getBlockZ() <= safeZonePoint2.getBlockZ()) {
-							PlayerData pdata = playerHandling.getPlayerData(ply);
-							
+						PlayerData pdata = playerHandling.getPlayerData(ply);
+						
+						//Check if player is in the grace bounds
+						System.out.println(safeZonePoint1 + " : " + safeZonePoint2);
+						if (Miscellaneous.playerInArea(safeZonePoint1, safeZonePoint2)) {
+							System.out.println("In bounds");
 							if (!playerInGraceBounds.get(ply.getName())) {        								
 								playerInGraceBounds.put(ply.getName(), true);
 								team.addPlayer(ply);
@@ -208,13 +209,12 @@ public class KitPvP extends GameBase {
 								if (pdata.getPermission("nyeblock.canBeDamaged")) {        									
 									pdata.setPermission("nyeblock.canBeDamaged", false);
 								}
-								if (ply.getGameMode() != GameMode.ADVENTURE) {
+								if (ply.getGameMode() != GameMode.ADVENTURE && !UserGroup.isStaff(pdata.getUserGroup())) {
 									ply.setGameMode(GameMode.ADVENTURE);
 								}
 							}
 						} else {
-							PlayerData pdata = playerHandling.getPlayerData(ply);
-							
+							System.out.println("Outside bounds");
 							if (playerInGraceBounds.get(ply.getName())) {        								
 								playerInGraceBounds.put(ply.getName(), false);
 								team.removePlayer(ply);
@@ -223,7 +223,7 @@ public class KitPvP extends GameBase {
 								if (!pdata.getPermission("nyeblock.canBeDamaged")) {
 									pdata.setPermission("nyeblock.canBeDamaged", true);
 								}
-								if (ply.getGameMode() != GameMode.SURVIVAL) {
+								if (ply.getGameMode() != GameMode.SURVIVAL && !UserGroup.isStaff(pdata.getUserGroup())) {
 									ply.setGameMode(GameMode.SURVIVAL);
 								}
 							}
@@ -248,7 +248,7 @@ public class KitPvP extends GameBase {
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				}
 				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
+				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}

@@ -26,6 +26,7 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 @SuppressWarnings("deprecation")
 public class SkyWars extends GameBase {
@@ -54,6 +55,8 @@ public class SkyWars extends GameBase {
 	//
 	
 	public SkyWars(Main mainInstance, String worldName, int duration, int maxPlayers) {
+		super(mainInstance,worldName);
+		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
@@ -73,9 +76,9 @@ public class SkyWars extends GameBase {
 		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
 		
 		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", this, null);
+		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
 		//Main functions timer
-		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", this, null);
+		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 	}
 	
 	//
@@ -154,10 +157,12 @@ public class SkyWars extends GameBase {
 		}
 		//Set player gamemodes
 		for(Player ply : players) {
+			PlayerData pd = playerHandling.getPlayerData(ply);
+			
 			if (!active) {
-//				if (ply.getGameMode() != GameMode.SURVIVAL) {
-//					ply.setGameMode(GameMode.SURVIVAL);
-//				}
+				if (ply.getGameMode() != GameMode.SURVIVAL && !UserGroup.isStaff(pd.getUserGroup())) {
+					ply.setGameMode(GameMode.SURVIVAL);
+				}
 			} else {
 				if (gameBegun && ply.getGameMode() == GameMode.SURVIVAL) {
 					boolean isPlaying = false;
@@ -195,7 +200,7 @@ public class SkyWars extends GameBase {
 							active = true;
 							countdownStart = System.currentTimeMillis() / 1000L;
 							
-							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
+							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
 						}
 					}
 					readyCount++;
@@ -233,7 +238,7 @@ public class SkyWars extends GameBase {
 				if (!endStarted) {
 					endStarted = true;
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
-					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
+					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
 			}
 		}
@@ -277,7 +282,7 @@ public class SkyWars extends GameBase {
 				
 				messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
+				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}

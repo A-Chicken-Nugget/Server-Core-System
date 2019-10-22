@@ -47,6 +47,8 @@ public class StepSpleef extends GameBase {
 //	private ArrayList<Entity> test = new ArrayList<>();
 	
 	public StepSpleef(Main mainInstance, String worldName, int duration, int maxPlayers) {
+		super(mainInstance,worldName);
+		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
@@ -61,13 +63,13 @@ public class StepSpleef extends GameBase {
 		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
 		
 		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", this, null);
+		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
 		//Main functions timer
-		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", this, null);
+		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 		//Block deletion timer
-		mainInstance.getTimerInstance().createTimer("blocks_" + worldName, .1, 0, "manageBlocks", this, null);
+		mainInstance.getTimerInstance().createTimer("blocks_" + worldName, .1, 0, "manageBlocks", false, null, this);
 		//Snow ball timer
-		mainInstance.getTimerInstance().createTimer("snowballs_" + worldName, 1, 0, "giveSnowballs", this, null);
+		mainInstance.getTimerInstance().createTimer("snowballs_" + worldName, 1, 0, "giveSnowballs", false, null, this);
 	}
 	
 	/**
@@ -244,7 +246,7 @@ public class StepSpleef extends GameBase {
 								ply.setVelocity(new Vector(0,0,0));
 								ply.teleport(new Location(Bukkit.getWorld(ply.getWorld().getName()),spawn.getX(),spawn.getY(),spawn.getZ()));
 							}
-							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
+							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
 							mainInstance.getTimerInstance().deleteTimer("snowballs_" + worldName);
 							clearSnowballs();
 						}
@@ -285,7 +287,7 @@ public class StepSpleef extends GameBase {
 				if (!endStarted) {
 					endStarted = true;
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
-					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
+					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
 			}
 		}
@@ -327,7 +329,7 @@ public class StepSpleef extends GameBase {
 				
 				messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
+				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}

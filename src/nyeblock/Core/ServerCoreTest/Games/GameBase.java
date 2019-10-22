@@ -39,8 +39,8 @@ public abstract class GameBase {
 	protected Scoreboard board;
 	protected Objective objective;
 	
-	public GameBase() {
-		mainInstance.getTimerInstance().createTimer("worldCheck_" + worldName, 1, 0, "checkWorld", this, null);
+	public GameBase(Main mainInstance, String worldName) {
+		mainInstance.getTimerInstance().createTimer("worldCheck_" + worldName, 1, 0, "checkWorld", true, null, this);
 	}
 	
 	/**
@@ -75,7 +75,7 @@ public abstract class GameBase {
 					}
 				}
 			}
-			if (realm == Realm.KITPVP) {				
+			if (realm == Realm.KITPVP) {	
 				//Set grace points
 				this.safeZonePoint1 = safeZonePoint1;
 				this.safeZonePoint2 = safeZonePoint2;

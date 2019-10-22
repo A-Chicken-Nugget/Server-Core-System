@@ -1,5 +1,7 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
+import java.util.Arrays;
+
 import org.bukkit.ChatColor;
 
 public class Enums {
@@ -28,7 +30,8 @@ public class Enums {
 	//User group enums
 	public enum UserGroup {
 		USER(1,"User","[" + ChatColor.WHITE + "User" + ChatColor.RESET + "]"),
-		ADMIN(2,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]");
+		ADMIN(2,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]"),
+		MODERATOR(3,"Moderator","[" + ChatColor.GRAY + "Mod" + ChatColor.RESET + "}");
 
 		private int value;  
 		private String name;
@@ -49,6 +52,15 @@ public class Enums {
 				}
 			}
 			return userGrp;
+		}
+		public static boolean isStaff(UserGroup userGroup) {
+			boolean isStaff = false;
+			
+			if (Arrays.asList(UserGroup.ADMIN,UserGroup.MODERATOR).contains(userGroup)) {
+				isStaff = true;
+			}
+			
+			return isStaff;
 		}
 		public int getValue() {
 			return value;

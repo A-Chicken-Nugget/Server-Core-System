@@ -2,17 +2,42 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_14_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Objective;
+import org.bukkit.util.Vector;
 
 import net.minecraft.server.v1_14_R1.AxisAlignedBB;
 import net.minecraft.server.v1_14_R1.EntityPlayer;
 
 public class Miscellaneous {
+	//Check if a player is within 2 locations
+	public static boolean playerInArea(Vector loc1, Vector loc2){
+        int x1,x2,y1,y2,z1,z2;
+        x1 = loc1.getX() > loc2.getX() ? (int) loc2.getX() : (int) loc1.getX();
+        y1 = loc1.getY() > loc2.getY() ? (int) loc2.getY() : (int) loc1.getY();
+        z1 = loc1.getZ() > loc2.getZ() ? (int) loc2.getZ() : (int) loc1.getZ();
+       
+        x2 = ((int) loc1.getX()) == x1 ? (int) loc2.getX() : (int) loc1.getX();
+        y2 = ((int) loc1.getY()) == y1 ? (int) loc2.getY() : (int) loc1.getY();
+        z2 = ((int) loc1.getZ()) == z1 ? (int) loc2.getZ() : (int) loc1.getZ();
+               
+        for (int x = x1; x <= x2; x++){
+            for (int y = y1; y <= y2; y++){
+                for (int z = z1; z <= z2; z++){
+                    for (Player p : Bukkit.getOnlinePlayers()){
+                        if (p.getLocation().getBlock().getLocation() == new Location(loc1.getWorld(),x,y,z)) return true;
+                    }
+                }
+            }
+        }
+       
+        return false;
+    }
 	//Used for the player scoreboards. If there is a change on a scoreboard row, update it
 	public static void updateScore(Objective o, int score, String name) {
 		boolean found = false;
