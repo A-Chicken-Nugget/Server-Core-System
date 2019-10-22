@@ -19,17 +19,17 @@ public class GameMapInfo {
 				mapInfo = new ArrayList<HashMap<String,Vector>>() {{
 					//Points
 					add(new HashMap<String,Vector>() {{
-						put("spawn_1", new Vector(0,63,-6));
-						put("spawn_2", new Vector(0,63,6));
-						put("spawn_3", new Vector(5,63,0));
-						put("spawn_4", new Vector(-5,63,0));
+						put("spawn_1", new Vector(-10.481,74,37.447));
+						put("spawn_2", new Vector(-16.472,74,43.521));
+						put("spawn_3", new Vector(-22.511,74,37.532));
+						put("spawn_4", new Vector(-16.504,74,31.515));
 					}});
 					//Grace area
 					add(new HashMap<String,Vector>() {{
-						put("graceBound1", new Vector(11,78,11));
+						put("graceBound1", new Vector(-3,87,23));
 					}});
 					add(new HashMap<String,Vector>() {{
-						put("graceBound2", new Vector(-11,60,-11));
+						put("graceBound2", new Vector(-29,69,50));
 					}});
 				}};
 			//grassland
@@ -44,10 +44,10 @@ public class GameMapInfo {
 					}});
 					//Grace area
 					add(new HashMap<String,Vector>() {{
-						put("graceBound1", new Vector(-95,97,23));
+						put("graceBound1", new Vector(-93,99,24));
 					}});
 					add(new HashMap<String,Vector>() {{
-						put("graceBound2", new Vector(-94,102,46));
+						put("graceBound2", new Vector(-71,84,44));
 					}});
 				}};
 			//nether

@@ -44,8 +44,6 @@ public class StepSpleef extends GameBase {
 	private boolean endStarted = false;
 	private long lastNumber = 0;
 	
-//	private ArrayList<Entity> test = new ArrayList<>();
-	
 	public StepSpleef(Main mainInstance, String worldName, int duration, int maxPlayers) {
 		super(mainInstance,worldName);
 		
@@ -138,7 +136,7 @@ public class StepSpleef extends GameBase {
 		if (gameBegun) {
 			//Add blocks to be deleted
 			for (Player ply : playersInGame) {
-				for (double startSub = .10; startSub < 1.1; startSub += .1) {
+				for (double startSub = .10; startSub < 1.2; startSub += .1) {
 					Location loc = ply.getLocation().subtract(0,.1,0);
 					Vector locs[] = {loc.toVector().add(new Vector(startSub, 0, 0)),loc.toVector().subtract(new Vector(startSub, 0, 0)),loc.toVector().add(new Vector(0, 0, startSub)),loc.toVector().subtract(new Vector(0, 0, startSub))};
 					Location closestLoc = null;
@@ -157,10 +155,10 @@ public class StepSpleef extends GameBase {
 						}
 					}
 					
-					blocksToDelete.put(loc.toVector(), (System.currentTimeMillis() / 1000L));
+					blocksToDelete.put(loc.toVector(), (System.currentTimeMillis()));
 					if (closestLoc != null) {		
 						if (!blocksToDelete.containsKey(closestLoc.toVector())) {						
-							blocksToDelete.put(closestLoc.toVector(), (System.currentTimeMillis() / 1000L));
+							blocksToDelete.put(closestLoc.toVector(), (System.currentTimeMillis()));
 						}
 						break;
 					}
@@ -171,7 +169,7 @@ public class StepSpleef extends GameBase {
 			while(itr.hasNext())
 			{
 				Map.Entry<Vector, Long> entry = itr.next();
-				if ((System.currentTimeMillis() / 1000L) - entry.getValue() >= 1) {
+				if (System.currentTimeMillis() - entry.getValue() >= 500L) {
 					Vector vec = entry.getKey();
 					
 					Bukkit.getWorld(worldName).getBlockAt(new Location(Bukkit.getWorld(worldName),vec.getX(),vec.getY(),vec.getZ())).setType(Material.AIR);

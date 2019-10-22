@@ -217,7 +217,7 @@ public class KitPvP extends GameBase {
 								if (pdata.getPermission("nyeblock.canBeDamaged")) {        									
 									pdata.setPermission("nyeblock.canBeDamaged", false);
 								}
-								if (ply.getGameMode() != GameMode.ADVENTURE && !UserGroup.isStaff(pdata.getUserGroup())) {
+								if (ply.getGameMode() != GameMode.ADVENTURE) {
 									ply.setGameMode(GameMode.ADVENTURE);
 								}
 							}
@@ -230,7 +230,7 @@ public class KitPvP extends GameBase {
 								if (!pdata.getPermission("nyeblock.canBeDamaged")) {
 									pdata.setPermission("nyeblock.canBeDamaged", true);
 								}
-								if (ply.getGameMode() != GameMode.SURVIVAL && !UserGroup.isStaff(pdata.getUserGroup())) {
+								if (ply.getGameMode() != GameMode.SURVIVAL) {
 									ply.setGameMode(GameMode.SURVIVAL);
 								}
 							}
