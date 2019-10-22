@@ -83,6 +83,17 @@ public class GameMapInfo {
 						put("spawn_7", new Vector(-47.506,75,48.541));
 						put("spawn_8", new Vector(-38.550,75,6.414));
 					}});
+					//Chests
+					/*add(new HashMap<String,Vector>() {{
+						put("spawn_1", new Vector(3.522,75,-2.43));
+						put("spawn_2", new Vector(45.456,75,6.565));
+						put("spawn_3", new Vector(54.464,74,48.502));
+						put("spawn_4", new Vector(45.452,75,90.433));
+						put("spawn_5", new Vector(3.434,75,100.480));
+						put("spawn_6", new Vector(-38.528,75,90.442));
+						put("spawn_7", new Vector(-47.506,75,48.541));
+						put("spawn_8", new Vector(-38.550,75,6.414));
+					}});*/
 				}};
 			}
 		}

@@ -3,10 +3,14 @@ package nyeblock.Core.ServerCoreTest;
 import java.util.ArrayList;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_14_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.block.Chest;
 import org.bukkit.scoreboard.Objective;
 
 import net.minecraft.server.v1_14_R1.AxisAlignedBB;
@@ -77,5 +81,31 @@ public class Miscellaneous {
 	        }
 	    }
 	    return blocksBelow;
+	}
+	
+	//TODO:Remove after testing
+	public static Chest MakeChest(Location blockLocation) 
+	{
+		Block block = blockLocation.getBlock();
+		block.setType(Material.CHEST);
+		
+		return (Chest) block;
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static Chest MakeChest(Location blockLocation, ArrayList<ItemStack> items) 
+	{
+		Block block = blockLocation.getBlock();
+		block.setType(Material.CHEST);
+		
+		Chest chest = (Chest) block.getState();
+		Inventory inv = chest.getBlockInventory();
+		
+		for (ItemStack item : items) 
+		{
+			inv.addItem(item);
+		}
+		
+		return chest;
 	}
 }

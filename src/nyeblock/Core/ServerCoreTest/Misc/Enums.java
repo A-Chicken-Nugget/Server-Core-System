@@ -56,26 +56,30 @@ public class Enums {
 	
 	//Chest Value Enums
 	public enum ChestValue {
-		SHIT(1, "Shit"),
-		BAD(2, "Bad"),
-		AVERAGE(3, "Average"),
-		GOOD(4, "Good"),
-		DIAMOND(5, "Diamnond");
+		SHIT(2, "Shit"),
+		BAD(4, "Bad"),
+		AVERAGE(6, "Average"),
+		GOOD(8, "Good"),
+		LEGENDARY(10, "Legendary");
 		
 		private int value;
 		private String name;
 		
-		private ChestValue(int value, String name) {
+		private ChestValue(int value, String name) 
+		{
 			this.value = value;
 			this.name = name;
 		}
 		
-		public int getValue() {
+		public int getValue() 
+		{
 			return value;
 		}
 		
-		public String toString() {
+		public String toString() 
+		{
 			return name;
 		}
 	}
+	
 }

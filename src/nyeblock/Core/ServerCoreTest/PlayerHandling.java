@@ -51,8 +51,12 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
+import nyeblock.Core.ServerCoreTest.Items.Armor;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
+import nyeblock.Core.ServerCoreTest.Items.RandomizedItems;
+import nyeblock.Core.ServerCoreTest.Items.Weapon;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
@@ -147,6 +151,17 @@ public class PlayerHandling implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event)
     {
 		Player ply = event.getPlayer();
+		
+		//TODO:Remove after testing
+		ArrayList<ItemStack> stuff = new ArrayList<ItemStack>()
+		{{
+			add(new Armor(Material.GOLDEN_LEGGINGS));
+			add(new Weapon(Material.WOODEN_SWORD));
+			add(new ItemStack(Material.BEEF));
+		}};
+		
+		Miscellaneous.MakeChest(ply.getLocation(), new RandomizedItems(stuff).GetItemsByTier(ChestValue.BAD, 1));
+		//END OF TEST CODE
 		
 		//Remove default join message
 		event.setJoinMessage("");

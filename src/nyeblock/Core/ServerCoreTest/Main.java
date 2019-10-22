@@ -29,6 +29,7 @@ public class Main extends JavaPlugin {
 		//Set spawn point for hub world
 		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.510, 113, -11.445));
 		Bukkit.getWorld("world").loadChunk(-10, 113);
+		
 		//Handle config file
 		File configFile = new File(this.getDataFolder(), "config.yml");
 		if (configFile.exists()) {
