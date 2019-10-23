@@ -24,7 +24,6 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.GhostFactory;
 
 @SuppressWarnings("deprecation")
 public class StepSpleef extends GameBase {
@@ -45,9 +44,9 @@ public class StepSpleef extends GameBase {
 	private boolean endStarted = false;
 	private long lastNumber = 0;
 	
-//	private ArrayList<Entity> test = new ArrayList<>();
-	
 	public StepSpleef(Main mainInstance, String worldName, int duration, int maxPlayers) {
+		super(mainInstance,worldName);
+		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
@@ -55,14 +54,20 @@ public class StepSpleef extends GameBase {
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		
+		//Scoreboard stuff
+		board = Bukkit.getScoreboardManager().getNewScoreboard();
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
+		
 		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", this, null);
+		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
 		//Main functions timer
-		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", this, null);
+		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 		//Block deletion timer
-		mainInstance.getTimerInstance().createTimer("blocks_" + worldName, .1, 0, "manageBlocks", this, null);
+		mainInstance.getTimerInstance().createTimer("blocks_" + worldName, .1, 0, "manageBlocks", false, null, this);
 		//Snow ball timer
-		mainInstance.getTimerInstance().createTimer("snowballs_" + worldName, 1, 0, "giveSnowballs", this, null);
+		mainInstance.getTimerInstance().createTimer("snowballs_" + worldName, 1, 0, "giveSnowballs", false, null, this);
 	}
 	
 	/**
@@ -131,47 +136,32 @@ public class StepSpleef extends GameBase {
 		if (gameBegun) {
 			//Add blocks to be deleted
 			for (Player ply : playersInGame) {
-//				BoundingBox boundingBox = ply.getBoundingBox();
-//				
-//				Location test = new Location(Bukkit.getWorld(worldName),boundingBox.getMinX(),boundingBox.getMinY(),boundingBox.getMinZ()).subtract(0, 1, 0);
-//				Location test2 = new Location(Bukkit.getWorld(worldName),boundingBox.getMaxX(),boundingBox.getMinY(),boundingBox.getMaxZ()).subtract(0, 1, 0);
-//				
-//				if (test.getBlock().getType() != Material.AIR) {
-//					blocksToDelete.put(test.getBlock(), (System.currentTimeMillis() / 1000L));
-//				}
-//				if (test2.getBlock().getType() != Material.AIR) {
-//					blocksToDelete.put(test2.getBlock(), (System.currentTimeMillis() / 1000L));
-//				}
-				
-//				test.get(0).teleport(new Location(Bukkit.getWorld(worldName),boundingBox.getMinX(),boundingBox.getMinY(),boundingBox.getMinZ()));
-//				test.get(1).teleport(new Location(Bukkit.getWorld(worldName),boundingBox.getMaxX(),boundingBox.getMinY(),boundingBox.getMaxZ()));
-				
-//				for (Block block : Miscellaneous.getBlocksBelow(ply)) {
-//					blocksToDelete.put(block, (System.currentTimeMillis() / 1000L));
-//				}
-				
-				Location loc = ply.getLocation().subtract(0,.5,0);
-				Vector locs[] = {loc.toVector().add(new Vector(1, 0, 0)),loc.toVector().subtract(new Vector(1, 0, 0)),loc.toVector().add(new Vector(0, 0, 1)),loc.toVector().subtract(new Vector(0, 0, 1))};
-				Location closestLoc = null;
-				
-				for (int i = 0; i < 4; i++) {
-					Location lc = locs[i].toLocation(Bukkit.getWorld(worldName));
-//					test.get(i).teleport(lc);
+				for (double startSub = .10; startSub < 1.2; startSub += .1) {
+					Location loc = ply.getLocation().subtract(0,.1,0);
+					Vector locs[] = {loc.toVector().add(new Vector(startSub, 0, 0)),loc.toVector().subtract(new Vector(startSub, 0, 0)),loc.toVector().add(new Vector(0, 0, startSub)),loc.toVector().subtract(new Vector(0, 0, startSub))};
+					Location closestLoc = null;
 					
-					if (closestLoc != null) {
-						if (loc.distance(closestLoc) > loc.distance(lc) && lc.getBlock().getType() != Material.AIR) {
-							closestLoc = lc;
-						}
-					} else {
-						if (lc.getBlock().getType() != Material.AIR) {							
-							closestLoc = lc;
+					for (int i = 0; i < 4; i++) {
+						Location lc = locs[i].toLocation(Bukkit.getWorld(worldName));
+						
+						if (closestLoc != null) {
+							if (loc.distance(closestLoc) > loc.distance(lc) && lc.getBlock().getType() != Material.AIR) {
+								closestLoc = lc;
+							}
+						} else {
+							if (lc.getBlock().getType() != Material.AIR) {							
+								closestLoc = lc;
+							}
 						}
 					}
-				}
-				
-				blocksToDelete.put(loc.toVector(), (System.currentTimeMillis() / 1000L));
-				if (closestLoc != null) {		
-					blocksToDelete.put(closestLoc.toVector(), (System.currentTimeMillis() / 1000L));
+					
+					blocksToDelete.put(loc.toVector(), (System.currentTimeMillis()));
+					if (closestLoc != null) {		
+						if (!blocksToDelete.containsKey(closestLoc.toVector())) {						
+							blocksToDelete.put(closestLoc.toVector(), (System.currentTimeMillis()));
+						}
+						break;
+					}
 				}
 			}
 			//Delete blocks that are over .5 seconds old
@@ -179,14 +169,10 @@ public class StepSpleef extends GameBase {
 			while(itr.hasNext())
 			{
 				Map.Entry<Vector, Long> entry = itr.next();
-				if ((System.currentTimeMillis() / 1000L) - entry.getValue() >= 1) {
+				if (System.currentTimeMillis() - entry.getValue() >= 500L) {
 					Vector vec = entry.getKey();
-					Block block = Bukkit.getWorld(worldName).getBlockAt(new Location(Bukkit.getWorld(worldName),vec.getX(),vec.getY(),vec.getZ()));
-//					Block block = entry.getKey();
 					
-					if (block.getType() != Material.AIR) {
-						block.setType(Material.AIR);
-					}
+					Bukkit.getWorld(worldName).getBlockAt(new Location(Bukkit.getWorld(worldName),vec.getX(),vec.getY(),vec.getZ())).setType(Material.AIR);
 					itr.remove();
 				}
 			}
@@ -244,7 +230,7 @@ public class StepSpleef extends GameBase {
 				emptyCount = 0;
 			}
 			if (!active) {				
-				if (players.size() > 1) {
+				if (players.size() > 0) {
 					if (readyCount == 0) {
 						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
@@ -258,7 +244,7 @@ public class StepSpleef extends GameBase {
 								ply.setVelocity(new Vector(0,0,0));
 								ply.teleport(new Location(Bukkit.getWorld(ply.getWorld().getName()),spawn.getX(),spawn.getY(),spawn.getZ()));
 							}
-							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", this, null);
+							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
 							mainInstance.getTimerInstance().deleteTimer("snowballs_" + worldName);
 							clearSnowballs();
 						}
@@ -294,12 +280,12 @@ public class StepSpleef extends GameBase {
     */
 	public void setScoreboard() {
 		//Check if player has won
-		if (playersInGame.size() == 1) {
+		if (playersInGame.size() == 2) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 					endStarted = true;
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
-					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
+					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
 			}
 		}
@@ -341,7 +327,7 @@ public class StepSpleef extends GameBase {
 				
 				messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
+				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}
@@ -381,36 +367,38 @@ public class StepSpleef extends GameBase {
     */
 	@SuppressWarnings("serial")
 	public void playerDeath(Player killed) {
-		boolean isSpectating = playersSpectating.contains(killed);
-		
-		//Remove player from the current game
-		playersInGame.removeAll(new ArrayList<Player>() {{
-			add(killed);
-		}});
-		
-		//Setup player to spectate
-		if (!isSpectating) {	
-			playersSpectating.add(killed);
-			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
+		if (gameBegun) {			
+			boolean isSpectating = playersSpectating.contains(killed);
 			
-			//Unhide spectators
-			for (Player ply : playersSpectating) {
-				killed.showPlayer(ply);
+			//Remove player from the current game
+			playersInGame.removeAll(new ArrayList<Player>() {{
+				add(killed);
+			}});
+			
+			//Setup player to spectate
+			if (!isSpectating) {	
+				playersSpectating.add(killed);
+				killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
+				
+				//Unhide spectators
+				for (Player ply : playersSpectating) {
+					killed.showPlayer(ply);
+				}
+				
+				//Hide player from players in the active game
+				for (Player ply : playersInGame) {
+					ply.hidePlayer(killed);
+				}
 			}
 			
-			//Hide player from players in the active game
-			for (Player ply : playersInGame) {
-				ply.hidePlayer(killed);
+			if (!isSpectating) {			
+				messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
 			}
 		}
 		
 		//Find a random spawn
 		Vector randSpawn = getRandomSpawnPoint();
 		killed.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
-		
-		if (!isSpectating) {			
-			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has fallen into the void!");
-		}
 	}
 	/**
     * Handle when a player joins the game
@@ -419,10 +407,17 @@ public class StepSpleef extends GameBase {
 		if (!active) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
 		}
+		
+		//Set players scoreboard
+		playerHandling.getPlayerData(ply).setScoreboard(board,objective);
+		
 		//Add player to players array
 		players.add(ply);
+		
+		//Teleport player to random spawn
 		Vector randSpawn = getRandomSpawnPoint();
 		ply.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
+		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
 		
 //		test.add(Bukkit.getWorld(worldName).spawnEntity(Bukkit.getWorld(worldName).getSpawnLocation(), EntityType.CHICKEN));

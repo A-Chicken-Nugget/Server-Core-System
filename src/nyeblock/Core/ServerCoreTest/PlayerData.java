@@ -48,9 +48,7 @@ public class PlayerData {
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
-	private Team team;
 	
-	@SuppressWarnings("deprecation")
 	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
 		this.mainInstance = mainInstance;
 		this.player = ply;
@@ -60,13 +58,6 @@ public class PlayerData {
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
-		ScoreboardManager sbm = Bukkit.getScoreboardManager();
-		board = sbm.getNewScoreboard();
-		team = board.registerNewTeam("user");
-		objective = board.registerNewObjective("scoreboard", "");
-		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
-		ply.setScoreboard(board);
 		setPermissions();
 		setItems();
 	}
@@ -82,8 +73,6 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
-//			permissions.setPermission("nyeblock.showRunningParticles", true);
-//			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
 		} else if (realm == Realm.KITPVP) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -91,7 +80,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canBeDamaged", true);
 			permissions.setPermission("nyeblock.canTakeFallDamage", true);
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-			permissions.setPermission("nyeblock.dropItems", false);
+			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 		} else if (realm == Realm.STEPSPLEEF) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
@@ -176,6 +165,9 @@ public class PlayerData {
 			for (SkyWars game : gh.getSkyWarsGames()) {
 				if (game.isInServer(player)) {
 					if (game.isGameActive()) {
+						//Select player
+						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.SKYWARS,player);
+						player.getInventory().setItem(4, selectPlayer.give());
 					} else {
 						//Select kit
 						KitSelector selectKit = new KitSelector(Realm.SKYWARS);
@@ -189,10 +181,6 @@ public class PlayerData {
 			player.getInventory().setItem(8, returnToHub.give());
 		}
 	}
-//	//Set scoreboard team
-//	public void setScoreboardTeam(String team) {
-//		for
-//	}
 	//Set a players realm
 	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems) {
 		this.realm = realm;
@@ -215,6 +203,23 @@ public class PlayerData {
 	//Set custom data to the custom data array
 	public void setCustomDataKey(String key, String value) {
 		customData.put(key, value);
+	}
+	//Set the players scoreboard
+	public void setScoreboard(Scoreboard scoreboard, Objective objective) {
+		board = scoreboard;
+		this.objective = objective;
+		player.setScoreboard(board);
+		player.setHealth(player.getHealth() - 0.0001);
+	}
+	//Set the title of the players scoreboard
+	public void setObjectiveName(String name) {
+		objective.setDisplayName(name);
+	}
+	//Update the players scoreboard text
+	public void updateObjectiveScores(HashMap<Integer,String> scores) {
+		for (Map.Entry<Integer, String> entry : scores.entrySet()) {
+			Miscellaneous.updateScore(objective, entry.getKey(), entry.getValue());
+		}
 	}
 	//Get custom data from the custom data array
 	public String getCustomDataKey(String name) {
@@ -250,25 +255,8 @@ public class PlayerData {
 		}
 		return value;
 	}
-	//Get the title of the players scoreboard
-	public String getObjectiveName() {
-		return objective.getName();
-	}
-	//Get the players current scoreboard objective
-	public Objective getObjective() {
-		return objective;
-	}
-	//Set the title of the players scoreboard
-	public void setObjectiveName(String name) {
-		for (String s : board.getEntries()) {			
-			board.resetScores(s);
-		}
-		objective.setDisplayName(name);
-	}
-	//Update the players scoreboard text
-	public void updateObjectiveScores(HashMap<Integer,String> scores) {
-		for (Map.Entry<Integer, String> entry : scores.entrySet()) {
-			Miscellaneous.updateScore(objective, entry.getKey(), entry.getValue());
-		}
+	//Get the players scoreboard
+	public Scoreboard getScoreboard() {
+		return board;
 	}
 }

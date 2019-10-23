@@ -6,6 +6,8 @@ import java.io.File;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,6 +17,7 @@ import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 
 public class Main extends JavaPlugin {
 	private PlayerHandling playerHandling;
+	private CommandHandling commandHandling;
 	private GameHandling gameHandling;
 	private MultiverseCore multiverse;
 	private DatabaseHandling databaseHandling;
@@ -23,9 +26,11 @@ public class Main extends JavaPlugin {
 	//When this plugin is enabled, initialize important classes
 	public void onEnable() {
 		playerHandling = new PlayerHandling(this);
+		commandHandling = new CommandHandling(this);
 		gameHandling = new GameHandling(this);
 		multiverse = (MultiverseCore) getServer().getPluginManager().getPlugin("Multiverse-Core");
 		timerHandling = new TimerHandling();
+		
 		//Set spawn point for hub world
 		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.510, 113, -11.445));
 		Bukkit.getWorld("world").loadChunk(-10, 113);
@@ -48,8 +53,13 @@ public class Main extends JavaPlugin {
 			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
 		}
 		
+		multiverse.getMVConfig().setPrefixChat(false);
+		
 		getServer().getPluginManager().registerEvents(playerHandling, this);
 		getServer().getPluginManager().registerEvents(gameHandling, this);
+		
+		this.getCommand("setpermission").setExecutor((CommandExecutor)commandHandling);
+		this.getCommand("setpermission").setTabCompleter((TabCompleter)commandHandling);
 	}
 	public void onDisable() {
 		MultiverseCore mv = multiverse;
@@ -66,6 +76,9 @@ public class Main extends JavaPlugin {
 	}
 	public PlayerHandling getPlayerHandlingInstance() {
 		return playerHandling;
+	}
+	public CommandHandling getCommandHandling() {
+		return commandHandling;
 	}
 	public MultiverseCore getMultiverseInstance() {
 		return multiverse;

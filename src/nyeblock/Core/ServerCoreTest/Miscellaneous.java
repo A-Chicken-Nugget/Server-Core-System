@@ -2,6 +2,8 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
 
+import org.apache.commons.lang.math.IntRange;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -12,11 +14,18 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.Chest;
 import org.bukkit.scoreboard.Objective;
+import org.bukkit.util.Vector;
 
 import net.minecraft.server.v1_14_R1.AxisAlignedBB;
 import net.minecraft.server.v1_14_R1.EntityPlayer;
 
 public class Miscellaneous {
+	//Check if a player is within 2 location vectors
+	public static boolean playerInArea(Vector loc, Vector l1, Vector l2){
+        return new IntRange(l1.getX(), l2.getX()).containsDouble(loc.getX())
+                && new IntRange(l1.getY(), l2.getY()).containsDouble(loc.getY())
+                &&  new IntRange(l1.getZ(), l2.getZ()).containsDouble(loc.getZ());
+    }
 	//Used for the player scoreboards. If there is a change on a scoreboard row, update it
 	public static void updateScore(Objective o, int score, String name) {
 		boolean found = false;
