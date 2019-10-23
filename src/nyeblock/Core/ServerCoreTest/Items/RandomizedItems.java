@@ -130,18 +130,23 @@ public class RandomizedItems
 		switch (chestValue) 
 		{
 			case SHIT:
+				Bukkit.broadcastMessage("shit chest");
 				itemsByValue = ShitItems;
 				break;
 			case BAD:
+				Bukkit.broadcastMessage("bad chest");
 				itemsByValue = BadItems;
 				break;
 			case AVERAGE:
+				Bukkit.broadcastMessage("average chest");
 				itemsByValue = AverageItems;
 				break;
 			case GOOD:
+				Bukkit.broadcastMessage("good chest");
 				itemsByValue = GoodItems;
 				break;
 			case LEGENDARY:
+				Bukkit.broadcastMessage("legendary chest");
 				itemsByValue = LegendaryItems;
 				break;
 			default:
