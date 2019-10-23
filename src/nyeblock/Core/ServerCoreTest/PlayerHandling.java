@@ -1,6 +1,5 @@
 package nyeblock.Core.ServerCoreTest;
 
-import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +35,6 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
@@ -55,16 +53,9 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
-import nyeblock.Core.ServerCoreTest.Items.Armor;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
-<<<<<<< HEAD
-import nyeblock.Core.ServerCoreTest.Items.RandomizedItems;
-import nyeblock.Core.ServerCoreTest.Items.Weapon;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
-=======
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
->>>>>>> refs/remotes/origin/tony
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
@@ -217,35 +208,6 @@ public class PlayerHandling implements Listener {
 			}
 		}
 	}
-<<<<<<< HEAD
-	//Handle when the player joins the server
-	@EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event)
-    {
-		Player ply = event.getPlayer();
-		
-		//TODO:Remove after testing
-		ArrayList<ItemStack> stuff = new ArrayList<ItemStack>()
-		{{
-			add(new Armor(Material.GOLDEN_LEGGINGS));
-			add(new Weapon(Material.WOODEN_SWORD));
-			add(new ItemStack(Material.BEEF));
-		}};
-		
-		Miscellaneous.MakeChest(ply.getLocation(), new RandomizedItems(stuff).GetItemsByTier(ChestValue.BAD, 1));
-		//END OF TEST CODE
-		
-		//Remove default join message
-		event.setJoinMessage("");
-		
-		//Setup player data. If they don't have a profile in the database, create one.
-		PlayerData playerData = null;
-		ArrayList<HashMap<String,String>> query = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 6, false);
-		if (query.size() > 0) {
-			HashMap<String,String> queryData = query.get(0);
-=======
->>>>>>> refs/remotes/origin/tony
-
 	// Handle when the player joins the server
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
