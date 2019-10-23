@@ -37,10 +37,12 @@ public class SchematicHandling {
 		
 		//Pick a random schematic for the world
 		for(File file : schems) {
-			String[] gamemode = file.getName().split(Pattern.quote("_"));
-			
-			if (Integer.parseInt(gamemode[0]) == realm.getValue()) {
-				validSchems.add(file);
+			if (!file.isDirectory()) {				
+				String[] gamemode = file.getName().split(Pattern.quote("_"));
+				
+				if (Integer.parseInt(gamemode[0]) == realm.getValue()) {
+					validSchems.add(file);
+				}
 			}
 		}
 		schem = validSchems.get(new Random().nextInt(validSchems.size()));

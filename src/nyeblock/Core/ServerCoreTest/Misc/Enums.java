@@ -1,5 +1,9 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
+import java.util.Arrays;
+
+import org.bukkit.ChatColor;
+
 public class Enums {
 	//Realm enums
 	public enum Realm {
@@ -25,15 +29,18 @@ public class Enums {
 	} 
 	//User group enums
 	public enum UserGroup {
-		USER(1,"User"),
-		ADMIN(2,"Admin");
+		USER(1,"User","[" + ChatColor.WHITE + "User" + ChatColor.RESET + "]"),
+		ADMIN(2,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]"),
+		MODERATOR(3,"Moderator","[" + ChatColor.GRAY + "Mod" + ChatColor.RESET + "}");
 
 		private int value;  
 		private String name;
+		private String tag;
 
-		private UserGroup(int value, String name) {
+		private UserGroup(int value, String name, String tag) {
 			this.value = value;
 			this.name = name;
+			this.tag = tag;
 		}
 
 		public static UserGroup fromInt(int userGroup) {
@@ -46,11 +53,23 @@ public class Enums {
 			}
 			return userGrp;
 		}
+		public static boolean isStaff(UserGroup userGroup) {
+			boolean isStaff = false;
+			
+			if (Arrays.asList(UserGroup.ADMIN,UserGroup.MODERATOR).contains(userGroup)) {
+				isStaff = true;
+			}
+			
+			return isStaff;
+		}
 		public int getValue() {
 			return value;
 		}
 		public String toString() {
 			return name;
+		}
+		public String getTag() {
+			return tag;
 		}
 	}
 	

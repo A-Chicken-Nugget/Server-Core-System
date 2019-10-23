@@ -101,13 +101,17 @@ public class GameHandling implements Listener {
 		if (!pd.isQueuingGame()) {
 			if (realm == Realm.HUB) {
 				ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
+				
+				if (ply.getOpenInventory() != null) {					
+					ply.closeInventory();
+				}
 			} else if (realm == Realm.KITPVP) {
 				pd.setQueuingStatus(true);
 				KitPvP gameToJoin = null;
 				
 				//Loop through active games to find one for the player
 				for(KitPvP currentGame : kitPvpGames) {
-					if (!currentGame.isGameOver()) {					
+					if (currentGame.getJoinStatus()) {					
 						if (gameToJoin != null) {
 							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
 								gameToJoin = currentGame;
@@ -127,10 +131,10 @@ public class GameHandling implements Listener {
 					//Create void world
 					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
 					
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
 				}
 			} else if (realm == Realm.STEPSPLEEF) {
 				pd.setQueuingStatus(true);
@@ -138,7 +142,7 @@ public class GameHandling implements Listener {
 				
 				//Loop through active games to find one for the player
 				for(StepSpleef currentGame : stepSpleefGames) {
-					if (!currentGame.isGameOver()) {	
+					if (currentGame.getJoinStatus()) {	
 						if (gameToJoin != null) {
 							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
 								gameToJoin = currentGame;
@@ -158,10 +162,10 @@ public class GameHandling implements Listener {
 					//Create void world
 					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
 					
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
 				}
 			} else if (realm == Realm.SKYWARS) {
 				pd.setQueuingStatus(true);
@@ -169,7 +173,7 @@ public class GameHandling implements Listener {
 				
 				//Loop through active games to find one for the player
 				for(SkyWars currentGame : skyWarsGames) {
-					if (!currentGame.isGameActive()) {					
+					if (currentGame.getJoinStatus()) {					
 						if (gameToJoin != null) {
 							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
 								gameToJoin = currentGame;
@@ -189,10 +193,10 @@ public class GameHandling implements Listener {
 					//Create void world
 					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
 					
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,realm,true});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),realm,false});
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
 				}
 			}
 		} else {
@@ -200,123 +204,47 @@ public class GameHandling implements Listener {
 		}
 	} 
 	public void checkWorld(Player ply, String worldName, Realm realm, Boolean setData) {
-		if (Bukkit.getWorld(worldName) != null) {
-			if (realm == Realm.KITPVP) {
-				for(KitPvP game : kitPvpGames) {
-					if (game.getWorldName().equalsIgnoreCase(worldName)) {
-						if (setData) {
-							//Set map schematic
-							SchematicHandling sh = new SchematicHandling();
-							String schem = sh.setSchematic(realm, worldName);
-							//Get map points
-							GameMapInfo gmi = new GameMapInfo();
-							ArrayList<HashMap<String,Vector>> points = gmi.getMapInfo(realm, schem);
-							ArrayList<Vector> spawnPoints = new ArrayList<Vector>();
-							Vector safeZonePoint1 = null;
-							Vector safeZonePoint2 = null;
-							
-							//Go through map points           				
-							for(int i = 0; i < points.size(); i++) {
-								HashMap<String,Vector> point = points.get(i);
-								
-								for(Map.Entry<String, Vector> entry : point.entrySet()) {
-									if (entry.getKey().contains("spawn")) {										
-										spawnPoints.add(entry.getValue());
-									} else if (entry.getKey().equalsIgnoreCase("graceBound1")) {
-										safeZonePoint1 = entry.getValue();
-									} else if (entry.getKey().equalsIgnoreCase("graceBound2")) {
-										safeZonePoint2 = entry.getValue();
-									}
-								}
-							}
-							//Set grace points
-							game.setSafeZoneBounds(safeZonePoint1, safeZonePoint2);
-							//Set spawn points
-							game.setSpawnPoints(spawnPoints);
-							//Set map name
-							game.setMap(schem);
-						}
-						//Join game
-						game.playerJoin(ply);
-						//Set player data
-						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-						PlayerData playerData = ph.getPlayerData(ply);
-						playerData.setRealm(realm,true,true);
-						playerData.setQueuingStatus(false);
-					}
-				}
-			} else if (realm == Realm.STEPSPLEEF) {
-				for(StepSpleef game : stepSpleefGames) {
-					if (game.getWorldName().equalsIgnoreCase(worldName)) {
-						if (setData) {
-							//Set map schematic
-							SchematicHandling sh = new SchematicHandling();
-							String schem = sh.setSchematic(realm, worldName);
-							//Get map points
-							GameMapInfo gmi = new GameMapInfo();
-							ArrayList<HashMap<String,Vector>> points = gmi.getMapInfo(realm, schem);
-							ArrayList<Vector> spawnPoints = new ArrayList<Vector>();
-							
-							//Go through map points
-							if (points != null) {	            				
-								for(int i = 0; i < points.size(); i++) {
-									HashMap<String,Vector> point = points.get(i);
-									
-									for(Map.Entry<String, Vector> entry : point.entrySet()) {
-										spawnPoints.add(entry.getValue());
-									}
-								}
-							}
-							//Set spawn points
-							game.setSpawnPoints(spawnPoints);
-							//Set map name
-							game.setMap(schem);
-						}
-						//Join game
-						game.playerJoin(ply);
-						//Set player data
-						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-						PlayerData playerData = ph.getPlayerData(ply);
-						playerData.setRealm(realm,true,true);
-						playerData.setQueuingStatus(false);
-					}
-				}
-			} else if (realm == Realm.SKYWARS) {
-				for(SkyWars game : skyWarsGames) {
-					if (game.getWorldName().equalsIgnoreCase(worldName)) {
-						if (setData) {
-							//Set map schematic
-							SchematicHandling sh = new SchematicHandling();
-							String schem = sh.setSchematic(realm, worldName);
-							//Get map points
-							GameMapInfo gmi = new GameMapInfo();
-							ArrayList<HashMap<String,Vector>> points = gmi.getMapInfo(realm, schem);
-							ArrayList<Vector> spawnPoints = new ArrayList<Vector>();
-							
-							//Go through map points           				
-							for(int i = 0; i < points.size(); i++) {
-								HashMap<String,Vector> point = points.get(i);
-								
-								for(Map.Entry<String, Vector> entry : point.entrySet()) {							
-									spawnPoints.add(entry.getValue());
-								}
-							}
-							//Set spawn points
-							game.setSpawnPoints(spawnPoints);
-							//Set map name
-							game.setMap(schem);
-						}
-						//Join game
-						game.playerJoin(ply);
-						//Set player data
-						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-						PlayerData playerData = ph.getPlayerData(ply);
-						playerData.setRealm(realm,true,true);
-						playerData.setQueuingStatus(false);
-					}
+		PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+		
+		if (realm == Realm.KITPVP) {
+			for (KitPvP game : kitPvpGames) {
+				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
+					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+					
+					//Join game
+					game.playerJoin(ply);
+					//Set player data
+					playerData.setRealm(realm,true,true);
+					playerData.setQueuingStatus(false);
 				}
 			}
-			mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+		} else if (realm == Realm.STEPSPLEEF) {
+			for (StepSpleef game : stepSpleefGames) {
+				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
+					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+					
+					//Join game
+					game.playerJoin(ply);
+					//Set player data
+					playerData.setRealm(realm,true,true);
+					playerData.setQueuingStatus(false);
+				}
+			}
+		} else if (realm == Realm.SKYWARS) {
+			for (SkyWars game : skyWarsGames) {
+				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
+					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+					
+					//Join game
+					game.playerJoin(ply);
+					//Set player data
+					playerData.setRealm(realm,true,true);
+					playerData.setQueuingStatus(false);
+				}
+			}
 		}
 	}
 }
