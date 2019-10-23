@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -20,6 +19,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import com.connorlinfoot.actionbarapi.ActionBarAPI;
@@ -28,57 +29,75 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.SchematicHandling;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-public class KitPvP {
-	//Instances needed to run the game
-	private Main mainInstance;
-	private PlayerHandling playerHandling;
+@SuppressWarnings("deprecation")
+public class KitPvP extends GameBase {
 	//Game info
-	private String type;
-	private String worldName;
 	private int duration;
 	private long startTime;
-	private String map;
-	private int maxPlayers;
 	//Player data
-	private ArrayList<Player> players = new ArrayList<>();
 	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private HashMap<String,String> playerKits = new HashMap<>();
 	private HashMap<String,Boolean> playerInGraceBounds = new HashMap<>();
-	//Game points
-	private Vector safeZonePoint1;
-	private Vector safeZonePoint2;
-	private ArrayList<Vector> spawns = new ArrayList<>();
 	//Etc
-	private int emptyCount = 0;
 	private boolean endStarted = false;
 	private ArrayList<String> top5 = new ArrayList<>();
+	//Scoreboard
+	private Objective healthTag;
+	private Team team;
 	
 	//
 	// CONSTRUCTOR
 	//
 	
-	public KitPvP(Main mainInstance, String type, String worldName, int duration, int maxPlayers) {
+	public KitPvP(Main mainInstance, String worldName, int duration, int maxPlayers) {
+		super(mainInstance,worldName);
+		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
-		this.type = type;
 		this.worldName = worldName;
+		realm = Realm.KITPVP;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		startTime = System.currentTimeMillis() / 1000L;
 		
+		//Scoreboard stuff
+		board = Bukkit.getScoreboardManager().getNewScoreboard();
+		team = board.registerNewTeam("default");
+		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
+		
+		//Healthtag stuff 
+		healthTag = board.registerNewObjective("healthtag", "health");
+		healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
+		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
+		
 		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", this, null);
+		mainInstance.getTimerInstance().createTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", false, null, this);
 		
 		//Delete timer
-		mainInstance.getTimerInstance().createTimer("delete_" + worldName, 1, 0, "checkForDeletion", this, null);
+		mainInstance.getTimerInstance().createTimer("delete_" + worldName, 1, 0, "checkForDeletion", false, null, this);
 	}
 	
 	//
 	// CLASS METHODS
 	//
 	
+	/**
+    * Kick everyone in the game
+    */
+	public void kickEveryone() {
+		ArrayList<Player> tempPlayers = new ArrayList<>(players);
+		
+		for (Player ply : tempPlayers) {
+			playerLeave(ply,false,true);
+		}
+	}
 	/**
     * Checks if the server is empty, if it is for 10 seconds then delete timers and world
     */
@@ -97,14 +116,14 @@ public class KitPvP {
 				//Delete world from server
 				mainInstance.getMultiverseInstance().deleteWorld(worldName);
 				//Remove game from games array
-				mainInstance.getGameInstance().removeGame(type,worldName);
+				mainInstance.getGameInstance().removeGame(realm,worldName);
 			}
 		}
 	}
 	/**
     * Sets the kitpvp scoreboard
     */
-	public void setScoreboard() {
+	public void setScoreboard() {		
 		//Get top 5 players with the most kills
 		HashMap<String,Integer> tempPlayerKills = new HashMap<String,Integer>(playerKills);
 		
@@ -130,7 +149,7 @@ public class KitPvP {
 		}					
 		//Update players scoreboard
 		for(Player ply : players)
-		{       				
+		{    
 			int pos = 1;
 			int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
 			PlayerData pd = playerHandling.getPlayerData(ply);
@@ -182,19 +201,14 @@ public class KitPvP {
 				for(Player ply : players) {
 					Location loc = ply.getLocation();
 					
-					//Check if player is in the grace bounds
 					if(ply.getLocation() != null) {
-						if (loc.getBlockX() >= safeZonePoint1.getBlockX() 
-								&& loc.getBlockX() <= safeZonePoint2.getBlockX()
-								&& loc.getBlockY() >= safeZonePoint1.getBlockY() 
-								&& loc.getBlockY() <= safeZonePoint2.getBlockY()
-								&& loc.getBlockZ() >= safeZonePoint1.getBlockZ() 
-								&& loc.getBlockZ() <= safeZonePoint2.getBlockZ()) {
-							PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-							PlayerData pdata = ph.getPlayerData(ply);
-							
+						PlayerData pdata = playerHandling.getPlayerData(ply);
+						
+						//Check if player is in the grace bounds
+						if (Miscellaneous.playerInArea(loc.toVector(), safeZonePoint1, safeZonePoint2)) {
 							if (!playerInGraceBounds.get(ply.getName())) {        								
 								playerInGraceBounds.put(ply.getName(), true);
+								team.addPlayer(ply);
 							}
 							if (pdata != null) {     
 								if (!pdata.getPermission("nyeblock.tempNoDamageOnFall")) {
@@ -208,11 +222,9 @@ public class KitPvP {
 								}
 							}
 						} else {
-							PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-							PlayerData pdata = ph.getPlayerData(ply);
-							
 							if (playerInGraceBounds.get(ply.getName())) {        								
 								playerInGraceBounds.put(ply.getName(), false);
+								team.removePlayer(ply);
 							}
 							if (pdata != null) {
 								if (!pdata.getPermission("nyeblock.canBeDamaged")) {
@@ -229,7 +241,7 @@ public class KitPvP {
 		}
 		//Check when the game has ended and determine winner
 		if ((duration-((System.currentTimeMillis() / 1000L)-startTime)) < 0) {
-			if (!endStarted) {
+			if (!endStarted && players.size() > 0) {
 				endStarted = true;
 				int top = Collections.max(playerKills.values());
 				
@@ -243,42 +255,9 @@ public class KitPvP {
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				}
 				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", this, null);
+				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
-	}
-	/**
-    * Kicks everyone from the game
-    */
-	public void kickEveryone() {
-		ArrayList<Player> tempPlayers = new ArrayList<>(players);
-		
-		for (Player ply : tempPlayers) {			
-			playerLeave(ply,false,true);
-		}
-	}
-	/**
-    * Sends a message in chat to all players in the game
-    * @param message - the message to send.
-    */
-	public void messageToAll(String message) {
-		for(Player ply : players) {
-			ply.sendMessage(message);
-		}
-	}
-	/**
-    * Checks to see if the provided player is in the game
-    * @param player - the player to check for.
-    */
-	public boolean isInServer(Player ply) {
-		boolean found = false;
-		
-		for(Player player : players) {
-			if (ply.getName().equalsIgnoreCase(player.getName())) {
-				found = true;
-			}
-		}
-		return found;
 	}
 	/**
     * Checks to see if the provided player is in the grace zone
@@ -301,40 +280,9 @@ public class KitPvP {
 		return playerKits.get(ply.getName());
 	}
 	/**
-    * Get the current amount of players in the game
-    */
-	public int getPlayerCount() {
-		return players.size();
-	}
-	/**
-    * Get the max amount of players the game can have
-    */
-	public int getMaxPlayers() {
-		return maxPlayers;
-	}
-	/**
-    * Get the world name
-    */
-	public String getWorldName() {
-		return worldName;
-	}
-	/**
-    * Get a random spawn point for the game
-    */
-	public Vector getRandomSpawnPoint() {
-		Vector vector = Bukkit.getWorld(worldName).getSpawnLocation().getDirection();
-		
-		if (spawns.size() > 0) {
-			Random r = new Random();
-			vector = spawns.get(r.nextInt(spawns.size()));
-		}
-		return vector;
-	}
-	/**
     * Set a specific players kit
     * @param player - the player to set the kit for.
     */
-	@SuppressWarnings("deprecation")
 	public void setPlayerKit(Player ply, String kit) {
 		ply.getInventory().clear(0);
 		ply.getInventory().clear(1);
@@ -443,35 +391,6 @@ public class KitPvP {
 		playerKits.put(ply.getName(), kit);
 	}
 	/**
-    * Set the map for the game
-    * @param map - the map to set.
-    */
-	public void setMap(String map) {
-		this.map = map;
-	}
-	/**
-    * Set the spawn points for the game
-    * @param spawns - an array list of spawn vectors.
-    */
-	public void setSpawnPoints(ArrayList<Vector> spawns) {
-		this.spawns = spawns;
-	}
-	/**
-    * Set the grace zone bounds
-    * @param bound 1 - a vector for bound 1.
-    * @param bound 2 - a vector for bound 2.
-    */
-	public void setSafeZoneBounds(Vector p1, Vector p2) {
-		int x1 = Math.min(p1.getBlockX(), p2.getBlockX());
-		int y1 = Math.min(p1.getBlockY(), p2.getBlockY());
-		int z1 = Math.min(p1.getBlockZ(), p2.getBlockZ());
-		int x2 = Math.max(p1.getBlockX(), p2.getBlockX());
-		int y2 = Math.max(p1.getBlockY(), p2.getBlockY());
-		int z2 = Math.max(p1.getBlockZ(), p2.getBlockZ());
-		this.safeZonePoint1 = new Vector( x1, y1, z1);
-		this.safeZonePoint2 = new Vector( x2, y2, z2);
-	}
-	/**
     * Handles when a player dies in the game
     * @param killed - the player killed.
     * @param killer - the player who killed.
@@ -490,18 +409,28 @@ public class KitPvP {
     * Handles when a player joins the game
     * @param player - the player who joined the game.
     */
-	@SuppressWarnings("deprecation")
 	public void playerJoin(Player ply) {
+		//Set players scoreboard
+		playerHandling.getPlayerData(ply).setScoreboard(board,objective);
+		
+		//Add player to team
+		team.addPlayer(ply);
+		
 		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
-		//Add player to players array
+		
+		//Add player to arrays
 		players.add(ply);
-		//Set the players kills to 0
 		playerKills.put(ply.getName(), 0);
 		playerKits.put(ply.getName(),"knight");
 		playerInGraceBounds.put(ply.getName(), true);
+		
+		//Teleport to random spawn
 		Vector randSpawn = getRandomSpawnPoint();
 		ply.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
+		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to KitPvP",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
+		
+		ply.setHealth(ply.getHealth());
 	}
 	/**
     * Handles when a player leaves the game
@@ -509,12 +438,12 @@ public class KitPvP {
     * @param bool - should a leave message be shown?
     * @param bool - should the player be moved to the hub?
     */
+	@SuppressWarnings("serial")
 	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
 		//Remove player from players list
-		ArrayList<Player> playersToRemove = new ArrayList<Player>() {{
+		players.removeAll(new ArrayList<Player>() {{
 			add(ply);
-		}};
-		players.removeAll(playersToRemove);
+		}});
 		
 		//Remove player from hashmaps
 		playerKills.remove(ply.getName());
@@ -530,6 +459,11 @@ public class KitPvP {
 		}
 		top5.removeAll(plyToRemove);
 		
+		//Remove player from team
+		if (team.hasPlayer(ply)) {			
+			team.removePlayer(ply);
+		}
+		
 		if (showLeaveMessage) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
 		}
@@ -537,9 +471,9 @@ public class KitPvP {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm("hub",true,true);
+			playerData.setRealm(Realm.HUB,true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, "hub");
+			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
 		}
 	}
 }

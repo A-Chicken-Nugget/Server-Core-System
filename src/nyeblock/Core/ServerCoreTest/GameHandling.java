@@ -2,43 +2,31 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Games.GameMapInfo;
 import nyeblock.Core.ServerCoreTest.Games.KitPvP;
+import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class GameHandling implements Listener {
 	private Main mainInstance;
-	private ArrayList<KitPvP> kitPvpGames = new ArrayList<KitPvP>();
-	private ArrayList<StepSpleef> stepSpleefGames = new ArrayList<StepSpleef>();
+	private ArrayList<KitPvP> kitPvpGames = new ArrayList<>();
+	private ArrayList<StepSpleef> stepSpleefGames = new ArrayList<>();
+	private ArrayList<SkyWars> skyWarsGames = new ArrayList<>();
 	
 	public GameHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
 	}
 	
-	//Determine a random spawn for the player
-	public Vector getRandomSpawn(Player ply,String realm) {
-		Vector loc = null;
-		
-		if (realm.equalsIgnoreCase("kitPvP")) {			
-			for (KitPvP game : kitPvpGames) {
-				if (game.isInServer(ply)) {
-					loc = game.getRandomSpawnPoint();
-				}
-			}
-		}
-		return loc;
-	}
 	//Return all of the active kitpvp games
 	public ArrayList<KitPvP> getKitPvpGames() {
 		return kitPvpGames;
@@ -47,11 +35,14 @@ public class GameHandling implements Listener {
 	public ArrayList<StepSpleef> getStepSpleefGames() {
 		return stepSpleefGames;
 	}
+	//Return all of the active sky wars games
+	public ArrayList<SkyWars> getSkyWarsGames() {
+		return skyWarsGames;
+	}
 	
 	//Remove game from list
-	public void removeGame(String realm,String worldName) {
-		
-		if (realm.equalsIgnoreCase("kitpvp")) {			
+	public void removeGame(Realm realm,String worldName) {
+		if (realm == Realm.KITPVP) {			
 			ArrayList<KitPvP> worldsToRemove = new ArrayList<>();
 			
 			for(KitPvP game : kitPvpGames) {
@@ -60,7 +51,7 @@ public class GameHandling implements Listener {
 				}
 			}
 			kitPvpGames.removeAll(worldsToRemove);
-		} else if (realm.equalsIgnoreCase("stepspleef")) {
+		} else if (realm == Realm.STEPSPLEEF) {
 			ArrayList<StepSpleef> worldsToRemove = new ArrayList<>();
 			
 			for(StepSpleef game : stepSpleefGames) {
@@ -69,18 +60,33 @@ public class GameHandling implements Listener {
 				}
 			}
 			stepSpleefGames.removeAll(worldsToRemove);
+		} else if (realm == Realm.SKYWARS) {
+			ArrayList<SkyWars> worldsToRemove = new ArrayList<>();
+			
+			for(SkyWars game : skyWarsGames) {
+				if (game.getWorldName().equalsIgnoreCase(worldName)) {
+					worldsToRemove.add(game);
+				}
+			}
+			skyWarsGames.removeAll(worldsToRemove);
 		}
 	}
 	//Remove player from a game
-	public void removePlayerFromGame(Player ply,String realm) {
-		if (realm.equalsIgnoreCase("kitPvP")) {
+	public void removePlayerFromGame(Player ply, Realm realm) {
+		if (realm == Realm.KITPVP) {
 			for (KitPvP game : kitPvpGames) {
 				if (game.isInServer(ply)) {
 					game.playerLeave(ply,true,false);
 				}
 			}
-		} else if (realm.equalsIgnoreCase("stepSpleef")) {
+		} else if (realm == Realm.STEPSPLEEF) {
 			for (StepSpleef game : stepSpleefGames) {
+				if (game.isInServer(ply)) {
+					game.playerLeave(ply,true,false);
+				}
+			}
+		} else if (realm == Realm.SKYWARS) {
+			for (SkyWars game : skyWarsGames) {
 				if (game.isInServer(ply)) {
 					game.playerLeave(ply,true,false);
 				}
@@ -88,151 +94,157 @@ public class GameHandling implements Listener {
 		}
 	}
 	//Handles the player joining games
-	public void joinGame(Player ply, String game) {
-		if (game.equals("hub")) {
-			ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
-		} else if (game.equals("kitPvP")) {
-			KitPvP gameToJoin = null;
-			
-			//Loop through active games to find one for the player
-			for(KitPvP currentGame : kitPvpGames) {
-				if (!currentGame.isGameOver()) {					
-					if (gameToJoin != null) {
-						if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+	public void joinGame(Player ply, Realm realm) {
+		PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
+		PlayerData pd = ph.getPlayerData(ply);
+		
+		if (!pd.isQueuingGame()) {
+			if (realm == Realm.HUB) {
+				ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
+				
+				if (ply.getOpenInventory() != null) {					
+					ply.closeInventory();
+				}
+			} else if (realm == Realm.KITPVP) {
+				pd.setQueuingStatus(true);
+				KitPvP gameToJoin = null;
+				
+				//Loop through active games to find one for the player
+				for(KitPvP currentGame : kitPvpGames) {
+					if (currentGame.getJoinStatus()) {					
+						if (gameToJoin != null) {
+							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+								gameToJoin = currentGame;
+							}
+						} else {
 							gameToJoin = currentGame;
 						}
-					} else {
-						gameToJoin = currentGame;
 					}
 				}
-			}
-			//If no games are found, create one
-			if (gameToJoin == null) {
-				ply.sendMessage(ChatColor.YELLOW + "No " + game + " worlds found! Creating a new one for you...");
-				String worldName = "kitPvP_" + UUID.randomUUID();
-				gameToJoin = new KitPvP(mainInstance,game,worldName,300,15); //900
-				kitPvpGames.add(gameToJoin);
+				//If no games are found, create one
+				if (gameToJoin == null) {
+					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+					String worldName = "kitPvP_" + UUID.randomUUID();
+					gameToJoin = new KitPvP(mainInstance,worldName,300,15); //900
+					kitPvpGames.add(gameToJoin);
+					
+					//Create void world
+					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
+					
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
+				}
+			} else if (realm == Realm.STEPSPLEEF) {
+				pd.setQueuingStatus(true);
+				StepSpleef gameToJoin = null;
 				
-				//Create void world
-				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
-				
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,game,true});
-			} else {
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),game,false});
-			}
-		} else if (game.equals("stepSpleef")) {
-			StepSpleef gameToJoin = null;
-			
-			//Loop through active games to find one for the player
-			for(StepSpleef currentGame : stepSpleefGames) {
-				if (currentGame.isGameActive()) {	
-					if (gameToJoin != null) {
-						if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+				//Loop through active games to find one for the player
+				for(StepSpleef currentGame : stepSpleefGames) {
+					if (currentGame.getJoinStatus()) {	
+						if (gameToJoin != null) {
+							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+								gameToJoin = currentGame;
+							}
+						} else {
 							gameToJoin = currentGame;
 						}
-					} else {
-						gameToJoin = currentGame;
 					}
 				}
-			}
-			//If no games are found, create one
-			if (gameToJoin == null) {
-				ply.sendMessage(ChatColor.YELLOW + "No " + game + " worlds found! Creating a new one for you...");
-				String worldName = "stepSpleef_" + UUID.randomUUID();
-				gameToJoin = new StepSpleef(mainInstance,game,worldName,300,15);
-				stepSpleefGames.add(gameToJoin);
+				//If no games are found, create one
+				if (gameToJoin == null) {
+					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+					String worldName = "stepSpleef_" + UUID.randomUUID();
+					gameToJoin = new StepSpleef(mainInstance,worldName,300,15);
+					stepSpleefGames.add(gameToJoin);
+					
+					//Create void world
+					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
+					
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
+				}
+			} else if (realm == Realm.SKYWARS) {
+				pd.setQueuingStatus(true);
+				SkyWars gameToJoin = null;
 				
-				//Create void world
-				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
-				
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", this, new Object[] {ply,worldName,game,true});
-			} else {
-				mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", this, new Object[] {ply,gameToJoin.getWorldName(),game,false});
+				//Loop through active games to find one for the player
+				for(SkyWars currentGame : skyWarsGames) {
+					if (currentGame.getJoinStatus()) {					
+						if (gameToJoin != null) {
+							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
+								gameToJoin = currentGame;
+							}
+						} else {
+							gameToJoin = currentGame;
+						}
+					}
+				}
+				//If no games are found, create one
+				if (gameToJoin == null) {
+					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+					String worldName = "skyWars_" + UUID.randomUUID();
+					gameToJoin = new SkyWars(mainInstance,worldName,300,8); //900
+					skyWarsGames.add(gameToJoin);
+					
+					//Create void world
+					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
+					
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin.getWorldName(),realm,false}, this);
+				}
 			}
+		} else {
+			ply.sendMessage(ChatColor.YELLOW + "Unable to queue for a game.");
 		}
 	} 
-	public void checkWorld(Player ply, String worldName, String realm, Boolean setData) {
-		if (Bukkit.getWorld(worldName) != null) {
-			if (realm.equals("kitPvP")) {
-				for(KitPvP game : kitPvpGames) {
-					if (game.getWorldName().equalsIgnoreCase(worldName)) {
-						if (setData) {
-							//Set map schematic
-							SchematicHandling sh = new SchematicHandling();
-							String schem = sh.setSchematic(realm, worldName);
-							//Get map points
-							GameMapInfo gmi = new GameMapInfo();
-							ArrayList<HashMap<String,Vector>> points = gmi.getMapInfo(realm, schem);
-							ArrayList<Vector> spawnPoints = new ArrayList<Vector>();
-							Vector safeZonePoint1 = null;
-							Vector safeZonePoint2 = null;
-							
-							//Go through map points           				
-							for(int i = 0; i < points.size(); i++) {
-								HashMap<String,Vector> point = points.get(i);
-								
-								for(Map.Entry<String, Vector> entry : point.entrySet()) {
-									if (entry.getKey().contains("spawn")) {										
-										spawnPoints.add(entry.getValue());
-									} else if (entry.getKey().equalsIgnoreCase("graceBound1")) {
-										safeZonePoint1 = entry.getValue();
-									} else if (entry.getKey().equalsIgnoreCase("graceBound2")) {
-										safeZonePoint2 = entry.getValue();
-									}
-								}
-							}
-							//Set grace points
-							game.setSafeZoneBounds(safeZonePoint1, safeZonePoint2);
-							//Set spawn points
-							game.setSpawnPoints(spawnPoints);
-							//Set map name
-							game.setMap(schem);
-						}
-						//Join game
-						game.playerJoin(ply);
-						//Set player data
-						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-						PlayerData playerData = ph.getPlayerData(ply);
-						playerData.setRealm(realm,true,true);
-					}
-				}
-			} else if (realm.equals("stepSpleef")) {
-				for(StepSpleef game : stepSpleefGames) {
-					if (game.getWorldName().equalsIgnoreCase(worldName)) {
-						if (setData) {
-							//Set map schematic
-							SchematicHandling sh = new SchematicHandling();
-							String schem = sh.setSchematic(realm, worldName);
-							//Get map points
-							GameMapInfo gmi = new GameMapInfo();
-							ArrayList<HashMap<String,Vector>> points = gmi.getMapInfo(realm, schem);
-							ArrayList<Vector> spawnPoints = new ArrayList<Vector>();
-							
-							//Go through map points
-							if (points != null) {	            				
-								for(int i = 0; i < points.size(); i++) {
-									HashMap<String,Vector> point = points.get(i);
-									
-									for(Map.Entry<String, Vector> entry : point.entrySet()) {
-										spawnPoints.add(entry.getValue());
-									}
-								}
-							}
-							//Set spawn points
-							game.setSpawnPoints(spawnPoints);
-							//Set map name
-							game.setMap(schem);
-						}
-						//Join game
-						game.playerJoin(ply);
-						//Set player data
-						PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-						PlayerData playerData = ph.getPlayerData(ply);
-						playerData.setRealm(realm,true,true);
-					}
+	public void checkWorld(Player ply, String worldName, Realm realm, Boolean setData) {
+		PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+		
+		if (realm == Realm.KITPVP) {
+			for (KitPvP game : kitPvpGames) {
+				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
+					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+					
+					//Join game
+					game.playerJoin(ply);
+					//Set player data
+					playerData.setRealm(realm,true,true);
+					playerData.setQueuingStatus(false);
 				}
 			}
-			mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+		} else if (realm == Realm.STEPSPLEEF) {
+			for (StepSpleef game : stepSpleefGames) {
+				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
+					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+					
+					//Join game
+					game.playerJoin(ply);
+					//Set player data
+					playerData.setRealm(realm,true,true);
+					playerData.setQueuingStatus(false);
+				}
+			}
+		} else if (realm == Realm.SKYWARS) {
+			for (SkyWars game : skyWarsGames) {
+				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
+					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+					
+					//Join game
+					game.playerJoin(ply);
+					//Set player data
+					playerData.setRealm(realm,true,true);
+					playerData.setQueuingStatus(false);
+				}
+			}
 		}
 	}
 }
