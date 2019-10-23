@@ -1,6 +1,5 @@
 package nyeblock.Core.ServerCoreTest;
 
-import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +35,6 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
@@ -210,7 +208,6 @@ public class PlayerHandling implements Listener {
 			}
 		}
 	}
-
 	// Handle when the player joins the server
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
