@@ -17,6 +17,7 @@ import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
+@SuppressWarnings("deprecation")
 public class GameHandling implements Listener {
 	private Main mainInstance;
 	private ArrayList<KitPvP> kitPvpGames = new ArrayList<>();
@@ -142,7 +143,7 @@ public class GameHandling implements Listener {
 				
 				//Loop through active games to find one for the player
 				for(StepSpleef currentGame : stepSpleefGames) {
-					if (currentGame.getJoinStatus()) {	
+					if (currentGame.getJoinStatus() && !currentGame.isGameActive()) {	
 						if (gameToJoin != null) {
 							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
 								gameToJoin = currentGame;
@@ -156,7 +157,7 @@ public class GameHandling implements Listener {
 				if (gameToJoin == null) {
 					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
 					String worldName = "stepSpleef_" + UUID.randomUUID();
-					gameToJoin = new StepSpleef(mainInstance,worldName,300,15);
+					gameToJoin = new StepSpleef(mainInstance,worldName,300,2,15);
 					stepSpleefGames.add(gameToJoin);
 					
 					//Create void world
@@ -217,6 +218,10 @@ public class GameHandling implements Listener {
 					//Set player data
 					playerData.setRealm(realm,true,true);
 					playerData.setQueuingStatus(false);
+					//Clear hidden players
+					for (Player player : Bukkit.getWorld("world").getPlayers()) {
+						ply.showPlayer(player);
+					}
 				}
 			}
 		} else if (realm == Realm.STEPSPLEEF) {
@@ -230,6 +235,10 @@ public class GameHandling implements Listener {
 					//Set player data
 					playerData.setRealm(realm,true,true);
 					playerData.setQueuingStatus(false);
+					//Clear hidden players
+					for (Player player : Bukkit.getWorld("world").getPlayers()) {
+						ply.showPlayer(player);
+					}
 				}
 			}
 		} else if (realm == Realm.SKYWARS) {
@@ -243,6 +252,10 @@ public class GameHandling implements Listener {
 					//Set player data
 					playerData.setRealm(realm,true,true);
 					playerData.setQueuingStatus(false);
+					//Clear hidden players
+					for (Player player : Bukkit.getWorld("world").getPlayers()) {
+						ply.showPlayer(player);
+					}
 				}
 			}
 		}

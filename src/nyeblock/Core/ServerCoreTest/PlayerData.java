@@ -25,6 +25,7 @@ import org.bukkit.util.Vector;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
+import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
@@ -39,6 +40,7 @@ public class PlayerData {
 	private int points;
 	private int xp;
 	private double timePlayed;
+	private long timeJoined = System.currentTimeMillis() / 1000L;
 	private String ip;
 	private UserGroup userGroup;
 	private PermissionAttachment permissions;
@@ -59,7 +61,6 @@ public class PlayerData {
 		this.ip = ip;
 		this.userGroup = userGroup;
 		setPermissions();
-		setItems();
 	}
 	
 	//Set player permissions depending on their realm
@@ -73,6 +74,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
+			permissions.setPermission("nyeblock.canSwapItems", false);
 		} else if (realm == Realm.KITPVP) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -82,15 +84,17 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
+			permissions.setPermission("nyeblock.canSwapItems", false);
 		} else if (realm == Realm.STEPSPLEEF) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
-			permissions.setPermission("nyeblock.canDamage", false);
+			permissions.setPermission("nyeblock.canDamage", true);
 			permissions.setPermission("nyeblock.canBeDamaged", true);
 			permissions.setPermission("nyeblock.canTakeFallDamage", false);
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
+			permissions.setPermission("nyeblock.canSwapItems", false);
 		} else if (realm == Realm.SKYWARS) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -100,6 +104,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", true);
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
+			permissions.setPermission("nyeblock.canSwapItems", false);
 		}
 	}
 	//Set a specific player permission
@@ -111,11 +116,17 @@ public class PlayerData {
 		player.getInventory().clear();
 		
 		if (realm == Realm.HUB) {
-			//Menu
+			//Game Menu
 			HubMenu hubMenu = new HubMenu();
 			ItemStack hm = hubMenu.give();
 			player.getInventory().setItem(4, hm);
 			player.getInventory().setHeldItemSlot(4);
+			
+			//Hide players
+			HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
+			ItemStack hp = hidePlayers.give();
+			player.getInventory().setItem(6, hp);
+			
 		} else if (realm == Realm.KITPVP) {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
@@ -235,6 +246,10 @@ public class PlayerData {
 	//Get the players queuing status
 	public boolean isQueuingGame() {
 		return queuingGame;
+	}
+	//Get the unix timestamp when the player joined the server
+	public long getTimeJoined() {
+		return timeJoined;
 	}
 	//Get the players current realm
 	public Realm getRealm() {

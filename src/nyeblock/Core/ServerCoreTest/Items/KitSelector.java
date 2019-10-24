@@ -34,7 +34,7 @@ public class KitSelector {
 		return item;
 	}
 	public void openMenu(Player ply, Main mainInstance) {
-		Inventory menu = Bukkit.createInventory(null, 9, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Select a Kit");
+		Inventory menu = Bukkit.createInventory(null, 9, ChatColor.DARK_GRAY + "Select a Kit");
 		String kitSelected = null;
 		
 		if (realm == Realm.KITPVP) {

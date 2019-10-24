@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.v1_14_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -63,33 +64,20 @@ public class Miscellaneous {
 	    return formattedTime;
 	}
 	//Get the blocks a player is standing on
-	public static ArrayList<Block> getBlocksBelow(Player player) {
-		ArrayList<Block> blocksBelow = new ArrayList<Block>();
-	    EntityPlayer entityPlayer = ((CraftPlayer) player).getHandle();
-	    AxisAlignedBB boundingBox = entityPlayer.getBoundingBox();
-	    World world = player.getWorld();
-	    double yBelow = player.getLocation().getY() - 0.0001;
-	    Block northEast = new Location(world, boundingBox.d(), yBelow, boundingBox.c()).getBlock();
-	    Block northWest = new Location(world, boundingBox.a(), yBelow, boundingBox.c()).getBlock();
-	    Block southEast = new Location(world, boundingBox.d(), yBelow, boundingBox.f().f()).getBlock();
-	    Block southWest = new Location(world, boundingBox.a(), yBelow, boundingBox.f().f()).getBlock();
-	    Block[] blocks = {northEast, northWest, southEast, southWest};
-	    for (Block block : blocks) {
-	        if (!blocksBelow.isEmpty()) {
-	            boolean duplicateExists = false;
-	            for (int i = 0; i < blocksBelow.size(); i++) {
-	                if (blocksBelow.get(i).equals(block)) {
-	                    duplicateExists = true;
-	                }
-	            }
-	            if (!duplicateExists) {
-	                blocksBelow.add(block);
-	            }
-	        } else {
-	            blocksBelow.add(block);
-	        }
-	    }
-	    return blocksBelow;
+	public static ArrayList<Block> getBlocksBelowPlayer(Player player) {
+		ArrayList<Block> blocks = new ArrayList<>();
+		Location location = player.getLocation();
+		double x = location.getX();
+		double z = location.getZ();
+		World world = player.getWorld();
+		double yBelow = player.getLocation().getY() - 0.0001;
+		
+		blocks.add(new Location(world, location.getX() + 0.3, yBelow, z - 0.3).getBlock());
+		blocks.add(new Location(world, x - 0.3, yBelow, z - 0.3).getBlock());
+		blocks.add(new Location(world, x + 0.3, yBelow, z + 0.3).getBlock());
+		blocks.add(new Location(world, x - 0.3, yBelow, z + 0.3).getBlock());        
+        
+        return blocks;
 	}
 	
 	//TODO:Remove after testing

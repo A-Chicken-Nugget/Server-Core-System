@@ -25,6 +25,7 @@ public abstract class GameBase {
 	protected Realm realm;
 	protected String worldName;
 	protected String map;
+	protected int minPlayers;
 	protected int maxPlayers;
 	//Player data
 	protected ArrayList<Player> players = new ArrayList<>();
