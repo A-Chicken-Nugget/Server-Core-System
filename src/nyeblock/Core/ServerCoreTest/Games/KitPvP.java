@@ -18,9 +18,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import com.connorlinfoot.actionbarapi.ActionBarAPI;
@@ -29,9 +26,7 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.SchematicHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 @SuppressWarnings("deprecation")
 public class KitPvP extends GameBase {
@@ -45,9 +40,6 @@ public class KitPvP extends GameBase {
 	//Etc
 	private boolean endStarted = false;
 	private ArrayList<String> top5 = new ArrayList<>();
-	//Scoreboard
-	private Objective healthTag;
-	private Team team;
 	
 	//
 	// CONSTRUCTOR
@@ -63,19 +55,6 @@ public class KitPvP extends GameBase {
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		startTime = System.currentTimeMillis() / 1000L;
-		
-		//Scoreboard stuff
-		board = Bukkit.getScoreboardManager().getNewScoreboard();
-		team = board.registerNewTeam("default");
-		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-		objective = board.registerNewObjective("scoreboard", "");
-		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
-		
-		//Healthtag stuff 
-		healthTag = board.registerNewObjective("healthtag", "health");
-		healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
-		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
 		
 		//Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", false, null, this);
@@ -121,7 +100,7 @@ public class KitPvP extends GameBase {
 		}
 	}
 	/**
-    * Sets the kitpvp scoreboard
+    * Sets the kitpvp scoreboard and manages world/grace zone
     */
 	public void setScoreboard() {		
 		//Get top 5 players with the most kills
@@ -155,10 +134,6 @@ public class KitPvP extends GameBase {
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			HashMap<Integer,String> scores = new HashMap<Integer,String>();
 			
-			if (!ply.getScoreboard().getObjective(DisplaySlot.SIDEBAR).getDisplayName().equalsIgnoreCase(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "KITPVP")) {						
-				pd.setObjectiveName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "KITPVP");
-			}
-			
 			scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
 			scores.put(pos++, ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.YELLOW + "Kills: " + ChatColor.GREEN + playerKills.get(ply.getName()));
@@ -181,10 +156,10 @@ public class KitPvP extends GameBase {
 			if (top5.size() > 0) {	
 				scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			}
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (timeLeft <= 0 ? "0:00" : Miscellaneous.formatSeconds(timeLeft)));
+			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (timeLeft <= 0 ? "0:00" : Miscellaneous.formatMMSS(timeLeft)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			
+			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));			
+			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "KITPVP");
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
@@ -206,9 +181,18 @@ public class KitPvP extends GameBase {
 						
 						//Check if player is in the grace bounds
 						if (Miscellaneous.playerInArea(loc.toVector(), safeZonePoint1, safeZonePoint2)) {
-							if (!playerInGraceBounds.get(ply.getName())) {        								
+							if (playerInGraceBounds.get(ply.getName()) == null || !playerInGraceBounds.get(ply.getName())) {
+								//Add players to team
+								for (Map.Entry<String,Boolean> entry : playerInGraceBounds.entrySet()) {
+									if (entry.getValue()) {
+										Player player = Bukkit.getServer().getPlayer(entry.getKey());
+										PlayerData pd2 = playerHandling.getPlayerData(player);
+										
+										pdata.addPlayerToTeam("default",player);
+										pd2.addPlayerToTeam("default", ply);
+									}
+								}
 								playerInGraceBounds.put(ply.getName(), true);
-								team.addPlayer(ply);
 							}
 							if (pdata != null) {     
 								if (!pdata.getPermission("nyeblock.tempNoDamageOnFall")) {
@@ -222,9 +206,19 @@ public class KitPvP extends GameBase {
 								}
 							}
 						} else {
-							if (playerInGraceBounds.get(ply.getName())) {        								
+							if (playerInGraceBounds.get(ply.getName())) {     
+								//Remove players to team
+								for (Map.Entry<String,Boolean> entry : playerInGraceBounds.entrySet()) {
+									Player player = Bukkit.getServer().getPlayer(entry.getKey());
+									
+									if (entry.getValue()) {
+										PlayerData pd2 = playerHandling.getPlayerData(player);
+										
+										pdata.removePlayerFromTeam("default",player);
+										pd2.removePlayerFromTeam("default", ply);
+									}
+								}
 								playerInGraceBounds.put(ply.getName(), false);
-								team.removePlayer(ply);
 							}
 							if (pdata != null) {
 								if (!pdata.getPermission("nyeblock.canBeDamaged")) {
@@ -410,11 +404,11 @@ public class KitPvP extends GameBase {
     * @param player - the player who joined the game.
     */
 	public void playerJoin(Player ply) {
-		//Set players scoreboard
-		playerHandling.getPlayerData(ply).setScoreboard(board,objective);
+		PlayerData pd = playerHandling.getPlayerData(ply);
 		
-		//Add player to team
-		team.addPlayer(ply);
+		//Setup team
+		pd.setScoreBoardTeams(new String[] {"default"});
+		pd.createHealthTags();
 		
 		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
 		
@@ -422,7 +416,6 @@ public class KitPvP extends GameBase {
 		players.add(ply);
 		playerKills.put(ply.getName(), 0);
 		playerKits.put(ply.getName(),"knight");
-		playerInGraceBounds.put(ply.getName(), true);
 		
 		//Teleport to random spawn
 		Vector randSpawn = getRandomSpawnPoint();
@@ -430,7 +423,11 @@ public class KitPvP extends GameBase {
 		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to KitPvP",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
 		
-		ply.setHealth(ply.getHealth());
+		for (Player player : players) {
+			if (player.getHealth() == 20) {				
+				player.setHealth(player.getHealth() - 0.0001);
+			}
+		}
 	}
 	/**
     * Handles when a player leaves the game
@@ -438,12 +435,11 @@ public class KitPvP extends GameBase {
     * @param bool - should a leave message be shown?
     * @param bool - should the player be moved to the hub?
     */
-	@SuppressWarnings("serial")
 	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
+		PlayerData playerData = playerHandling.getPlayerData(ply);
+		
 		//Remove player from players list
-		players.removeAll(new ArrayList<Player>() {{
-			add(ply);
-		}});
+		players.remove(ply);
 		
 		//Remove player from hashmaps
 		playerKills.remove(ply.getName());
@@ -459,17 +455,20 @@ public class KitPvP extends GameBase {
 		}
 		top5.removeAll(plyToRemove);
 		
-		//Remove player from team
-		if (team.hasPlayer(ply)) {			
-			team.removePlayer(ply);
+		//Clear scoreboard
+		playerData.clearScoreboard();
+		
+		//Remove players from teams
+		for (Player player : players) {
+			PlayerData pd2 = playerHandling.getPlayerData(player);
+			
+			pd2.removePlayerFromTeam("default", ply);
 		}
 		
 		if (showLeaveMessage) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
 		}
 		if (moveToHub) {
-			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-			
 			//Set player realms/items/permissions
 			playerData.setRealm(Realm.HUB,true,true);
 			//Move player to hub

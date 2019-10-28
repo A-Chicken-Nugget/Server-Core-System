@@ -10,5 +10,6 @@
 	<classpathentry kind="lib" path="L:/Eclipse Jars/Multiverse-Core-4.0.0.jar"/>
 	<classpathentry kind="lib" path="L:/Eclipse Jars/spigot-1.14.4.jar"/>
 	<classpathentry kind="lib" path="L:/Eclipse Jars/worldedit-bukkit-7.0.0.jar"/>
+	<classpathentry kind="lib" path="L:/Eclipse Jars/HolographicDisplays.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

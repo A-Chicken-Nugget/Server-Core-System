@@ -19,7 +19,7 @@ public class HubMenu {
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.NETHER_STAR);
 		ItemMeta shopMeta = item.getItemMeta();
-		shopMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Server Menu" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		shopMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Game Menu" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
 		shopMeta.setLocalizedName("hub_menu");
 		item.setItemMeta(shopMeta);
 		
@@ -27,7 +27,7 @@ public class HubMenu {
 	}
 	//Set the gui of the item
 	public void openMenu(Main mainInstance, Player ply) {
-		Inventory menu = Bukkit.createInventory(null, 9, ChatColor.DARK_GRAY + "Server Menu");
+		Inventory menu = Bukkit.createInventory(null, 9, ChatColor.DARK_GRAY + "Game Menu");
 		
 		//Kitpvp
 		ItemStack kitPvp = new ItemStack(Material.IRON_AXE);
@@ -51,7 +51,7 @@ public class HubMenu {
 		skyWarsMeta.setLocalizedName("skyWars");
 		skyWarsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 		ArrayList<String> skyWarsMetaLore = new ArrayList<String>();
-		skyWarsMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getSkyWarsGames().size() + " games active");
+		skyWarsMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getSkyWarsGames().size() + ChatColor.YELLOW + " games active");
 		skyWarsMetaLore.add(ChatColor.RESET.toString());
 		skyWarsMetaLore.add(ChatColor.YELLOW + "Each player starts with their");
 		skyWarsMetaLore.add(ChatColor.YELLOW + "own island. You must craft and");
@@ -67,7 +67,7 @@ public class HubMenu {
 		stepSpleefMeta.setLocalizedName("stepSpleef");
 		stepSpleefMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 		ArrayList<String> stepSpleefMetaLore = new ArrayList<String>();
-		stepSpleefMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getStepSpleefGames().size() + " games active");
+		stepSpleefMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getStepSpleefGames().size() + ChatColor.YELLOW + " games active");
 		stepSpleefMetaLore.add(ChatColor.RESET.toString());
 		stepSpleefMetaLore.add(ChatColor.YELLOW + "Dodge and weave to survive");
 		stepSpleefMetaLore.add(ChatColor.YELLOW + "when the blocks you've walked");

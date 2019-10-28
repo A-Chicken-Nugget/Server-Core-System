@@ -15,8 +15,6 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
 import org.bukkit.util.Vector;
 
 import com.connorlinfoot.actionbarapi.ActionBarAPI;
@@ -28,7 +26,7 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation","serial"})
 public class SkyWars extends GameBase {
 	//Game info
 	private int duration;
@@ -47,8 +45,6 @@ public class SkyWars extends GameBase {
 	private int messageCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
-	//Scoreboard
-	private Objective healthTag;
 	
 	//
 	// CONSTRUCTOR
@@ -63,17 +59,6 @@ public class SkyWars extends GameBase {
 		realm = Realm.SKYWARS;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
-		
-		//Scoreboard stuff
-		board = Bukkit.getScoreboardManager().getNewScoreboard();
-		objective = board.registerNewObjective("scoreboard", "");
-		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
-		
-		//Healthtag stuff
-		healthTag = board.registerNewObjective("healthtag", "health");
-		healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
-		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
 		
 		//Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
@@ -118,6 +103,7 @@ public class SkyWars extends GameBase {
 				
 				//Set permissions
 				PlayerData pd = playerHandling.getPlayerData(ply);
+				pd.setPermission("nyeblock.canPlaceBlocks", true);
 				pd.setPermission("nyeblock.canBreakBlocks", true);
 				pd.setPermission("nyeblock.canUseInventory", true);
 				pd.setPermission("nyeblock.canDropItems", true);
@@ -208,7 +194,7 @@ public class SkyWars extends GameBase {
 					if (messageCount >= 20) {
 						messageCount = 0;
 						
-//						messageToAll(ChatColor.YELLOW + "Waiting for more players...");
+						messageToAll(ChatColor.YELLOW + "Waiting for more players...");
 					}
 					messageCount++;
 				}
@@ -250,20 +236,16 @@ public class SkyWars extends GameBase {
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			HashMap<Integer,String> scores = new HashMap<Integer,String>();
 			
-			if (!ply.getScoreboard().getObjective(DisplaySlot.SIDEBAR).getDisplayName().equalsIgnoreCase(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS")) {						
-				pd.setObjectiveName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");
-			}
-			
 			scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
 			scores.put(pos++, ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.YELLOW + "Kills: " + ChatColor.GREEN + playerKills.get(ply.getName()));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Miscellaneous.formatSeconds(timeLeft)) : Miscellaneous.formatSeconds(duration)));
+			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Miscellaneous.formatMMSS(timeLeft)) : Miscellaneous.formatMMSS(duration)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			
+			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
@@ -427,7 +409,6 @@ public class SkyWars extends GameBase {
 	/**
     * Handle when a player died
     */
-	@SuppressWarnings("serial")
 	public void playerDeath(Player killed,Player killer) {		
 		boolean isSpectating = playersSpectating.contains(killed);
 		
@@ -480,12 +461,15 @@ public class SkyWars extends GameBase {
     * Handle when a player joins the game
     */
 	public void playerJoin(Player ply) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
 		if (!active) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
 		}
 		
-		//Set players scoreboard
-		playerHandling.getPlayerData(ply).setScoreboard(board,objective);
+		//Setup team
+		pd.setScoreBoardTeams(new String[] {"default"});
+		pd.createHealthTags();
 		
 		//Add player to arrays
 		players.add(ply);
@@ -504,12 +488,19 @@ public class SkyWars extends GameBase {
 			}
 		}
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Sky Wars",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
+		
+		for (Player player : players) {
+			if (player.getHealth() == 20) {				
+				player.setHealth(player.getHealth() - 0.0001);
+			}
+		}
 	}
 	/**
     * Handle when a player leaves the game
     */
-	@SuppressWarnings("serial")
 	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
 		//Remove player from players list
 		players.removeAll(new ArrayList<Player>() {{
 			add(ply);
@@ -524,6 +515,9 @@ public class SkyWars extends GameBase {
 		playersSpectating.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
+		
+		//Clear scoreboard
+		pd.clearScoreboard();
 		
 		//Remove player from the spots list
 		Iterator<Map.Entry<Integer, String>> itr = playerSpots.entrySet().iterator();

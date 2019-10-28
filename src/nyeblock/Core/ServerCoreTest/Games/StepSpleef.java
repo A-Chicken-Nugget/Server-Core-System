@@ -25,7 +25,7 @@ import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation","serial"})
 public class StepSpleef extends GameBase {
 	//Game info
 	private int duration;
@@ -54,12 +54,6 @@ public class StepSpleef extends GameBase {
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
-		
-		//Scoreboard stuff
-		board = Bukkit.getScoreboardManager().getNewScoreboard();
-		objective = board.registerNewObjective("scoreboard", "");
-		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
 		
 		//Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
@@ -229,10 +223,9 @@ public class StepSpleef extends GameBase {
 			if (emptyCount != 0) {
 				emptyCount = 0;
 			}
-			if (!active) {				
-				if (players.size() > minPlayers) {
+			if (!active) {
+				if (players.size() >= minPlayers) {
 					if (readyCount == 0) {
-						readyCount = 0;
 						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
 						
@@ -241,7 +234,6 @@ public class StepSpleef extends GameBase {
 							
 							if (pd.getPermission("nyeblock.canDamage")) {
 								pd.setPermission("nyeblock.canDamage", false);
-								pd.setPermission("nyeblock.canBeDamaged", false);
 							}
 						}
 					} else {
@@ -261,6 +253,9 @@ public class StepSpleef extends GameBase {
 					}
 					readyCount++;
 				} else {
+					if (readyCount != 0) {
+						readyCount = 0;
+					}
 					if (messageCount >= 20) {
 						messageCount = 0;
 						
@@ -307,18 +302,14 @@ public class StepSpleef extends GameBase {
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			HashMap<Integer,String> scores = new HashMap<Integer,String>();
 			
-			if (!ply.getScoreboard().getObjective(DisplaySlot.SIDEBAR).getDisplayName().equalsIgnoreCase(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF")) {						
-				pd.setObjectiveName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
-			}
-			
 			scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
 			scores.put(pos++, ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Miscellaneous.formatSeconds(timeLeft)) : Miscellaneous.formatSeconds(duration)));
+			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Miscellaneous.formatMMSS(timeLeft)) : Miscellaneous.formatMMSS(duration)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			
+			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
@@ -418,9 +409,6 @@ public class StepSpleef extends GameBase {
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
 		}
 		
-		//Set players scoreboard
-		playerHandling.getPlayerData(ply).setScoreboard(board,objective);
-		
 		//Add player to players array
 		players.add(ply);
 		
@@ -433,8 +421,12 @@ public class StepSpleef extends GameBase {
 	/**
     * Handle when a player leaves the game
     */
-	@SuppressWarnings("serial")
 	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
+		//Clear scoreboard
+		pd.clearScoreboard();
+		
 		//Remove player from players list
 		players.removeAll(new ArrayList<Player>() {{
 			add(ply);

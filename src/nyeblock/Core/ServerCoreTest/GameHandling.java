@@ -1,17 +1,13 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
-import nyeblock.Core.ServerCoreTest.Games.GameMapInfo;
 import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
@@ -102,6 +98,8 @@ public class GameHandling implements Listener {
 		if (!pd.isQueuingGame()) {
 			if (realm == Realm.HUB) {
 				ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
+				
+				mainInstance.getHubInstance().playerJoin(ply);
 				
 				if (ply.getOpenInventory() != null) {					
 					ply.closeInventory();
@@ -210,7 +208,8 @@ public class GameHandling implements Listener {
 		if (realm == Realm.KITPVP) {
 			for (KitPvP game : kitPvpGames) {
 				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
-					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getPlayerHandlingInstance().getPlayerData(ply).clearScoreboard();
+					mainInstance.getHubInstance().playerLeave(ply);
 					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
 					
 					//Join game
@@ -221,13 +220,18 @@ public class GameHandling implements Listener {
 					//Clear hidden players
 					for (Player player : Bukkit.getWorld("world").getPlayers()) {
 						ply.showPlayer(player);
+						
+						if (!player.canSee(ply)) {
+							player.showPlayer(ply);
+						}
 					}
 				}
 			}
 		} else if (realm == Realm.STEPSPLEEF) {
 			for (StepSpleef game : stepSpleefGames) {
 				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
-					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getPlayerHandlingInstance().getPlayerData(ply).clearScoreboard();
+					mainInstance.getHubInstance().playerLeave(ply);
 					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
 					
 					//Join game
@@ -244,7 +248,8 @@ public class GameHandling implements Listener {
 		} else if (realm == Realm.SKYWARS) {
 			for (SkyWars game : skyWarsGames) {
 				if (game.getWorldName().equalsIgnoreCase(worldName) && game.getJoinStatus()) {
-					mainInstance.getPlayerHandlingInstance().removeFromTeam(ply);
+					mainInstance.getPlayerHandlingInstance().getPlayerData(ply).clearScoreboard();
+					mainInstance.getHubInstance().playerLeave(ply);
 					mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
 					
 					//Join game

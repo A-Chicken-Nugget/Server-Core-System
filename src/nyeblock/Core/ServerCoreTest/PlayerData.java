@@ -33,10 +33,11 @@ import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"deprecation","unused"})
 public class PlayerData {
 	private Main mainInstance;
 	private Player player;
+	private int id;
 	private int points;
 	private int xp;
 	private double timePlayed;
@@ -51,9 +52,10 @@ public class PlayerData {
 	private Scoreboard board;
 	private Objective objective;
 	
-	public PlayerData(Main mainInstance, Player ply, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
+	public PlayerData(Main mainInstance, Player ply, int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
 		this.mainInstance = mainInstance;
 		this.player = ply;
+		this.id = id;
 		permissions = new PermissionAttachment(mainInstance, ply);
 		this.points = points;
 		this.xp = xp;
@@ -61,12 +63,18 @@ public class PlayerData {
 		this.ip = ip;
 		this.userGroup = userGroup;
 		setPermissions();
+		
+		board = Bukkit.getScoreboardManager().getNewScoreboard();
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		player.setScoreboard(board);
 	}
 	
 	//Set player permissions depending on their realm
 	public void setPermissions() {
 		if (realm == Realm.HUB) {
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canPlaceBlocks", true);
+			permissions.setPermission("nyeblock.canBreakBlocks", true);
 			permissions.setPermission("nyeblock.canUseInventory", false);
 			permissions.setPermission("nyeblock.canDamage", false);
 			permissions.setPermission("nyeblock.canBeDamaged", false);
@@ -76,6 +84,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
 		} else if (realm == Realm.KITPVP) {
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
 			permissions.setPermission("nyeblock.canDamage", true);
@@ -87,6 +96,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canSwapItems", false);
 		} else if (realm == Realm.STEPSPLEEF) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
 			permissions.setPermission("nyeblock.canDamage", true);
 			permissions.setPermission("nyeblock.canBeDamaged", true);
@@ -97,6 +107,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canSwapItems", false);
 		} else if (realm == Realm.SKYWARS) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
 			permissions.setPermission("nyeblock.canDamage", true);
 			permissions.setPermission("nyeblock.canBeDamaged", true);
@@ -106,6 +117,8 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
 		}
+		permissions.setPermission("worldedit.navigation.jumpto.tool", false);
+		permissions.setPermission("worldedit.navigation.thru.tool", false);
 	}
 	//Set a specific player permission
 	public void setPermission(String permission, boolean value) {
@@ -215,16 +228,10 @@ public class PlayerData {
 	public void setCustomDataKey(String key, String value) {
 		customData.put(key, value);
 	}
-	//Set the players scoreboard
-	public void setScoreboard(Scoreboard scoreboard, Objective objective) {
-		board = scoreboard;
-		this.objective = objective;
-		player.setScoreboard(board);
-		player.setHealth(player.getHealth() - 0.0001);
-	}
-	//Set the title of the players scoreboard
-	public void setObjectiveName(String name) {
-		objective.setDisplayName(name);
+	
+	//Update the scoreboard title
+	public void setScoreboardTitle(String title) {
+		objective.setDisplayName(title);
 	}
 	//Update the players scoreboard text
 	public void updateObjectiveScores(HashMap<Integer,String> scores) {
@@ -232,6 +239,55 @@ public class PlayerData {
 			Miscellaneous.updateScore(objective, entry.getKey(), entry.getValue());
 		}
 	}
+	//Setup scoreboard team
+	public void setScoreBoardTeams(String[] teams) {
+		for (int i = 0; i < teams.length; i++) {			
+			Team team = board.registerNewTeam(teams[i]);
+			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+		}
+	}
+	//Clear scoreboard teams
+	public void clearScoreboard() {
+		for (Team team : board.getTeams()) {
+			team.unregister();
+		}
+		for (String score : board.getEntries()) {
+			board.resetScores(score);
+		}
+		for (Objective objective : board.getObjectives()) {
+			if (objective.getName().equals("healthtag")) {
+				objective.unregister();
+			}
+		}
+	}
+	//Add player to a specific team
+	public void addPlayerToTeam(String teamName, Player ply) {
+		for (Team team : board.getTeams()) {
+			if (team.getName().equals(teamName)) {
+				if (!team.hasPlayer(ply)) {				
+					team.addPlayer(ply);
+				}
+			}
+		}
+	}
+	//Remove player from a specific team
+	public void removePlayerFromTeam(String teamName, Player ply) {
+		for (Team team : board.getTeams()) {
+			if (team.getName().equals(teamName)) {
+				if (team.hasPlayer(ply)) {					
+					team.removePlayer(ply);
+				}
+			}
+		}
+	}
+	//Create and display health tags
+	public void createHealthTags() {
+		Objective healthTag = board.registerNewObjective("healthtag", "health");
+		healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
+		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
+		player.setHealth(player.getHealth() - 0.0001);
+	}
+	
 	//Get custom data from the custom data array
 	public String getCustomDataKey(String name) {
 		String value = null;
@@ -246,6 +302,10 @@ public class PlayerData {
 	//Get the players queuing status
 	public boolean isQueuingGame() {
 		return queuingGame;
+	}
+	//Get the users database id
+	public int getId() {
+		return id;
 	}
 	//Get the unix timestamp when the player joined the server
 	public long getTimeJoined() {

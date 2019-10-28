@@ -9,11 +9,15 @@ import org.bukkit.Location;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
+
+import nyeblock.Core.ServerCoreTest.Games.Hub;
+import nyeblock.Core.ServerCoreTest.Games.HubParkour;
 
 public class Main extends JavaPlugin {
 	private PlayerHandling playerHandling;
@@ -22,6 +26,8 @@ public class Main extends JavaPlugin {
 	private MultiverseCore multiverse;
 	private DatabaseHandling databaseHandling;
 	private TimerHandling timerHandling;
+	private Hub hub;
+	private HubParkour hubParkour;
 	
 	//When this plugin is enabled, initialize important classes
 	public void onEnable() {
@@ -32,7 +38,7 @@ public class Main extends JavaPlugin {
 		timerHandling = new TimerHandling();
 		
 		//Set spawn point for hub world
-		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.510, 113, -11.445));
+		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.435, 113, -11.550));
 		Bukkit.getWorld("world").loadChunk(-10, 113);
 		
 		//Handle config file
@@ -52,8 +58,10 @@ public class Main extends JavaPlugin {
 			
 			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
 		}
-		
 		multiverse.getMVConfig().setPrefixChat(false);
+		
+		hub = new Hub(this);
+		hubParkour = new HubParkour(this);
 		
 		getServer().getPluginManager().registerEvents(playerHandling, this);
 		getServer().getPluginManager().registerEvents(gameHandling, this);
@@ -62,12 +70,18 @@ public class Main extends JavaPlugin {
 		this.getCommand("setpermission").setTabCompleter((TabCompleter)commandHandling);
 	}
 	public void onDisable() {
+		//Delete created game worlds
 		MultiverseCore mv = multiverse;
 		for(MultiverseWorld world : mv.getMVWorldManager().getMVWorlds()) {
 			if (!world.getName().toString().matches("world|world_nether|world_the_end")) {
 				MVWorldManager wm = mv.getMVWorldManager();
 				wm.deleteWorld(world.getName());
 			}
+		}
+		//Save every players play time
+		DatabaseHandling dh = this.getDatabaseInstance();
+		for (Player ply : Bukkit.getWorld("world").getPlayers()) {
+			dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-playerHandling.getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
 		}
 	}
 	
@@ -88,5 +102,11 @@ public class Main extends JavaPlugin {
 	}
 	public TimerHandling getTimerInstance() {
 		return timerHandling;
+	}
+	public Hub getHubInstance() {
+		return hub;
+	}
+	public HubParkour getHubParkourInstance() {
+		return hubParkour;
 	}
 }

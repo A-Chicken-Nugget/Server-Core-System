@@ -2,7 +2,7 @@ name: ServerCoreTest
 version: 1.0
 api-version: 1.13
 main: nyeblock.Core.ServerCoreTest.Main
-depend: [Multiverse-Core]
+depend: [Multiverse-Core, WorldEdit]
 commands:
   setpermission:
     description: Set the permission for a player

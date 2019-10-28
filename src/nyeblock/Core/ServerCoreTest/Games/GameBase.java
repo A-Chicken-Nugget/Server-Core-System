@@ -36,9 +36,6 @@ public abstract class GameBase {
 	//Etc
 	protected int emptyCount = 0;
 	protected boolean canUsersJoin = false;
-	//Scoreboard
-	protected Scoreboard board;
-	protected Objective objective;
 	
 	public GameBase(Main mainInstance, String worldName) {
 		mainInstance.getTimerInstance().createTimer("worldCheck_" + worldName, 1, 0, "checkWorld", true, null, this);

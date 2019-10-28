@@ -1,17 +1,13 @@
 package nyeblock.Core.ServerCoreTest;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -20,6 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -37,16 +34,13 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
-import org.bukkit.event.player.PlayerAchievementAwardedEvent;
 import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
+import com.gmail.filoghost.holographicdisplays.api.Hologram;
+import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
@@ -57,119 +51,39 @@ import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
-import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
+import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-@SuppressWarnings({ "deprecation", "serial" })
+@SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
 	private HashMap<String, PlayerData> playersData = new HashMap<String, PlayerData>();
 	private World world = Bukkit.getWorld("world");
 	private boolean worldsChecked = false;
-	// Scoreboard
-	private Scoreboard board;
-	private Objective objective;
-	private Team team;
-	private TextAnimation boardAnim;
 
 	public PlayerHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
-
-		// Scoreboard stuff
-		board = Bukkit.getScoreboardManager().getNewScoreboard();
-		team = board.registerNewTeam("default");
-		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-		objective = board.registerNewObjective("hub_scoreboard", "");
-		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-		objective.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
-		boardAnim = new TextAnimation("Hub board animation", new ArrayList<String>() {
-			{
-				add("ß7NyeBlock");
-				add("ßbNß7yeBlock");
-				add("ßbNyß7eBlock");
-				add("ßbNyeß7Block");
-				add("ßbNyeBß7lock");
-				add("ßbNyeBlß7ock");
-				add("ßbNyeBloß7ck");
-				add("ßbNyeBlocß7k");
-				add("ßbNyeBlock");
-				add("ß7NßbyeBlock");
-				add("ß7NyßbeBlock");
-				add("ß7NyeßbBlock");
-				add("ß7NyeBßblock");
-				add("ß7NyeBlßbock");
-				add("ß7NyeBloßbck");
-				add("ß7NyeBlocßbk");
-			}
-		}, 250);
-
-		// Timer ran every second
+		
+		//Floating text
+		Hologram spawnText = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),-9.498,116,-7.467));
+		spawnText.appendTextLine(ChatColor.YELLOW + "Welcome to " + ChatColor.BOLD + "NyeBlock");
+		spawnText.appendTextLine(ChatColor.YELLOW + "‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ‚îÅ");
+		spawnText.appendTextLine(ChatColor.YELLOW + "Choose a game to play with the Game menu item!");
+		spawnText.appendTextLine(ChatColor.YELLOW + "‚Üê ‚Üê ‚Üê Parkour ‚Üê ‚Üê ‚Üê");
+		spawnText.appendItemLine(new ItemStack(Material.NETHER_STAR));
+		
+		// Save players play time every 3 minutes
 		Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"),
-				new Runnable() {
-					@Override
-					public void run() {
-						// Manage hub weather/time
-						world.setTime(1000);
-						if (world.hasStorm()) {
-							world.setStorm(false);
-						}
-
-						// Update players scoreboard
-						for (Player ply : world.getPlayers()) {
-							PlayerData pd = getPlayerData(ply);
-							HashMap<Integer, String> scores = new HashMap<>();
-
-							if (!ply.getScoreboard().getObjective(DisplaySlot.SIDEBAR).getName()
-									.equalsIgnoreCase("hub_scoreboard")) {
-								// Update scoreboard name
-								pd.setObjectiveName(
-										ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "NYEBLOCK (ALPHA)");
-
-								// Clear scoreboard
-								for (String s : board.getEntries()) {
-									board.resetScores(s);
-								}
-
-								// Set players scoreboard
-								pd.setScoreboard(board, objective);
-
-								// Add player to team
-								team.addPlayer(ply);
-							}
-
-							pd.setObjectiveName(boardAnim.getMessage());
-
-							scores.put(5, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-							scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-							scores.put(3, ChatColor.YELLOW + "Players online: " + ChatColor.GREEN + playersData.size());
-							scores.put(2, ChatColor.RESET.toString());
-							scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
-
-							pd.updateObjectiveScores(scores);
-
-							// Update gamemode
-							if (ply.getGameMode() != GameMode.ADVENTURE) {
-								ply.setGameMode(GameMode.ADVENTURE);
-							}
-							
-							//Check hide players status
-							if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
-								for (Player ply2 : world.getPlayers()) {
-									if (ply.canSee(ply2) && ply != ply2) {
-										ply.hidePlayer(ply2);
-									}
-								}
-							} else {
-								for (Player ply2 : world.getPlayers()) {
-									if (!ply.canSee(ply2) && ply != ply2) {
-										ply.showPlayer(ply2);
-									}
-								}
-							}
-						}
+			new Runnable() {
+				@Override
+				public void run() {
+					DatabaseHandling dh = mainInstance.getDatabaseInstance();
+					for (Player ply : Bukkit.getOnlinePlayers()) {
+						dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
 					}
-				}, 0, 7);
+				}
+			}, 0, 20*180);
 	}
 
 	// Get a specific players player data
@@ -182,11 +96,6 @@ public class PlayerHandling implements Listener {
 			}
 		}
 		return plyData;
-	}
-
-	// Remove player from scoreboard team
-	public void removeFromTeam(Player ply) {
-		team.removePlayer(ply);
 	}
 
 	// Prevent mob spawn
@@ -220,10 +129,10 @@ public class PlayerHandling implements Listener {
 		event.setCancelled(true);
 	}
 	//Hide achievements from being broadcasted
-	@EventHandler
-	public void onPlayerAchievement(PlayerAchievementAwardedEvent event) {
-		event.setCancelled(true);
-	}
+//	@EventHandler
+//	public void onPlayerAchievement(PlayerAchievementAwardedEvent event) {
+//		event.setCancelled(true);
+//	}
 	// Keep the players food bar at 100%
 	@EventHandler
 	public void onFoodChange(FoodLevelChangeEvent event) {
@@ -246,26 +155,26 @@ public class PlayerHandling implements Listener {
 		ply.setHealth(20);
 		ply.setFoodLevel(20);
 
-		// Add player to team
-		team.addPlayer((OfflinePlayer) ply);
-
 		// Remove default join message
 		event.setJoinMessage("");
 
 		// Setup player data. If they don't have a profile in the database, create one.
 		PlayerData playerData = null;
 		ArrayList<HashMap<String, String>> query = mainInstance.getDatabaseInstance()
-				.query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 6, false);
+				.query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 7, false);
 		if (query.size() > 0) {
 			HashMap<String, String> queryData = query.get(0);
 
-			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(queryData.get("points")), 0,
+			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(queryData.get("id")), Integer.parseInt(queryData.get("points")), 0,
 					Double.parseDouble(queryData.get("timePlayed")), ply.getAddress().getHostName(),
 					UserGroup.fromInt(Integer.parseInt(queryData.get("userGroup"))));
 		} else {
 			mainInstance.getDatabaseInstance().query(
-					"INSERT INTO users (name,ip) VALUES ('" + ply.getName() + "','" + ply.getAddress() + "')", 0, true);
-			playerData = new PlayerData(mainInstance, ply, 0, 0, 0.0, ply.getAddress().getHostName(), UserGroup.USER);
+					"INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ply.getAddress() + "')", 0, true);
+			ArrayList<HashMap<String, String>> query2 = mainInstance.getDatabaseInstance()
+					.query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 1, false);
+			HashMap<String, String> queryData = query2.get(0);
+			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(queryData.get("id")), 0, 0, 0.0, ply.getAddress().getHostName(), UserGroup.USER);
 
 			// Let everyone know this is a new player
 			for (Player player : world.getPlayers()) {
@@ -275,15 +184,11 @@ public class PlayerHandling implements Listener {
 		}
 		playersData.put(ply.getName(), playerData);
 		playerData.setItems();
-
-		// Set players scoreboard
-		playerData.setScoreboard(board, objective);
-
+		
 		// Teleport to main worlds spawn location
 		ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
 
-		// Check if there are any undeleted worlds that weren't deleted on the previous
-		// server shutdown
+		// Check if there are any undeleted worlds that weren't deleted on the previous server shutdown
 		if (!worldsChecked) {
 			worldsChecked = true;
 			MultiverseCore mv = mainInstance.getMultiverseInstance();
@@ -295,6 +200,9 @@ public class PlayerHandling implements Listener {
 				}
 			}
 		}
+		
+		//Add player to hub
+		mainInstance.getHubInstance().playerJoin(ply);
 	}
 
 	// Handle when a player leaves the server
@@ -308,6 +216,16 @@ public class PlayerHandling implements Listener {
 		// If the player is in a game, remove them
 		PlayerData pd = playersData.get(ply.getName());
 		mainInstance.getGameInstance().removePlayerFromGame(ply, pd.getRealm());
+		
+		//If player is in parkour
+		if (mainInstance.getHubParkourInstance().getPlayers().contains(ply)) {
+			mainInstance.getHubParkourInstance().playerLeave(ply);
+		}
+		
+		//If player is in parkour
+		if (mainInstance.getHubParkourInstance().getPlayers().contains(ply)) {
+			mainInstance.getHubParkourInstance().playerLeave(ply);
+		}
 
 		//Update play time
 		DatabaseHandling dh = mainInstance.getDatabaseInstance();
@@ -383,7 +301,17 @@ public class PlayerHandling implements Listener {
 			event.setCancelled(true);
 		}
 	}
-
+	//Handle when a block is placed
+	public void onBlockPlace(BlockPlaceEvent event) {
+		Player ply = event.getPlayer();
+		PlayerData playerData = playersData.get(ply.getName());
+		
+		if (ply.hasPermission("nyeblock.canPlaceBlocks")) {
+			if (!playerData.getPermission("nyeblock.canPlaceBlocks")) {
+				event.setCancelled(true);
+			}
+		}
+	}
 	// Handle when a block is broken
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent event) {
@@ -557,159 +485,166 @@ public class PlayerHandling implements Listener {
 		
 		if (event != null) {
 			ItemStack item = event.getCurrentItem();
-			
+
 			if (item != null) {				
 				ItemMeta itemMeta = item.getItemMeta();
 				
-				// Track items in menus
-				if (event.getView().getTitle().equalsIgnoreCase(ChatColor.DARK_GRAY + "Server Menu")) {
-					event.getView().close();
-					HubMenu hubMenu = new HubMenu();
-					hubMenu.clickItem(ply, itemMeta.getLocalizedName(), mainInstance);
-				} else if (event.getView().getTitle()
-						.equalsIgnoreCase(ChatColor.DARK_GRAY + "Select a Kit")) {
-					event.getView().close();
-					KitSelector selectKit = new KitSelector(getPlayerData(ply).getRealm());
-					selectKit.clickItem(ply, itemMeta.getLocalizedName(), mainInstance);
-				} else {
-					String itemName = itemMeta.getLocalizedName();
-					PlayerData playerData = playersData.get(ply.getName());
-					
-					if (itemName.equals("hub_menu")) {
+				if (itemMeta != null) {
+					// Track items in menus
+					if (event.getView().getTitle().equalsIgnoreCase(ChatColor.DARK_GRAY + "Game Menu")) {
+						event.getView().close();
 						HubMenu hubMenu = new HubMenu();
+						hubMenu.clickItem(ply, itemMeta.getLocalizedName(), mainInstance);
+					} else if (event.getView().getTitle()
+							.equalsIgnoreCase(ChatColor.DARK_GRAY + "Select a Kit")) {
+						event.getView().close();
+						KitSelector selectKit = new KitSelector(getPlayerData(ply).getRealm());
+						selectKit.clickItem(ply, itemMeta.getLocalizedName(), mainInstance);
+					} else if (event.getView().getTitle()
+							.equalsIgnoreCase(ChatColor.DARK_GRAY + "Parkour Menu")) {
+						event.getView().close();
+						ParkourMenu select = new ParkourMenu();
+						select.clickItem(ply, itemMeta.getLocalizedName(), mainInstance);
+					} else {
+						String itemName = itemMeta.getLocalizedName();
+						PlayerData playerData = playersData.get(ply.getName());
 						
-						hubMenu.openMenu(mainInstance,ply);
-						event.setCancelled(false);
-					} else if (itemName.equals("return_to_hub")) {
-						// Remove player from game
-						if (playerData.getRealm() == Realm.KITPVP) {
-							for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-								if (game.isInServer(ply)) {
-									game.playerLeave(ply, true, true);
+						if (itemName.equals("hub_menu")) {
+							HubMenu hubMenu = new HubMenu();
+							
+							hubMenu.openMenu(mainInstance,ply);
+							event.setCancelled(false);
+						} else if (itemName.equals("return_to_hub")) {
+							// Remove player from game
+							if (playerData.getRealm() == Realm.KITPVP) {
+								for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
+									if (game.isInServer(ply)) {
+										game.playerLeave(ply, true, true);
+									}
+								}
+							} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
+								for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
+									if (game.isInServer(ply)) {
+										game.playerLeave(ply, true, true);
+									}
+								}
+							} else if (playerData.getRealm() == Realm.SKYWARS) {
+								for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
+									if (game.isInServer(ply)) {
+										game.playerLeave(ply, true, true);
+									}
 								}
 							}
-						} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
-							for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
-								if (game.isInServer(ply)) {
-									game.playerLeave(ply, true, true);
+							event.setCancelled(false);
+						} else if (itemName.equals("kit_selector")) {
+							if (playerData.getRealm() == Realm.KITPVP) {
+								for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
+									if (game.isInServer(ply)) {
+										if (game.isInGraceBounds(ply)) {
+											KitSelector selectKit = new KitSelector(Realm.KITPVP);
+											
+											selectKit.openMenu(ply, mainInstance);
+										}
+									}
 								}
-							}
-						} else if (playerData.getRealm() == Realm.SKYWARS) {
-							for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-								if (game.isInServer(ply)) {
-									game.playerLeave(ply, true, true);
-								}
-							}
-						}
-						event.setCancelled(false);
-					} else if (itemName.equals("kit_selector")) {
-						if (playerData.getRealm() == Realm.KITPVP) {
-							for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-								if (game.isInServer(ply)) {
-									if (game.isInGraceBounds(ply)) {
-										KitSelector selectKit = new KitSelector(Realm.KITPVP);
+							} else if (playerData.getRealm() == Realm.SKYWARS) {
+								for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
+									if (game.isInServer(ply)) {
+										KitSelector selectKit = new KitSelector(Realm.SKYWARS);
 										
 										selectKit.openMenu(ply, mainInstance);
 									}
 								}
 							}
-						} else if (playerData.getRealm() == Realm.SKYWARS) {
-							for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-								if (game.isInServer(ply)) {
-									KitSelector selectKit = new KitSelector(Realm.SKYWARS);
-									
-									selectKit.openMenu(ply, mainInstance);
-								}
-							}
-						}
-						event.setCancelled(false);
-					} else if (itemName.equals("player_selector")) {
-						int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
-						String worldName = playerData.getCustomDataKey("player_world");
-						
-						if (playerData.getRealm() == Realm.STEPSPLEEF) {
-							for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
-								if (game.getWorldName().equalsIgnoreCase(worldName)) {
-									ArrayList<Player> playersInGame = game.getPlayersInGame();
-									
-									if (playersInGame.size() > currentIndex + 1) {
-										Player playerToSpec = playersInGame.get(currentIndex + 1);
+							event.setCancelled(false);
+						} else if (itemName.equals("player_selector")) {
+							int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
+							String worldName = playerData.getCustomDataKey("player_world");
+							
+							if (playerData.getRealm() == Realm.STEPSPLEEF) {
+								for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
+									if (game.getWorldName().equalsIgnoreCase(worldName)) {
+										ArrayList<Player> playersInGame = game.getPlayersInGame();
 										
-										ply.teleport(playerToSpec);
-										itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-												+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-												+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-										playerData.setCustomDataKey("player_selector_index",
-												String.valueOf(currentIndex + 1));
-									} else {
-										if (playersInGame.size() > 0) {
-											Player playerToSpec = playersInGame.get(0);
+										if (playersInGame.size() > currentIndex + 1) {
+											Player playerToSpec = playersInGame.get(currentIndex + 1);
 											
 											ply.teleport(playerToSpec);
 											itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
 													+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
 													+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-											playerData.setCustomDataKey("player_selector_index", "0");
+											playerData.setCustomDataKey("player_selector_index",
+													String.valueOf(currentIndex + 1));
 										} else {
-											itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
+											if (playersInGame.size() > 0) {
+												Player playerToSpec = playersInGame.get(0);
+												
+												ply.teleport(playerToSpec);
+												itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+														+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
+														+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+												playerData.setCustomDataKey("player_selector_index", "0");
+											} else {
+												itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
+											}
 										}
 									}
 								}
-							}
-						} else if (playerData.getRealm() == Realm.SKYWARS) {
-							for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-								if (game.getWorldName().equalsIgnoreCase(worldName)) {
-									ArrayList<Player> playersInGame = game.getPlayersInGame();
-									
-									if (playersInGame.size() > currentIndex + 1) {
-										Player playerToSpec = playersInGame.get(currentIndex + 1);
+							} else if (playerData.getRealm() == Realm.SKYWARS) {
+								for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
+									if (game.getWorldName().equalsIgnoreCase(worldName)) {
+										ArrayList<Player> playersInGame = game.getPlayersInGame();
 										
-										ply.teleport(playerToSpec);
-										itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-												+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-												+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-										playerData.setCustomDataKey("player_selector_index",
-												String.valueOf(currentIndex + 1));
-									} else {
-										if (playersInGame.size() > 0) {
-											Player playerToSpec = playersInGame.get(0);
+										if (playersInGame.size() > currentIndex + 1) {
+											Player playerToSpec = playersInGame.get(currentIndex + 1);
 											
 											ply.teleport(playerToSpec);
 											itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
 													+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
 													+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-											playerData.setCustomDataKey("player_selector_index", "0");
+											playerData.setCustomDataKey("player_selector_index",
+													String.valueOf(currentIndex + 1));
 										} else {
-											itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
+											if (playersInGame.size() > 0) {
+												Player playerToSpec = playersInGame.get(0);
+												
+												ply.teleport(playerToSpec);
+												itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+														+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
+														+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+												playerData.setCustomDataKey("player_selector_index", "0");
+											} else {
+												itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
+											}
 										}
 									}
 								}
 							}
+							event.getCurrentItem().setItemMeta(itemMeta);
+							event.setCancelled(false);
+						} else if (itemName.equals("hide_players")) {
+							boolean currentStatus = Boolean.parseBoolean(playerData.getCustomDataKey("hide_players"));
+							
+							if (currentStatus) {
+								playerData.setCustomDataKey("hide_players", "false");
+								itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.RED.toString() + ChatColor.BOLD + "Disabled");
+							} else {
+								playerData.setCustomDataKey("hide_players", "true");
+								itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.GREEN.toString() + ChatColor.BOLD + "Enabled");
+							}
+							item.setItemMeta(itemMeta);
 						}
-						event.getCurrentItem().setItemMeta(itemMeta);
-						event.setCancelled(false);
-					} else if (itemName.equals("hide_players")) {
-						boolean currentStatus = Boolean.parseBoolean(playerData.getCustomDataKey("hide_players"));
-
-						if (currentStatus) {
-							playerData.setCustomDataKey("hide_players", "false");
-							itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.RED.toString() + ChatColor.BOLD + "Disabled");
-						} else {
-							playerData.setCustomDataKey("hide_players", "true");
-							itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.GREEN.toString() + ChatColor.BOLD + "Enabled");
-						}
-						item.setItemMeta(itemMeta);
 					}
-				}
-				// Block inventory move
-				if (ply.hasPermission("nyeblock.canUseInventory")) {
-					PlayerData playerData = playersData.get(ply.getName());
-					
-					if (!playerData.getPermission("nyeblock.canUseInventory")) {
+					// Block inventory move
+					if (ply.hasPermission("nyeblock.canUseInventory")) {
+						PlayerData playerData = playersData.get(ply.getName());
+						
+						if (!playerData.getPermission("nyeblock.canUseInventory")) {
+							event.setCancelled(true);
+						}
+					} else {
 						event.setCancelled(true);
 					}
-				} else {
-					event.setCancelled(true);
 				}
 			}
 		}
@@ -731,6 +666,12 @@ public class PlayerHandling implements Listener {
 					HubMenu hubMenu = new HubMenu();
 
 					hubMenu.openMenu(mainInstance,ply);
+				} else if (itemName.equals("parkour_menu")) {
+					ParkourMenu parkourMenu = new ParkourMenu();
+
+					parkourMenu.openMenu(mainInstance,ply);
+					
+					event.setCancelled(true);
 				} else if (itemName.equals("return_to_hub")) {
 					event.setCancelled(true);
 					PlayerData playerData = playersData.get(ply.getName());
@@ -755,6 +696,8 @@ public class PlayerHandling implements Listener {
 							}
 						}
 					}
+				} else if (itemName.equals("parkour_start")) {
+					mainInstance.getHubParkourInstance().goToStart(ply);
 				} else if (itemName.equals("kit_selector")) {
 					PlayerData playerData = playersData.get(ply.getName());
 

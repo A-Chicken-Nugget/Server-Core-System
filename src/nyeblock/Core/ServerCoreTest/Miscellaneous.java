@@ -45,7 +45,7 @@ public class Miscellaneous {
 		}
 	}
 	//Format seconds into mm:ss
-	public static String formatSeconds(int timeInSeconds)
+	public static String formatMMSS(int timeInSeconds)
 	{
 	    int hours = timeInSeconds / 3600;
 	    int secondsLeft = timeInSeconds - hours * 3600;
