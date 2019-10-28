@@ -1,6 +1,7 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,6 +55,7 @@ import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Misc.TabListPerWorld;
 
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
@@ -84,6 +86,30 @@ public class PlayerHandling implements Listener {
 					}
 				}
 			}, 0, 20*180);
+		
+		//Manage players tab lists
+		Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"),
+			new Runnable() {
+				@Override
+				public void run() {
+					TabListPerWorld tlpw = new TabListPerWorld();
+					Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+					
+					for (Player ply : onlinePlayers) {
+						World plyWorld = ply.getWorld();
+						
+						for (Player ply2 : onlinePlayers) {
+							World ply2World = ply2.getWorld();
+							
+							if (!plyWorld.getName().equals(ply2World.getName())) {
+								tlpw.hideForWorld(plyWorld, ply2);
+							} else {
+								tlpw.showForWorld(ply2World, ply2);
+							}
+						}
+					}
+				}
+			}, 0, 20*3);
 	}
 
 	// Get a specific players player data
