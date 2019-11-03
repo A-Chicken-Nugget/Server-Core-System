@@ -6,50 +6,70 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+
+import com.gmail.filoghost.holographicdisplays.api.Hologram;
+import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation","serial"})
 public class Hub {
-	private Main mainInstance;
 	private PlayerHandling playerHandlingInstance;
 	private World world = Bukkit.getWorld("world");
 	private ArrayList<Player> players = new ArrayList<Player>();
 	private TextAnimation boardAnim = new TextAnimation("Hub board animation", new ArrayList<String>() {
 		{
-			add("�7NyeBlock");
-			add("�bN�7yeBlock");
-			add("�bNy�7eBlock");
-			add("�bNye�7Block");
-			add("�bNyeB�7lock");
-			add("�bNyeBl�7ock");
-			add("�bNyeBlo�7ck");
-			add("�bNyeBloc�7k");
-			add("�bNyeBlock");
-			add("�7N�byeBlock");
-			add("�7Ny�beBlock");
-			add("�7Nye�bBlock");
-			add("�7NyeB�block");
-			add("�7NyeBl�bock");
-			add("�7NyeBlo�bck");
-			add("�7NyeBloc�bk");
+			add("§7NyeBlock");
+			add("§bN§7yeBlock");
+			add("§bNy§7eBlock");
+			add("§bNye§7Block");
+			add("§bNyeB§7lock");
+			add("§bNyeBl§7ock");
+			add("§bNyeBlo§7ck");
+			add("§bNyeBloc§7k");
+			add("§bNyeBlock");
+			add("§7N§byeBlock");
+			add("§7Ny§beBlock");
+			add("§7Nye§bBlock");
+			add("§7NyeB§block");
+			add("§7NyeBl§bock");
+			add("§7NyeBlo§bck");
+			add("§7NyeBloc§bk");
 		}
 	}, 250);
 	
 	public Hub(Main mainInstance) {
-		this.mainInstance = mainInstance;
 		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
+		
+		//Floating text
+		Hologram spawnText = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),-9.498,116,-7.467));
+		spawnText.appendTextLine(ChatColor.YELLOW + "Welcome to " + ChatColor.BOLD + "NyeBlock");
+		spawnText.appendTextLine(ChatColor.YELLOW + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+		spawnText.appendTextLine(ChatColor.YELLOW + "Choose a game to play with the Game menu item!");
+		spawnText.appendTextLine(ChatColor.YELLOW + "Don't feel like playing a game? Try out the parkour!");
+		spawnText.appendItemLine(new ItemStack(Material.NETHER_STAR));
 		
 		//Main functions timer
 		mainInstance.getTimerInstance().createTimer("hub_functions", .5, 0, "mainFunctions", false, null, this);
 	}
 	
+	/**
+	* Get players
+	*/
+	public ArrayList<Player> getPlayers() {
+		return players;
+	}
 	/**
 	* Main functions ran for the hub
 	*/
@@ -88,6 +108,9 @@ public class Hub {
 					}
 				}
 			}
+			
+			//Set gamemode
+			ply.setGameMode(GameMode.ADVENTURE);
 		}
 	}
 	/**
@@ -102,13 +125,37 @@ public class Hub {
 		//Setup team
 		pd.setScoreBoardTeams(new String[] {"default"});
 		
+		//Add player to proper team
+		if (pd.getUserGroup() == UserGroup.ADMIN) {
+			pd.addPlayerToTeam("admin", ply);
+		} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
+			pd.addPlayerToTeam("moderator", ply);
+		} else {
+			pd.addPlayerToTeam("default", ply);
+		}
+		
 		//Add players to teams
 		for (Player player : players) {
 			PlayerData pd2 = playerHandlingInstance.getPlayerData(player);
 			
-			if (player != ply) {				
-				pd.addPlayerToTeam("default", player);
-				pd2.addPlayerToTeam("default", ply);
+			if (player != ply) {
+				//Update joining player team
+				if (pd2.getUserGroup() == UserGroup.ADMIN) {
+					pd.addPlayerToTeam("admin", player);
+				} else if (pd2.getUserGroup() == UserGroup.MODERATOR) {
+					pd.addPlayerToTeam("moderator", player);
+				} else {					
+					pd.addPlayerToTeam("default", player);
+				}
+				
+				//Update current players teams
+				if (pd.getUserGroup() == UserGroup.ADMIN) {
+					pd2.addPlayerToTeam("admin", ply);
+				} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
+					pd2.addPlayerToTeam("moderator", ply);
+				} else {
+					pd2.addPlayerToTeam("default", ply);
+				}
 			}
 		}
 	}

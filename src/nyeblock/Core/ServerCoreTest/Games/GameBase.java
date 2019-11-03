@@ -8,8 +8,6 @@ import java.util.Random;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.util.Vector;
 
 import nyeblock.Core.ServerCoreTest.Main;
@@ -36,6 +34,7 @@ public abstract class GameBase {
 	//Etc
 	protected int emptyCount = 0;
 	protected boolean canUsersJoin = false;
+	protected boolean forceStart = false;
 	
 	public GameBase(Main mainInstance, String worldName) {
 		mainInstance.getTimerInstance().createTimer("worldCheck_" + worldName, 1, 0, "checkWorld", true, null, this);
@@ -86,6 +85,12 @@ public abstract class GameBase {
 		}
 	}
 	/**
+    * Forces the start of the game
+    */
+	public void forceStart() {
+		forceStart = true;
+	}
+	/**
     * Sends a message in chat to all players in the game
     * @param message - the message to send.
     */
@@ -130,6 +135,12 @@ public abstract class GameBase {
 	// GETTERS
 	//
 	
+	/**
+    * Get instance of this game
+    */
+	public GameBase getInstance() {
+		return this;
+	}
 	/**
     * Get the join status of the game
     */

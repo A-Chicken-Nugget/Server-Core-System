@@ -15,6 +15,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.LocalConfiguration;
 
 import nyeblock.Core.ServerCoreTest.Games.Hub;
 import nyeblock.Core.ServerCoreTest.Games.HubParkour;
@@ -32,8 +34,8 @@ public class Main extends JavaPlugin {
 	//When this plugin is enabled, initialize important classes
 	public void onEnable() {
 		playerHandling = new PlayerHandling(this);
-		commandHandling = new CommandHandling(this);
 		gameHandling = new GameHandling(this);
+		commandHandling = new CommandHandling(this);
 		multiverse = (MultiverseCore) getServer().getPluginManager().getPlugin("Multiverse-Core");
 		timerHandling = new TimerHandling();
 		
@@ -43,11 +45,11 @@ public class Main extends JavaPlugin {
 		
 		//Handle config file
 		File configFile = new File(this.getDataFolder(), "config.yml");
+		FileConfiguration config;
 		if (configFile.exists()) {
-			FileConfiguration config = this.getConfig();
-			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
+			config = this.getConfig();
 		} else {
-			FileConfiguration config = this.getConfig();
+			config = this.getConfig();
 			config.addDefault("mysql.host","host");
 			config.addDefault("mysql.database","database");
 			config.addDefault("mysql.port",3306);
@@ -55,19 +57,34 @@ public class Main extends JavaPlugin {
 			config.addDefault("mysql.password", "password");
 			config.options().copyDefaults(true);
 			this.saveConfig();
-			
-			databaseHandling = new DatabaseHandling(config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
 		}
+		databaseHandling = new DatabaseHandling(this,config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
+		
+		//Disable multiverse chat tags
 		multiverse.getMVConfig().setPrefixChat(false);
 		
+		//Disable compass teleporting for ops
+		LocalConfiguration worldEditConfig = WorldEdit.getInstance().getConfiguration();
+		worldEditConfig.navigationWandMaxDistance = -1;
+		
+		//Initialize hub and hub parkour
 		hub = new Hub(this);
 		hubParkour = new HubParkour(this);
 		
+		//Set classes with event handlers
 		getServer().getPluginManager().registerEvents(playerHandling, this);
-		getServer().getPluginManager().registerEvents(gameHandling, this);
 		
+		//
+		// Commands
+		//
+		
+		//Set the players permission
 		this.getCommand("setpermission").setExecutor((CommandExecutor)commandHandling);
 		this.getCommand("setpermission").setTabCompleter((TabCompleter)commandHandling);
+		
+		//Force start the game you are in
+		this.getCommand("force-start").setExecutor((CommandExecutor)commandHandling);
+		this.getCommand("force-start").setTabCompleter((TabCompleter)commandHandling);
 	}
 	public void onDisable() {
 		//Delete created game worlds

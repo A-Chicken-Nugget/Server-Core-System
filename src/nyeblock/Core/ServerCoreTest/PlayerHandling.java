@@ -40,8 +40,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
-import com.gmail.filoghost.holographicdisplays.api.Hologram;
-import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
@@ -67,14 +65,6 @@ public class PlayerHandling implements Listener {
 	public PlayerHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
 		
-		//Floating text
-		Hologram spawnText = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),-9.498,116,-7.467));
-		spawnText.appendTextLine(ChatColor.YELLOW + "Welcome to " + ChatColor.BOLD + "NyeBlock");
-		spawnText.appendTextLine(ChatColor.YELLOW + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-		spawnText.appendTextLine(ChatColor.YELLOW + "Choose a game to play with the Game menu item!");
-		spawnText.appendTextLine(ChatColor.YELLOW + "← ← ← Parkour ← ← ←");
-		spawnText.appendItemLine(new ItemStack(Material.NETHER_STAR));
-		
 		// Save players play time every 3 minutes
 		Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"),
 			new Runnable() {
@@ -82,7 +72,10 @@ public class PlayerHandling implements Listener {
 				public void run() {
 					DatabaseHandling dh = mainInstance.getDatabaseInstance();
 					for (Player ply : Bukkit.getOnlinePlayers()) {
+						HashMap<Realm,Integer> realmXp = getPlayerData(ply).getRealmXp();
+						
 						dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
+						dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
 					}
 				}
 			}, 0, 20*180);
@@ -111,6 +104,10 @@ public class PlayerHandling implements Listener {
 				}
 			}, 0, 20*3);
 	}
+	
+	//
+	// GETTERS
+	//
 
 	// Get a specific players player data
 	public PlayerData getPlayerData(Player ply) {
@@ -123,12 +120,18 @@ public class PlayerHandling implements Listener {
 		}
 		return plyData;
 	}
+	
+	//
+	// EVENT HANDLERS
+	//
 
 	// Prevent mob spawn
 	@EventHandler()
 	public void onCreatureSpawn(CreatureSpawnEvent event) {
 		if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CUSTOM) {
 			event.setCancelled(true);
+		} else {
+			System.out.println("Spawning: " + event.getEntity().getName());
 		}
 	}
 
@@ -186,21 +189,25 @@ public class PlayerHandling implements Listener {
 
 		// Setup player data. If they don't have a profile in the database, create one.
 		PlayerData playerData = null;
-		ArrayList<HashMap<String, String>> query = mainInstance.getDatabaseInstance()
-				.query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 7, false);
-		if (query.size() > 0) {
-			HashMap<String, String> queryData = query.get(0);
+		ArrayList<HashMap<String, String>> userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 7, false);
+		
+		//If the player exists in the users table
+		if (userQuery.size() > 0) {
+			HashMap<String, String> userQueryData = userQuery.get(0);
 
-			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(queryData.get("id")), Integer.parseInt(queryData.get("points")), 0,
-					Double.parseDouble(queryData.get("timePlayed")), ply.getAddress().getHostName(),
-					UserGroup.fromInt(Integer.parseInt(queryData.get("userGroup"))));
+			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
+					Double.parseDouble(userQueryData.get("timePlayed")), ply.getAddress().getHostName(),
+					UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))));
+		//If the player does not exists in the users table
 		} else {
+			//Insert the user into the users table
 			mainInstance.getDatabaseInstance().query(
 					"INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ply.getAddress() + "')", 0, true);
-			ArrayList<HashMap<String, String>> query2 = mainInstance.getDatabaseInstance()
-					.query("SELECT * FROM users WHERE name = '" + ply.getName() + "'", 1, false);
-			HashMap<String, String> queryData = query2.get(0);
-			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(queryData.get("id")), 0, 0, 0.0, ply.getAddress().getHostName(), UserGroup.USER);
+			
+			//Get the users data from the users table. This is done to get their db id
+			userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+			HashMap<String, String> userQueryData = userQuery.get(0);
+			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ply.getAddress().getHostName(), UserGroup.USER);
 
 			// Let everyone know this is a new player
 			for (Player player : world.getPlayers()) {
@@ -235,17 +242,18 @@ public class PlayerHandling implements Listener {
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player ply = event.getPlayer();
+		PlayerData pd = playersData.get(ply.getName());
+		DatabaseHandling dh = mainInstance.getDatabaseInstance();
 
 		// Remove default quit message
 		event.setQuitMessage("");
 
 		// If the player is in a game, remove them
-		PlayerData pd = playersData.get(ply.getName());
 		mainInstance.getGameInstance().removePlayerFromGame(ply, pd.getRealm());
 		
-		//If player is in parkour
-		if (mainInstance.getHubParkourInstance().getPlayers().contains(ply)) {
-			mainInstance.getHubParkourInstance().playerLeave(ply);
+		//If player is in hub
+		if (mainInstance.getHubInstance().getPlayers().contains(ply)) {
+			mainInstance.getHubInstance().playerLeave(ply);
 		}
 		
 		//If player is in parkour
@@ -254,8 +262,11 @@ public class PlayerHandling implements Listener {
 		}
 
 		//Update play time
-		DatabaseHandling dh = mainInstance.getDatabaseInstance();
 		dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
+		
+		//Update realm xp
+		HashMap<Realm,Integer> realmXp = pd.getRealmXp();
+		dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
 		
 		//Remove player data
 		playersData.remove(ply.getName());
@@ -312,7 +323,6 @@ public class PlayerHandling implements Listener {
 			}
 		}
 	}
-
 	// Handle when a player attempts to drop an item
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent event) {
@@ -328,6 +338,7 @@ public class PlayerHandling implements Listener {
 		}
 	}
 	//Handle when a block is placed
+	@EventHandler
 	public void onBlockPlace(BlockPlaceEvent event) {
 		Player ply = event.getPlayer();
 		PlayerData playerData = playersData.get(ply.getName());
@@ -353,7 +364,6 @@ public class PlayerHandling implements Listener {
 			event.setCancelled(true);
 		}
 	}
-
 	// Handle when a player is damaged by an entity
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
@@ -377,7 +387,6 @@ public class PlayerHandling implements Listener {
 			}
 		}
 	}
-
 	// Handle when the player falls
 	@EventHandler
 	public void onDamageEvent(EntityDamageEvent event) {
@@ -399,7 +408,6 @@ public class PlayerHandling implements Listener {
 			}
 		}
 	}
-
 	// Handle when a player has died
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent event) {
@@ -452,7 +460,6 @@ public class PlayerHandling implements Listener {
 		}
 		killed.remove();
 	}
-
 	// Handle when a player shoots a bow
 	@EventHandler
 	public void onPlayerShootBow(EntityShootBowEvent event) {
@@ -468,7 +475,6 @@ public class PlayerHandling implements Listener {
 			}
 		}
 	}
-
 	// Handle explosion events
 	@EventHandler
 	public void onExplode(EntityExplodeEvent event) {
@@ -478,7 +484,6 @@ public class PlayerHandling implements Listener {
 			event.setCancelled(true);
 		}
 	}
-
 	// Handle potion splashes
 	@EventHandler
 	public void onPotionSpash(PotionSplashEvent event) {
@@ -562,6 +567,14 @@ public class PlayerHandling implements Listener {
 								}
 							}
 							event.setCancelled(false);
+						} else if (itemName.equals("parkour_menu")) {
+							ParkourMenu parkourMenu = new ParkourMenu();
+
+							parkourMenu.openMenu(mainInstance,ply);
+							
+							event.setCancelled(true);
+						} else if (itemName.equals("parkour_start")) {
+							mainInstance.getHubParkourInstance().goToStart(ply);
 						} else if (itemName.equals("kit_selector")) {
 							if (playerData.getRealm() == Realm.KITPVP) {
 								for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
@@ -675,7 +688,6 @@ public class PlayerHandling implements Listener {
 			}
 		}
 	}
-
 	// Handle when a player uses an item
 	@EventHandler
 	public void onPlayerUse(PlayerInteractEvent event) {

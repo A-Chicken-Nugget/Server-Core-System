@@ -4,9 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
@@ -27,11 +33,24 @@ import com.sk89q.worldedit.session.ClipboardHolder;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class SchematicHandling {
+	public Set<String> listFilesUsingDirectoryStream(String dir) throws IOException {
+	    Set<String> fileList = new HashSet<>();
+	    try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dir))) {
+	        for (Path path : stream) {
+	            if (!Files.isDirectory(path)) {
+	                fileList.add(path.getFileName()
+	                    .toString());
+	            }
+	        }
+	    }
+	    return fileList;
+	}
+	
 	//Create a schematic in a world based on the game
 	public String setSchematic(Realm realm, String worldName) {
 		String schemToUse = null;
 		ArrayList<File> schems = new ArrayList<File>();
-		schems.addAll(Arrays.asList(new File(Bukkit.getPluginManager().getPlugin("WorldEdit").getDataFolder().getAbsolutePath() + "\\schematics").listFiles()));
+		schems.addAll(Arrays.asList(new File(Bukkit.getPluginManager().getPlugin("WorldEdit").getDataFolder().getAbsolutePath() + "/schematics").listFiles()));
 		ArrayList<File> validSchems = new ArrayList<File>();
 		File schem = new File("");
 		

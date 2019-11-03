@@ -53,6 +53,7 @@ public class HubMenu {
 		ArrayList<String> skyWarsMetaLore = new ArrayList<String>();
 		skyWarsMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getSkyWarsGames().size() + ChatColor.YELLOW + " games active");
 		skyWarsMetaLore.add(ChatColor.RESET.toString());
+		skyWarsMetaLore.add(ChatColor.RED.toString() + ChatColor.BOLD + "(Currently Disabled)");
 		skyWarsMetaLore.add(ChatColor.YELLOW + "Each player starts with their");
 		skyWarsMetaLore.add(ChatColor.YELLOW + "own island. You must craft and");
 		skyWarsMetaLore.add(ChatColor.YELLOW + "build your way to the center of");
@@ -88,7 +89,7 @@ public class HubMenu {
 		} else if (item.equalsIgnoreCase("stepSpleef")) {
 			mainInstance.getGameInstance().joinGame(ply, Realm.STEPSPLEEF);
 		} else if (item.equalsIgnoreCase("skyWars")) {
-			mainInstance.getGameInstance().joinGame(ply, Realm.SKYWARS);
+//			mainInstance.getGameInstance().joinGame(ply, Realm.SKYWARS);
 		}
 	}
 }

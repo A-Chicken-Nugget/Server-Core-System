@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -14,25 +15,43 @@ public class DatabaseHandling {
 	private String database;
 	private String username;
 	private String password;
+	private Connection connection;
+	private long lastConnected = System.currentTimeMillis() / 1000L;
 	
-	public DatabaseHandling(String host, String database, int port, String username, String password) {
+	public DatabaseHandling(Main mainInstance, String host, String database, int port, String username, String password) {
 		this.host = host;
 		this.database = database;
 		this.port = port;
 		this.username = username;
 		this.password = password;
+		
+		mainInstance.getTimerInstance().createTimer("db_connection_montior", 2, 0, "checkConnectionStatus", false, null, this);
 	}
 	
-	public ArrayList<HashMap<String,String>> query(String query, int columns, boolean changeData) {
-		Connection conn;
+	public void checkConnectionStatus() {
+		if ((System.currentTimeMillis() / 1000L) - lastConnected > 15) {
+			try {
+				if (connection != null && !connection.isClosed()) {
+					connection.close();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+			}
+		}
+	}
+	public synchronized ArrayList<HashMap<String,String>> query(String query, int columns, boolean changeData) {
 		String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false";
 		ArrayList<HashMap<String,String>> returnData = new ArrayList<HashMap<String,String>>();
  
 		//Attempt to connect
 		try {
 			//Connection succeeded
-			conn = DriverManager.getConnection(url, username, password);
-			PreparedStatement statement = conn.prepareStatement(query);
+			if (connection == null || connection.isClosed()) {				
+				connection = DriverManager.getConnection(url, username, password);
+				lastConnected = System.currentTimeMillis() / 1000L;
+			}
+			PreparedStatement statement = connection.prepareStatement(query);
 			
 			if (changeData) {
 				statement.executeUpdate();

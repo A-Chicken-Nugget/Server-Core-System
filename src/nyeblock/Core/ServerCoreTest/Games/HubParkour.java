@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -22,13 +23,14 @@ import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.DatabaseHandling;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-@SuppressWarnings("serial")
+@SuppressWarnings({"deprecation","serial"})
 public class HubParkour {
 	private Main mainInstance;
 	private PlayerHandling playerHandling;
@@ -73,10 +75,10 @@ public class HubParkour {
 		top5Text.appendItemLine(new ItemStack(Material.CLOCK));
 
 		// Zones timer
-		mainInstance.getTimerInstance().createTimer("parkour_functions", .25, 0, "mainFunctions", false, null, this);
+		mainInstance.getTimerInstance().createTimer("parkour_functions", .15, 0, "mainFunctions", false, null, this);
 		
 		// Refresh top 5 times floating text
-		mainInstance.getTimerInstance().createTimer("parkour_top5", 10, 0, "getTop5", false, null, this);
+		mainInstance.getTimerInstance().createTimer("parkour_top5", 60, 0, "getTop5", false, null, this);
 
 		// Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("parkour_scoreboard", .5, 0, "setScoreboard", false, null, this);
@@ -117,8 +119,26 @@ public class HubParkour {
 											.format(System.currentTimeMillis() - playerTimes.get(ply.getName()))));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-
+			
 			pd.updateObjectiveScores(scores);
+			
+			//Check hide players status
+			if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+				for (Player ply2 : world.getPlayers()) {
+					if (ply.canSee(ply2) && ply != ply2) {
+						ply.hidePlayer(ply2);
+					}
+				}
+			} else {
+				for (Player ply2 : world.getPlayers()) {
+					if (!ply.canSee(ply2) && ply != ply2) {
+						ply.showPlayer(ply2);
+					}
+				}
+			}
+			
+			//Set gamemode
+			ply.setGameMode(GameMode.ADVENTURE);
 		}
 	}
 	/**
@@ -151,7 +171,7 @@ public class HubParkour {
 				PlayerData pd = playerHandling.getPlayerData(ply);
 
 				// Check if player is in the parkour zones
-				if (Miscellaneous.playerInArea(loc.toVector(), parkourZonePoint1, parkourZonePoint2)) {
+				if (Toolkit.playerInArea(loc.toVector(), parkourZonePoint1, parkourZonePoint2)) {
 					if (!players.contains(ply)) {
 						//Setup player
 						players.add(ply);
@@ -167,13 +187,37 @@ public class HubParkour {
 						//Setup team
 						pd.setScoreBoardTeams(new String[] {"default"});
 						
+						//Add player to proper team
+						if (pd.getUserGroup() == UserGroup.ADMIN) {
+							pd.addPlayerToTeam("admin", ply);
+						} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
+							pd.addPlayerToTeam("moderator", ply);
+						} else {
+							pd.addPlayerToTeam("default", ply);
+						}
+						
 						//Add players to teams
 						for (Player player : players) {
 							PlayerData pd2 = playerHandling.getPlayerData(player);
 							
-							if (player != ply) {				
-								pd.addPlayerToTeam("default", player);
-								pd2.addPlayerToTeam("default", ply);
+							if (player != ply) {
+								//Update joining player team
+								if (pd2.getUserGroup() == UserGroup.ADMIN) {
+									pd.addPlayerToTeam("admin", player);
+								} else if (pd2.getUserGroup() == UserGroup.MODERATOR) {
+									pd.addPlayerToTeam("moderator", player);
+								} else {					
+									pd.addPlayerToTeam("default", player);
+								}
+								
+								//Update current players teams
+								if (pd.getUserGroup() == UserGroup.ADMIN) {
+									pd2.addPlayerToTeam("admin", ply);
+								} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
+									pd2.addPlayerToTeam("moderator", ply);
+								} else {
+									pd2.addPlayerToTeam("default", ply);
+								}
 							}
 						}
 						
@@ -201,7 +245,7 @@ public class HubParkour {
 						startItem.setItemMeta(startItemMeta);
 						ply.getInventory().setItem(2, startItem);
 					}
-					if (Miscellaneous.playerInArea(loc.toVector(), restartZonePoint1, restartZonePoint2)) {
+					if (Toolkit.playerInArea(loc.toVector(), restartZonePoint1, restartZonePoint2)) {
 						if (playerCheckPoints.get(ply.getName()) != -1) {
 							Location tempPos = checkPointLocations.get(playerCheckPoints.get(ply.getName()));
 							Float[] tempDirection = checkPointDirections.get(playerCheckPoints.get(ply.getName()));
@@ -272,7 +316,7 @@ public class HubParkour {
 								 ply.sendMessage(ChatColor.YELLOW + "You finished the parkour! Your time was " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
 							 }
 						} else {
-							if (Miscellaneous.playerInArea(loc.toVector(), timeResetZonePoint1, timeResetZonePoint2)) {
+							if (Toolkit.playerInArea(loc.toVector(), timeResetZonePoint1, timeResetZonePoint2)) {
 								if (playerTimes.get(ply.getName()) != 0L) {
 									playerTimes.put(ply.getName(), 0L);
 								}

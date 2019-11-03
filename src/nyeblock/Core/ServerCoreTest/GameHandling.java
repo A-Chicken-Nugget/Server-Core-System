@@ -5,16 +5,16 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 
 import net.md_5.bungee.api.ChatColor;
+import nyeblock.Core.ServerCoreTest.Games.GameBase;
 import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings("deprecation")
-public class GameHandling implements Listener {
+public class GameHandling {
 	private Main mainInstance;
 	private ArrayList<KitPvP> kitPvpGames = new ArrayList<>();
 	private ArrayList<StepSpleef> stepSpleefGames = new ArrayList<>();
@@ -90,6 +90,31 @@ public class GameHandling implements Listener {
 			}
 		}
 	}
+	//Get the game the player is in
+	public GameBase getPlayerGame(Player ply, Realm realm) {
+		GameBase gameClass = null;
+		
+		if (realm == Realm.KITPVP) {
+			for (KitPvP game : kitPvpGames) {
+				if (game.isInServer(ply)) {
+					gameClass = game.getInstance();
+				}
+			}
+		} else if (realm == Realm.STEPSPLEEF) {
+			for (StepSpleef game : stepSpleefGames) {
+				if (game.isInServer(ply)) {
+					gameClass = game;
+				}
+			}
+		} else if (realm == Realm.SKYWARS) {
+			for (SkyWars game : skyWarsGames) {
+				if (game.isInServer(ply)) {
+					gameClass = game;
+				}
+			}
+		}
+		return gameClass;
+	}
 	//Handles the player joining games
 	public void joinGame(Player ply, Realm realm) {
 		PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
@@ -110,7 +135,7 @@ public class GameHandling implements Listener {
 				
 				//Loop through active games to find one for the player
 				for(KitPvP currentGame : kitPvpGames) {
-					if (currentGame.getJoinStatus()) {					
+					if (currentGame.getJoinStatus() && !currentGame.isGameOver()) {					
 						if (gameToJoin != null) {
 							if (gameToJoin.getPlayerCount() != gameToJoin.getMaxPlayers() && gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {
 								gameToJoin = currentGame;
@@ -155,7 +180,7 @@ public class GameHandling implements Listener {
 				if (gameToJoin == null) {
 					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
 					String worldName = "stepSpleef_" + UUID.randomUUID();
-					gameToJoin = new StepSpleef(mainInstance,worldName,300,2,15);
+					gameToJoin = new StepSpleef(mainInstance,worldName,300,6,15);
 					stepSpleefGames.add(gameToJoin);
 					
 					//Create void world

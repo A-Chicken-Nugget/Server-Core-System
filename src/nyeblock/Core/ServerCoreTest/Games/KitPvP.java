@@ -24,9 +24,9 @@ import com.connorlinfoot.actionbarapi.ActionBarAPI;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings("deprecation")
 public class KitPvP extends GameBase {
@@ -102,7 +102,7 @@ public class KitPvP extends GameBase {
 	/**
     * Sets the kitpvp scoreboard and manages world/grace zone
     */
-	public void setScoreboard() {		
+	public void setScoreboard() {
 		//Get top 5 players with the most kills
 		HashMap<String,Integer> tempPlayerKills = new HashMap<String,Integer>(playerKills);
 		
@@ -156,7 +156,7 @@ public class KitPvP extends GameBase {
 			if (top5.size() > 0) {	
 				scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			}
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (timeLeft <= 0 ? "0:00" : Miscellaneous.formatMMSS(timeLeft)));
+			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));			
 			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "KITPVP");
@@ -180,7 +180,7 @@ public class KitPvP extends GameBase {
 						PlayerData pdata = playerHandling.getPlayerData(ply);
 						
 						//Check if player is in the grace bounds
-						if (Miscellaneous.playerInArea(loc.toVector(), safeZonePoint1, safeZonePoint2)) {
+						if (Toolkit.playerInArea(loc.toVector(), safeZonePoint1, safeZonePoint2)) {
 							if (playerInGraceBounds.get(ply.getName()) == null || !playerInGraceBounds.get(ply.getName())) {
 								//Add players to team
 								for (Map.Entry<String,Boolean> entry : playerInGraceBounds.entrySet()) {
@@ -238,18 +238,48 @@ public class KitPvP extends GameBase {
 			if (!endStarted && players.size() > 0) {
 				endStarted = true;
 				int top = Collections.max(playerKills.values());
+				boolean receiveXp = true;
 				
+				if (players.size() < 3) {
+					receiveXp = false;
+				}
 				if (top > 0) {        					
 					for (Map.Entry<String,Integer> entry : playerKills.entrySet()) {
 						if (entry.getValue() == top) {
+							Player ply = Bukkit.getServer().getPlayer(entry.getKey());
+							PlayerData pd = playerHandling.getPlayerData(ply);
+							
 							messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + entry.getKey() + " has won!");
+							if (receiveXp) {								
+								ply.sendMessage(ChatColor.YELLOW + "You received " + ChatColor.GREEN + "200xp " + ChatColor.YELLOW + "for winning the game!");
+								pd.giveXP(Realm.KITPVP, 200);
+							} else {
+								ply.sendMessage(ChatColor.YELLOW + "Not enough players to receive xp.");
+							}
+						} else {
+							Player ply = Bukkit.getServer().getPlayer(entry.getKey());
+							
+							if (receiveXp) {								
+								PlayerData pd = playerHandling.getPlayerData(ply);
+								int place = 0;
+								for (int i = 0; i < top5.size(); i++) {
+									if (top5.get(i).equalsIgnoreCase(ply.getName())) {									
+										place = 5-i;
+									}
+								}
+								
+								ply.sendMessage(ChatColor.YELLOW + "You received " + ChatColor.GREEN + place*35 + "xp " + ChatColor.YELLOW + "for placing #" + place);
+								pd.giveXP(Realm.KITPVP, place*35);
+							} else {
+								ply.sendMessage(ChatColor.YELLOW + "Not enough players to receive xp.");
+							}
 						}
 					}
 				} else {
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				}
-				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
+				//Wait 10 seconds, then kick everyone
+				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 10, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}
@@ -391,9 +421,14 @@ public class KitPvP extends GameBase {
     */
 	public void playerDeath(Player killed,Player killer) {
 		if (killer != null) {
+			PlayerData pd = playerHandling.getPlayerData(killer);
+			
 			//Update the killers kill count
 			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
-			ActionBarAPI.sendActionBar(killer,ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName(), 40);
+			
+			ActionBarAPI.sendActionBar(killer,ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " (" + ChatColor.GREEN + "+10 XP" + ChatColor.YELLOW + ")", 80);
+			pd.giveXP(realm, 10);
+			
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
 		} else {
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has died!");
@@ -416,6 +451,9 @@ public class KitPvP extends GameBase {
 		players.add(ply);
 		playerKills.put(ply.getName(), 0);
 		playerKits.put(ply.getName(),"knight");
+		
+		//Give player level
+		ply.giveExp(ply.getLevel() + 2);
 		
 		//Teleport to random spawn
 		Vector randSpawn = getRandomSpawnPoint();

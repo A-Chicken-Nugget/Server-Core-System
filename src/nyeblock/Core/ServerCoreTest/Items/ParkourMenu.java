@@ -1,7 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Items;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -41,17 +40,17 @@ public class ParkourMenu {
 		//Parkour mode
 		ItemStack parkourMode = new ItemStack(isParkourMode ? Material.GREEN_WOOL : Material.RED_WOOL);
 		ItemMeta parkourModeMeta = parkourMode.getItemMeta();
-		parkourModeMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Parkour Mode " + (isParkourMode ? ("(" + ChatColor.GREEN + "Enabled" + ChatColor.YELLOW + ")") : ("(" + ChatColor.RED + "Disabled" + ChatColor.YELLOW + ")")));
+		parkourModeMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Parkour Mode " + (isParkourMode ? ("(" + ChatColor.GREEN + "Competitive" + ChatColor.YELLOW + ")") : ("(" + ChatColor.RED + "Normal" + ChatColor.YELLOW + ")")));
 		parkourModeMeta.setLocalizedName("parkourMode");
 		parkourModeMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 		ArrayList<String> parkourModeMetaLore = new ArrayList<String>();
 		parkourModeMetaLore.add(ChatColor.YELLOW + "Set your parkour mode.");
 		parkourModeMetaLore.add(ChatColor.RESET.toString());
-		parkourModeMetaLore.add(ChatColor.YELLOW + "If enabled then you will be timed and");
+		parkourModeMetaLore.add(ChatColor.YELLOW + "If competitive then you will be timed and");
 		parkourModeMetaLore.add(ChatColor.YELLOW + "teleported to the start if you fail.");
 		parkourModeMetaLore.add(ChatColor.YELLOW + "Try to beat the top 5 times.");
 		parkourModeMetaLore.add(ChatColor.RESET.toString());
-		parkourModeMetaLore.add(ChatColor.YELLOW + "If disabled then you will not be timed");
+		parkourModeMetaLore.add(ChatColor.YELLOW + "If normal then you will not be timed");
 		parkourModeMetaLore.add(ChatColor.YELLOW + "and if you fail will be teleported");
 		parkourModeMetaLore.add(ChatColor.YELLOW + "to your last checkpoint.");
 		parkourModeMeta.setLore(parkourModeMetaLore);
@@ -68,10 +67,10 @@ public class ParkourMenu {
 			
 			if (isParkourMode) {
 				pd.setCustomDataKey("parkour_mode", "false");
-				ply.sendMessage(ChatColor.YELLOW + "Parkour mode set to " + ChatColor.RED.toString() + ChatColor.BOLD + "disabled");
+				ply.sendMessage(ChatColor.YELLOW + "Parkour mode set to " + ChatColor.RED.toString() + ChatColor.BOLD + "normal");
 			} else {
 				pd.setCustomDataKey("parkour_mode", "true");
-				ply.sendMessage(ChatColor.YELLOW + "Parkour mode set to " + ChatColor.GREEN.toString() + ChatColor.BOLD + "enabled");
+				ply.sendMessage(ChatColor.YELLOW + "Parkour mode set to " + ChatColor.GREEN.toString() + ChatColor.BOLD + "competitive");
 			}
 			ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 			

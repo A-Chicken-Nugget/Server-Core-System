@@ -21,10 +21,10 @@ import com.connorlinfoot.actionbarapi.ActionBarAPI;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({"deprecation","serial"})
 public class SkyWars extends GameBase {
@@ -177,7 +177,7 @@ public class SkyWars extends GameBase {
 				emptyCount = 0;
 			}
 			if (!active) {
-				if (players.size() >= 2) {					
+				if (players.size() >= minPlayers || forceStart) {					
 					if (readyCount == 0) {
 						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
@@ -242,7 +242,7 @@ public class SkyWars extends GameBase {
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Miscellaneous.formatMMSS(timeLeft)) : Miscellaneous.formatMMSS(duration)));
+			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
 			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");

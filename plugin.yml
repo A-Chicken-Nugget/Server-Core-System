@@ -6,4 +6,7 @@ depend: [Multiverse-Core, WorldEdit]
 commands:
   setpermission:
     description: Set the permission for a player
-    usage: /setpermission <player> <string> <value>
+    usage: /setpermission <player> <permission> <value>
+  force-start:
+    description: Force start the game you are in
+    usage: /forcestart

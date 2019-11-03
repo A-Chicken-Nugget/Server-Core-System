@@ -16,14 +16,13 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Miscellaneous;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({"deprecation","serial"})
 public class StepSpleef extends GameBase {
@@ -131,31 +130,29 @@ public class StepSpleef extends GameBase {
 		if (gameBegun) {
 			//Add blocks to be deleted
 			for (Player ply : playersInGame) {
-				for (double startSub = .10; startSub < 1.1; startSub += .1) {
-					Location loc = ply.getLocation().subtract(0,.1,0);
-					ArrayList<Block> locs = Miscellaneous.getBlocksBelowPlayer(ply);
-					Location closestLoc = null;
+				Location loc = ply.getLocation().subtract(0,.1,0);
+				ArrayList<Block> locs = Toolkit.getBlocksBelowPlayer(ply);
+				Location closestLoc = null;
+				
+				for (int i = 0; i < locs.size(); i++) {
+					Location lc = locs.get(i).getLocation();
 					
-					for (int i = 0; i < locs.size(); i++) {
-						Location lc = locs.get(i).getLocation();
-						
-						if (closestLoc != null) {
-							if (loc.distance(closestLoc) > loc.distance(lc) && lc.getBlock().getType() != Material.AIR) {
-								closestLoc = lc;
-							}
-						} else {
-							if (lc.getBlock().getType() != Material.AIR) {							
-								closestLoc = lc;
-							}
+					if (closestLoc != null) {
+						if (loc.distance(closestLoc) > loc.distance(lc) && lc.getBlock().getType() != Material.AIR) {
+							closestLoc = lc;
+						}
+					} else {
+						if (lc.getBlock().getType() != Material.AIR) {							
+							closestLoc = lc;
 						}
 					}
-					
-					if (closestLoc != null) {		
-						if (!blocksToDelete.containsKey(closestLoc.toVector())) {						
-							blocksToDelete.put(closestLoc.toVector(), (System.currentTimeMillis()));
-						}
-						break;
+				}
+				
+				if (closestLoc != null) {		
+					if (!blocksToDelete.containsKey(closestLoc.toVector())) {						
+						blocksToDelete.put(closestLoc.toVector(), (System.currentTimeMillis()));
 					}
+					break;
 				}
 			}
 			//Delete blocks that are over .5 seconds old
@@ -224,7 +221,7 @@ public class StepSpleef extends GameBase {
 				emptyCount = 0;
 			}
 			if (!active) {
-				if (players.size() >= minPlayers) {
+				if (players.size() >= minPlayers || forceStart) {
 					if (readyCount == 0) {
 						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
@@ -289,7 +286,11 @@ public class StepSpleef extends GameBase {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 					endStarted = true;
+					PlayerData pd = playerHandling.getPlayerData(ply);
+					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
+					ply.sendMessage(ChatColor.YELLOW + "You received " + ChatColor.GREEN + "150xp " + ChatColor.YELLOW + "for winning.");
+					pd.giveXP(Realm.STEPSPLEEF, 150);
 					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
 			}
@@ -306,7 +307,7 @@ public class StepSpleef extends GameBase {
 			scores.put(pos++, ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Miscellaneous.formatMMSS(timeLeft)) : Miscellaneous.formatMMSS(duration)));
+			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
 			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
@@ -366,7 +367,6 @@ public class StepSpleef extends GameBase {
 	/**
     * Handle when a player died
     */
-	@SuppressWarnings("serial")
 	public void playerDeath(Player killed) {
 		if (gameBegun) {			
 			boolean isSpectating = playersSpectating.contains(killed);

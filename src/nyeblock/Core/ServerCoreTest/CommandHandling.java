@@ -1,9 +1,12 @@
 package nyeblock.Core.ServerCoreTest;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -11,15 +14,20 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import net.md_5.bungee.api.ChatColor;
+import nyeblock.Core.ServerCoreTest.Games.GameBase;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 @SuppressWarnings({"rawtypes","unchecked"})
 
 public class CommandHandling implements CommandExecutor, TabCompleter {
 	private Main mainInstance;
+	private PlayerHandling playerHandlingInstance;
+	private GameHandling gameHandlingInstance;
 	
 	public CommandHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
+		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
+		gameHandlingInstance = mainInstance.getGameInstance();
 	}
 	
 	@Override
@@ -32,52 +40,19 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 				if (args.length > 0) {
 					if (label.equalsIgnoreCase("setpermission")) {
 						
-//						if (args[0].equalsIgnoreCase("start")) {
-//							round.begin();
-//						} else if (args[0].equalsIgnoreCase("end")) {
-//							round.end();
-//						} else {
-//							ply.sendMessage(ChatColor.RED + "Please enter a valid command!");
-//						}
-					} //else if (label.equalsIgnoreCase("kit")) {
-//						if (args[0].equalsIgnoreCase("brawler")) {
-//							PlayerInventory inv = ply.getInventory();
-//							
-//							for (ItemStack item : inv) {
-//								if (item != null) {								
-//									if (item.getType() != Material.DIAMOND) {
-//										if (item.getType() != Material.EMERALD) {										
-//											inv.remove(item);
-//										}
-//									}
-//								}
-//							}
-//							
-//							ItemStack sword = new ItemStack(Material.DIAMOND_SWORD);
-//							sword.addEnchantment(Enchantment.KNOCKBACK, 2);
-//							sword.addEnchantment(Enchantment.FIRE_ASPECT, 2);
-//							sword.addEnchantment(Enchantment.DAMAGE_ALL, 4);
-//							
-//							ItemStack[] armor = {
-//									new ItemStack(Material.IRON_BOOTS),
-//									new ItemStack(Material.IRON_LEGGINGS),
-//									new ItemStack(Material.IRON_CHESTPLATE),
-//									new ItemStack(Material.IRON_HELMET)
-//							};
-//							
-//							armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 4);
-//							armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 4);
-//							armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 4);
-//							armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 4);
-//							
-//							ply.getInventory().addItem(sword);
-//							ply.getInventory().setArmorContents(armor);
-//						} else {
-//							ply.sendMessage(ChatColor.RED + "Please enter a valid kit name!");
-//						}
-//					}
+					}
 				} else {
-					ply.sendMessage(ChatColor.RED + "Please enter a valid command!");
+					if (label.equalsIgnoreCase("force-start")) {
+						GameBase game = gameHandlingInstance.getPlayerGame(ply, playerHandlingInstance.getPlayerData(ply).getRealm());
+						
+						if (game != null) {	
+							game.forceStart();
+						} else {
+							ply.sendMessage(ChatColor.YELLOW + "You are not in a game!");
+						}
+					} else {						
+						ply.sendMessage(ChatColor.RED + "Please enter arguements for this command!");
+					}
 				}
 			} else {
 				ply.sendMessage(ChatColor.RED + "I'm sorry, but you do not have permission to perform this command. Please contact the server administrators if you believe that this is a mistake.");
@@ -88,13 +63,24 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 		}
 	}
 	
+	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
 		List<String> autoCompletes = new ArrayList();
 		
 		if (command.getLabel().equalsIgnoreCase("setpermission")) {
-			if (args.length > 1) {
+			if (args.length == 1) {
+				for (Player ply : Bukkit.getOnlinePlayers()) {
+					autoCompletes.add(ply.getName());
+				}
+			} else if (args.length == 2) {
 				for (String permission : Arrays.asList("canBreakBlocks","canUseInventory")) {
 					if (permission.contains(args[1])) {
+						autoCompletes.add(permission);
+					}
+				}
+			} else if (args.length == 3) {
+				for (String permission : Arrays.asList("true","false")) {
+					if (permission.contains(args[2])) {
 						autoCompletes.add(permission);
 					}
 				}
