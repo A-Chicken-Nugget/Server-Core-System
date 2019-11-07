@@ -22,6 +22,7 @@ import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 
 import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
@@ -57,49 +58,6 @@ public class PlayerData {
 	private Scoreboard board;
 	private Objective objective;
 	
-	public PlayerData(Main mainInstance, Player ply, int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
-		this.mainInstance = mainInstance;
-		databaseHandlingInstance = mainInstance.getDatabaseInstance();
-		this.player = ply;
-		this.id = id;
-		permissions = new PermissionAttachment(mainInstance, ply);
-		this.points = points;
-		this.xp = xp;
-		this.timePlayed = timePlayed;
-		this.ip = ip;
-		this.userGroup = userGroup;
-		setPermissions();
-		
-		board = Bukkit.getScoreboardManager().getNewScoreboard();
-		objective = board.registerNewObjective("scoreboard", "");
-		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-		player.setScoreboard(board);
-		
-		//Get the players realm xp
-		ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
-		
-		//If the player exists in the userXP table
-		if (realmXPQuery.size() > 0) {
-			HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
-			
-			//Set the players realm xp
-			realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
-			realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
-			realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
-		} else {
-			//Insert the user in the userXP table
-			mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + ply.getUniqueId() + "')", 0, true);
-			
-			realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
-			HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
-			
-			//Set the players realm xp
-			realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
-			realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
-			realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
-		}
-	}
-	
 	/**
     * Give the player xp
     * @param realm - realm to give the xp should be added to
@@ -107,6 +65,15 @@ public class PlayerData {
     */
 	public void giveXP(Realm realm, int amount) {
 		realmXp.put(realm, realmXp.get(realm) + amount);
+	}
+	/**
+	* Create the players scoreboard
+	*/
+	public void createScoreboard(Player ply) {
+		board = Bukkit.getScoreboardManager().getNewScoreboard();
+		objective = board.registerNewObjective("scoreboard", "");
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		ply.setScoreboard(board);
 	}
 	
 	//
@@ -190,6 +157,54 @@ public class PlayerData {
 	// SETTERS
 	//
 	
+	/**
+    * Set the players data
+    * @param mainInstance - plugin instance
+    * @param ply - the player
+    * @param id - database id
+    * @param points - amount of points
+    * @param xp - amount of xp
+    * @param timePlayed - amount of time played on the server
+    * @param ip - players ip
+    * @param userGroup - players user group
+    */
+	public void setData(Main mainInstance, Player ply, int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
+		this.mainInstance = mainInstance;
+		databaseHandlingInstance = mainInstance.getDatabaseInstance();
+		this.player = ply;
+		this.id = id;
+		permissions = new PermissionAttachment(mainInstance, ply);
+		this.points = points;
+		this.xp = xp;
+		this.timePlayed = timePlayed;
+		this.ip = ip;
+		this.userGroup = userGroup;
+		setPermissions();
+		
+		//Get the players realm xp
+		ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
+		
+		//If the player exists in the userXP table
+		if (realmXPQuery.size() > 0) {
+			HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
+			
+			//Set the players realm xp
+			realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
+			realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
+			realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
+		} else {
+			//Insert the user in the userXP table
+			mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + ply.getUniqueId() + "')", 0, true);
+			
+			realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
+			HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
+			
+			//Set the players realm xp
+			realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
+			realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
+			realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
+		}
+	}
 	/**
     * Set the players permissions based on their current realm
     */
@@ -394,11 +409,18 @@ public class PlayerData {
 			Team team = board.registerNewTeam(teams[i]);
 			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
 		}
+		//Admin user group
 		Team team = board.registerNewTeam("admin");
 		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
 		team.setColor(ChatColor.DARK_RED);
+		//Moderator user group
 		team = board.registerNewTeam("moderator");
 		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+		team.setColor(ChatColor.GRAY);
+		//Tester user group
+		team = board.registerNewTeam("tester");
+		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+		team.setColor(ChatColor.YELLOW);
 	}
 	/**
     * Clear the players scoreboard teams, scores and health tags

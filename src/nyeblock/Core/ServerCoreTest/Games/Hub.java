@@ -108,9 +108,6 @@ public class Hub {
 					}
 				}
 			}
-			
-			//Set gamemode
-			ply.setGameMode(GameMode.ADVENTURE);
 		}
 	}
 	/**
@@ -130,6 +127,8 @@ public class Hub {
 			pd.addPlayerToTeam("admin", ply);
 		} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
 			pd.addPlayerToTeam("moderator", ply);
+		} else if (pd.getUserGroup() == UserGroup.TESTER) {
+			pd.addPlayerToTeam("tester", ply);
 		} else {
 			pd.addPlayerToTeam("default", ply);
 		}
@@ -144,6 +143,8 @@ public class Hub {
 					pd.addPlayerToTeam("admin", player);
 				} else if (pd2.getUserGroup() == UserGroup.MODERATOR) {
 					pd.addPlayerToTeam("moderator", player);
+				} else if (pd2.getUserGroup() == UserGroup.TESTER) {
+					pd.addPlayerToTeam("tester", ply);
 				} else {					
 					pd.addPlayerToTeam("default", player);
 				}
@@ -153,6 +154,8 @@ public class Hub {
 					pd2.addPlayerToTeam("admin", ply);
 				} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
 					pd2.addPlayerToTeam("moderator", ply);
+				} else if (pd.getUserGroup() == UserGroup.TESTER) {
+					pd2.addPlayerToTeam("tester", ply);
 				} else {
 					pd2.addPlayerToTeam("default", ply);
 				}

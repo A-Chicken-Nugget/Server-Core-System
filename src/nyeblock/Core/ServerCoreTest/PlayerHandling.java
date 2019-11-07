@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
@@ -14,6 +15,8 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -27,8 +30,11 @@ import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -66,31 +72,43 @@ public class PlayerHandling implements Listener {
 		this.mainInstance = mainInstance;
 		
 		// Save players play time every 3 minutes
-		Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"),
-			new Runnable() {
-				@Override
-				public void run() {
-					DatabaseHandling dh = mainInstance.getDatabaseInstance();
-					for (Player ply : Bukkit.getOnlinePlayers()) {
-						HashMap<Realm,Integer> realmXp = getPlayerData(ply).getRealmXp();
+		Bukkit.getScheduler().runTaskTimer(mainInstance, new Runnable() {
+			@Override
+			public void run() {
+				DatabaseHandling dh = mainInstance.getDatabaseInstance();
+				for (Player ply : Bukkit.getOnlinePlayers()) {
+					PlayerData pd = getPlayerData(ply);
+					
+					if (pd != null) {						
+						HashMap<Realm,Integer> realmXp = pd.getRealmXp();
 						
 						dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
 						dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
 					}
 				}
-			}, 0, 20*180);
+			}
+		}, 0, 20*180);
 		
 		//Manage players tab lists
-		Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"),
-			new Runnable() {
-				@Override
-				public void run() {
-					TabListPerWorld tlpw = new TabListPerWorld();
-					Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+		Bukkit.getScheduler().runTaskTimer(mainInstance, new Runnable() {
+			@Override
+			public void run() {
+				TabListPerWorld tlpw = new TabListPerWorld();
+				Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+				
+				for (Player ply : onlinePlayers) {
+					World plyWorld = ply.getWorld();
+					PlayerData pd = getPlayerData(ply);
+					boolean hidePlayers = false;
 					
-					for (Player ply : onlinePlayers) {
-						World plyWorld = ply.getWorld();
-						
+					if (pd != null) {						
+						hidePlayers = Boolean.parseBoolean(getPlayerData(ply).getCustomDataKey("hide_players"));
+					}
+					if (plyWorld.getName().equals("world") && hidePlayers) {
+						for (Player ply2 : onlinePlayers) {
+							ply.hidePlayer(ply2);
+						}
+					} else {							
 						for (Player ply2 : onlinePlayers) {
 							World ply2World = ply2.getWorld();
 							
@@ -102,7 +120,8 @@ public class PlayerHandling implements Listener {
 						}
 					}
 				}
-			}, 0, 20*3);
+			}
+		}, 0, 20*3);
 	}
 	
 	//
@@ -157,11 +176,6 @@ public class PlayerHandling implements Listener {
 	public void onPlayerRecipe(PlayerRecipeDiscoverEvent event) {
 		event.setCancelled(true);
 	}
-	//Hide achievements from being broadcasted
-//	@EventHandler
-//	public void onPlayerAchievement(PlayerAchievementAwardedEvent event) {
-//		event.setCancelled(true);
-//	}
 	// Keep the players food bar at 100%
 	@EventHandler
 	public void onFoodChange(FoodLevelChangeEvent event) {
@@ -172,6 +186,25 @@ public class PlayerHandling implements Listener {
 				if (event.getFoodLevel() < 20) {
 					event.setFoodLevel(20);
 				}
+			}
+		}
+	}
+	//Handle when the player attempts to connect
+	@EventHandler
+	public void playerPreLogin(AsyncPlayerPreLoginEvent event) {
+		UUID uniqueId = event.getUniqueId();
+		
+		ArrayList<HashMap<String, String>> banQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM bans WHERE uniqueId = '" + uniqueId + "' AND isExpired != 1", 5, false);
+		
+		//If the user has an active ban
+		if (banQuery.size() > 0) {
+			HashMap<String, String> banQueryData = banQuery.get(0);
+			long difference = ((Integer.parseInt(banQueryData.get("length"))*60) + Integer.parseInt(banQueryData.get("added")) - (System.currentTimeMillis()/1000L));
+			
+			if (difference <= 0) {
+				mainInstance.getDatabaseInstance().query("UPDATE bans SET isExpired = 1 WHERE id = " + banQueryData.get("id"), 0, true);
+			} else {
+				event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + (difference/60) + " minute(s).\n\nReason:" + banQueryData.get("reason"));
 			}
 		}
 	}
@@ -186,40 +219,62 @@ public class PlayerHandling implements Listener {
 
 		// Remove default join message
 		event.setJoinMessage("");
-
+		
 		// Setup player data. If they don't have a profile in the database, create one.
-		PlayerData playerData = null;
-		ArrayList<HashMap<String, String>> userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 7, false);
+		final PlayerData playerData = new PlayerData();
+		playerData.createScoreboard(ply);
 		
-		//If the player exists in the users table
-		if (userQuery.size() > 0) {
-			HashMap<String, String> userQueryData = userQuery.get(0);
-
-			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
-					Double.parseDouble(userQueryData.get("timePlayed")), ply.getAddress().getHostName(),
-					UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))));
-		//If the player does not exists in the users table
-		} else {
-			//Insert the user into the users table
-			mainInstance.getDatabaseInstance().query(
-					"INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ply.getAddress() + "')", 0, true);
-			
-			//Get the users data from the users table. This is done to get their db id
-			userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 1, false);
-			HashMap<String, String> userQueryData = userQuery.get(0);
-			playerData = new PlayerData(mainInstance, ply, Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ply.getAddress().getHostName(), UserGroup.USER);
-
-			// Let everyone know this is a new player
-			for (Player player : world.getPlayers()) {
-				player.sendMessage(ChatColor.YELLOW + "Welcome " + ChatColor.BOLD + ply.getName()
-						+ ChatColor.RESET.toString() + ChatColor.YELLOW + " for their first time on the server!");
-			}
-		}
-		playersData.put(ply.getName(), playerData);
-		playerData.setItems();
+		//Run database queries asynchronously
+		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+            @Override
+            public void run() {            	
+            	ArrayList<HashMap<String, String>> userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 7, false);
+            	String ip = ply.getAddress().toString().split(":")[0].replace("/","");
+            	
+            	//If the player exists in the users table
+            	if (userQuery.size() > 0) {
+            		HashMap<String, String> userQueryData = userQuery.get(0);
+            		
+            		playerData.setData(mainInstance, ply, Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
+            				Double.parseDouble(userQueryData.get("timePlayed")), ip,
+            				UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))));
+            		
+            		//If the players ip has changed from whats in the DB
+            		if (!userQueryData.get("ip").equals(ip)) {
+            			//Insert ip into the ipLogs table
+                		mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", 0, true);
+                		mainInstance.getDatabaseInstance().query("UPDATE users SET ip = '" + ip + "' WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+            		}
+            		
+            		//If the player does not exists in the users table
+            	} else {
+            		//Insert the user into the users table
+            		mainInstance.getDatabaseInstance().query("INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ip + "')", 0, true);
+            		
+            		//Insert ip into the ipLogs table
+            		mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", 0, true);
+            		
+            		//Get the users data from the users table. This is done to get their db id
+            		userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+            		HashMap<String, String> userQueryData = userQuery.get(0);
+            		playerData.setData(mainInstance, ply, Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER);
+            		
+            		// Let everyone know this is a new player
+            		for (Player player : world.getPlayers()) {
+            			player.sendMessage(ChatColor.YELLOW + "Welcome " + ChatColor.BOLD + ply.getName()
+            			+ ChatColor.RESET.toString() + ChatColor.YELLOW + " for their first time on the server!");
+            		}
+            	}
+            	playersData.put(ply.getName(), playerData);
+            	playerData.setItems();
+            	
+            	//Add player to hub
+            	mainInstance.getHubInstance().playerJoin(ply);
+            }
+		});
 		
-		// Teleport to main worlds spawn location
-		ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
+		// Teleport to spawn
+		ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
 
 		// Check if there are any undeleted worlds that weren't deleted on the previous server shutdown
 		if (!worldsChecked) {
@@ -227,15 +282,12 @@ public class PlayerHandling implements Listener {
 			MultiverseCore mv = mainInstance.getMultiverseInstance();
 
 			for (MultiverseWorld world : mv.getMVWorldManager().getMVWorlds()) {
-				if (!world.getName().toString().matches("world|world_nether|world_the_end")) {
+				if (!world.getName().toString().matches("world")) {
 					MVWorldManager wm = mv.getMVWorldManager();
 					wm.deleteWorld(world.getName());
 				}
 			}
 		}
-		
-		//Add player to hub
-		mainInstance.getHubInstance().playerJoin(ply);
 	}
 
 	// Handle when a player leaves the server
@@ -395,16 +447,33 @@ public class PlayerHandling implements Listener {
 		if (ply instanceof Player) {
 			PlayerData playerData = playersData.get(ply.getName());
 
-			if (!playerData.getPermission("nyeblock.canBeDamaged")) {
-				event.setCancelled(true);
-			} else {
-				if (event.getCause() == DamageCause.FALL) {
-					if (!playerData.getPermission("nyeblock.canTakeFallDamage")
-							|| playerData.getPermission("nyeblock.tempNoDamageOnFall")) {
-						playerData.setPermission("nyeblock.tempNoDamageOnFall", false);
-						event.setCancelled(true);
+			if (playerData != null) {				
+				if (!playerData.getPermission("nyeblock.canBeDamaged")) {
+					event.setCancelled(true);
+				} else {
+					if (event.getCause() == DamageCause.FALL) {
+						if (!playerData.getPermission("nyeblock.canTakeFallDamage")
+								|| playerData.getPermission("nyeblock.tempNoDamageOnFall")) {
+							playerData.setPermission("nyeblock.tempNoDamageOnFall", false);
+							event.setCancelled(true);
+						}
 					}
 				}
+			} else {
+				event.setCancelled(true);
+			}
+		}
+	}
+	@EventHandler
+	public void onProjectileHit(ProjectileHitEvent event) {
+		Projectile projectile = event.getEntity();
+		Player attacked = (Player)event.getHitEntity();
+		Player attacker = (Player)event.getEntity().getShooter();
+		
+		if (attacked instanceof Player && attacker instanceof Player) {
+			if (projectile instanceof Snowball) {
+				attacked.damage(0.0001);
+				attacked.setVelocity(attacked.getVelocity().add(attacked.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(1)));
 			}
 		}
 	}

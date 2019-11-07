@@ -1,10 +1,24 @@
 package nyeblock.Core.ServerCoreTest;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.WorldType;
+import org.bukkit.World.Environment;
+import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
+
+import com.onarandombox.MultiverseCore.MultiverseCore;
+import com.onarandombox.MultiverseCore.api.MVWorldManager;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Games.GameBase;
@@ -12,6 +26,7 @@ import nyeblock.Core.ServerCoreTest.Games.KitPvP;
 import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.GameUtils;
 
 @SuppressWarnings("deprecation")
 public class GameHandling {
@@ -122,7 +137,7 @@ public class GameHandling {
 		
 		if (!pd.isQueuingGame()) {
 			if (realm == Realm.HUB) {
-				ply.teleport(Bukkit.getWorld("world").getSpawnLocation());
+				ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
 				
 				mainInstance.getHubInstance().playerJoin(ply);
 				
@@ -153,8 +168,16 @@ public class GameHandling {
 					kitPvpGames.add(gameToJoin);
 					
 					//Create void world
-					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "mv create " + worldName + " normal -g VoidGenerator -t FLAT");
-					
+//					Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+//			            @Override
+//			            public void run() {
+//							GameUtils.copyWorld(new File("./game_worlds/kitpvp_nether").toPath(), new File("./" + worldName).toPath());
+//							mainInstance.getMultiverseInstance().getMVWorldManager().world
+//			            }
+//					});
+					MVWorldManager mvwm = mainInstance.getMultiverseInstance().getMVWorldManager();
+					mvwm.addWorld(worldName, Environment.NORMAL, null, WorldType.FLAT, false, "VoidGenerator");
+	            	
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,worldName,realm,true}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");

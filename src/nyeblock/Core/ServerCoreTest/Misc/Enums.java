@@ -31,7 +31,8 @@ public class Enums {
 	public enum UserGroup {
 		USER(1,"User","[" + ChatColor.WHITE + "User" + ChatColor.RESET + "]"),
 		ADMIN(2,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]"),
-		MODERATOR(3,"Moderator","[" + ChatColor.GRAY + "Mod" + ChatColor.RESET + "}");
+		MODERATOR(3,"Moderator","[" + ChatColor.GRAY + "Mod" + ChatColor.RESET + "]"),
+		TESTER(4,"Tester","[" + ChatColor.YELLOW + "Tester" + ChatColor.RESET + "]");
 
 		private int value;  
 		private String name;

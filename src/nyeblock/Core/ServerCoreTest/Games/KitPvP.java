@@ -26,6 +26,7 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings("deprecation")
@@ -201,9 +202,6 @@ public class KitPvP extends GameBase {
 								if (pdata.getPermission("nyeblock.canBeDamaged")) {        									
 									pdata.setPermission("nyeblock.canBeDamaged", false);
 								}
-								if (ply.getGameMode() != GameMode.ADVENTURE) {
-									ply.setGameMode(GameMode.ADVENTURE);
-								}
 							}
 						} else {
 							if (playerInGraceBounds.get(ply.getName())) {     
@@ -223,9 +221,6 @@ public class KitPvP extends GameBase {
 							if (pdata != null) {
 								if (!pdata.getPermission("nyeblock.canBeDamaged")) {
 									pdata.setPermission("nyeblock.canBeDamaged", true);
-								}
-								if (ply.getGameMode() != GameMode.SURVIVAL) {
-									ply.setGameMode(GameMode.SURVIVAL);
 								}
 							}
 						}
@@ -426,6 +421,9 @@ public class KitPvP extends GameBase {
 			//Update the killers kill count
 			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
 			
+			//Give player level
+			killer.setLevel(killer.getLevel() + 2);
+			
 			ActionBarAPI.sendActionBar(killer,ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " (" + ChatColor.GREEN + "+10 XP" + ChatColor.YELLOW + ")", 80);
 			pd.giveXP(realm, 10);
 			
@@ -452,8 +450,45 @@ public class KitPvP extends GameBase {
 		playerKills.put(ply.getName(), 0);
 		playerKits.put(ply.getName(),"knight");
 		
-		//Give player level
-		ply.giveExp(ply.getLevel() + 2);
+		//Add player to proper team
+		if (pd.getUserGroup() == UserGroup.ADMIN) {
+			pd.addPlayerToTeam("admin", ply);
+		} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
+			pd.addPlayerToTeam("moderator", ply);
+		} else if (pd.getUserGroup() == UserGroup.TESTER) {
+			pd.addPlayerToTeam("tester", ply);
+		} else {
+			pd.addPlayerToTeam("default", ply);
+		}
+		
+		//Add players to teams
+		for (Player player : players) {
+			PlayerData pd2 = playerHandling.getPlayerData(player);
+			
+			if (player != ply) {
+				//Update joining player team
+				if (pd2.getUserGroup() == UserGroup.ADMIN) {
+					pd.addPlayerToTeam("admin", player);
+				} else if (pd2.getUserGroup() == UserGroup.MODERATOR) {
+					pd.addPlayerToTeam("moderator", player);
+				} else if (pd2.getUserGroup() == UserGroup.TESTER) {
+					pd.addPlayerToTeam("tester", ply);
+				} else {					
+					pd.addPlayerToTeam("default", player);
+				}
+				
+				//Update current players teams
+				if (pd.getUserGroup() == UserGroup.ADMIN) {
+					pd2.addPlayerToTeam("admin", ply);
+				} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
+					pd2.addPlayerToTeam("moderator", ply);
+				} else if (pd.getUserGroup() == UserGroup.TESTER) {
+					pd2.addPlayerToTeam("tester", ply);
+				} else {
+					pd2.addPlayerToTeam("default", ply);
+				}
+			}
+		}
 		
 		//Teleport to random spawn
 		Vector randSpawn = getRandomSpawnPoint();
@@ -466,6 +501,9 @@ public class KitPvP extends GameBase {
 				player.setHealth(player.getHealth() - 0.0001);
 			}
 		}
+		
+		//Set gamemode
+		ply.setGameMode(GameMode.SURVIVAL);
 	}
 	/**
     * Handles when a player leaves the game

@@ -1,13 +1,12 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.io.File;
+import java.util.HashMap;
 
 //import java.io.File;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +19,7 @@ import com.sk89q.worldedit.LocalConfiguration;
 
 import nyeblock.Core.ServerCoreTest.Games.Hub;
 import nyeblock.Core.ServerCoreTest.Games.HubParkour;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class Main extends JavaPlugin {
 	private PlayerHandling playerHandling;
@@ -35,12 +35,11 @@ public class Main extends JavaPlugin {
 	public void onEnable() {
 		playerHandling = new PlayerHandling(this);
 		gameHandling = new GameHandling(this);
-		commandHandling = new CommandHandling(this);
 		multiverse = (MultiverseCore) getServer().getPluginManager().getPlugin("Multiverse-Core");
 		timerHandling = new TimerHandling();
 		
 		//Set spawn point for hub world
-		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.435, 113, -11.550));
+		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
 		Bukkit.getWorld("world").loadChunk(-10, 113);
 		
 		//Handle config file
@@ -59,6 +58,7 @@ public class Main extends JavaPlugin {
 			this.saveConfig();
 		}
 		databaseHandling = new DatabaseHandling(this,config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
+		commandHandling = new CommandHandling(this);
 		
 		//Disable multiverse chat tags
 		multiverse.getMVConfig().setPrefixChat(false);
@@ -73,32 +73,23 @@ public class Main extends JavaPlugin {
 		
 		//Set classes with event handlers
 		getServer().getPluginManager().registerEvents(playerHandling, this);
-		
-		//
-		// Commands
-		//
-		
-		//Set the players permission
-		this.getCommand("setpermission").setExecutor((CommandExecutor)commandHandling);
-		this.getCommand("setpermission").setTabCompleter((TabCompleter)commandHandling);
-		
-		//Force start the game you are in
-		this.getCommand("force-start").setExecutor((CommandExecutor)commandHandling);
-		this.getCommand("force-start").setTabCompleter((TabCompleter)commandHandling);
 	}
 	public void onDisable() {
 		//Delete created game worlds
 		MultiverseCore mv = multiverse;
 		for(MultiverseWorld world : mv.getMVWorldManager().getMVWorlds()) {
-			if (!world.getName().toString().matches("world|world_nether|world_the_end")) {
+			if (!world.getName().toString().matches("world")) {
 				MVWorldManager wm = mv.getMVWorldManager();
 				wm.deleteWorld(world.getName());
 			}
 		}
-		//Save every players play time
+		//Save every players play time and xp
 		DatabaseHandling dh = this.getDatabaseInstance();
 		for (Player ply : Bukkit.getWorld("world").getPlayers()) {
+			HashMap<Realm,Integer> realmXp = playerHandling.getPlayerData(ply).getRealmXp();
+			
 			dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-playerHandling.getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
+			dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
 		}
 	}
 	

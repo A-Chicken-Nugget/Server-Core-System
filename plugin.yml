@@ -10,3 +10,6 @@ commands:
   force-start:
     description: Force start the game you are in
     usage: /forcestart
+  ban:
+    description: Ban the specific player for the specified amount of time
+    usage: /ban <player> <length in minutes> <reason>
