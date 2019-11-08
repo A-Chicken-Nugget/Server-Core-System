@@ -12,11 +12,12 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.Commands.Ban;
+import nyeblock.Core.ServerCoreTest.Commands.BanIp;
 import nyeblock.Core.ServerCoreTest.Commands.CommandBase;
 import nyeblock.Core.ServerCoreTest.Commands.ForceStart;
 import nyeblock.Core.ServerCoreTest.Commands.SetPermission;
 
-@SuppressWarnings({"rawtypes","unchecked","serial"})
+@SuppressWarnings({"rawtypes","unchecked"})
 public class CommandHandling implements CommandExecutor, TabCompleter {
 	private Main mainInstance;
 	private HashMap<CommandBase,String> commands = new HashMap<>();
@@ -30,6 +31,7 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 		
 		commands.put(new SetPermission(mainInstance).getInstance(),"setPermission");
 		commands.put(new Ban(mainInstance).getInstance(),"ban");
+		commands.put(new BanIp(mainInstance).getInstance(),"banIp");
 		commands.put(new ForceStart(mainInstance).getInstance(),"force-start");
 		
 		//

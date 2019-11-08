@@ -207,6 +207,21 @@ public class PlayerHandling implements Listener {
 				event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + (difference/60) + " minute(s).\n\nReason:" + banQueryData.get("reason"));
 			}
 		}
+		
+		String playerIp = event.getAddress().toString().split(":")[0].replace("/","");
+		ArrayList<HashMap<String, String>> ipBanQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM ipBans WHERE ip = '" + playerIp + "' AND isExpired != 1", 5, false);
+		
+		//If the user has an active ban
+		if (ipBanQuery.size() > 0) {
+			HashMap<String, String> ipBanQueryData = ipBanQuery.get(0);
+			long difference = ((Integer.parseInt(ipBanQueryData.get("length"))*60) + Integer.parseInt(ipBanQueryData.get("added")) - (System.currentTimeMillis()/1000L));
+			
+			if (difference <= 0) {
+				mainInstance.getDatabaseInstance().query("UPDATE bans SET isExpired = 1 WHERE id = " + ipBanQueryData.get("id"), 0, true);
+			} else {
+				event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + (difference/60) + " minute(s).\n\nReason:" + ipBanQueryData.get("reason"));
+			}
+		}
 	}
 	// Handle when the player joins the server
 	@EventHandler

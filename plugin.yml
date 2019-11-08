@@ -13,3 +13,6 @@ commands:
   ban:
     description: Ban the specific player for the specified amount of time
     usage: /ban <player> <length in minutes> <reason>
+  banIp:
+    description: Ban the specified ip
+    usage: /banIp <ip>
