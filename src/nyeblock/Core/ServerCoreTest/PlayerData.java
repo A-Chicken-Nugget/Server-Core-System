@@ -181,29 +181,34 @@ public class PlayerData {
 		this.userGroup = userGroup;
 		setPermissions();
 		
-		//Get the players realm xp
-		ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
-		
-		//If the player exists in the userXP table
-		if (realmXPQuery.size() > 0) {
-			HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
-			
-			//Set the players realm xp
-			realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
-			realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
-			realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
-		} else {
-			//Insert the user in the userXP table
-			mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + ply.getUniqueId() + "')", 0, true);
-			
-			realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
-			HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
-			
-			//Set the players realm xp
-			realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
-			realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
-			realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
-		}
+		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+            @Override
+            public void run() {                   	
+            	//Get the players realm xp
+            	ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
+            	
+            	//If the player exists in the userXP table
+            	if (realmXPQuery.size() > 0) {
+            		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
+            		
+            		//Set the players realm xp
+            		realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
+            		realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
+            		realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
+            	} else {
+            		//Insert the user in the userXP table
+            		mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + ply.getUniqueId() + "')", 0, true);
+            		
+            		realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
+            		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
+            		
+            		//Set the players realm xp
+            		realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
+            		realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
+            		realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
+            	}
+            }
+		});
 	}
 	/**
     * Set the players permissions based on their current realm

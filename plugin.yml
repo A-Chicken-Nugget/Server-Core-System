@@ -15,4 +15,4 @@ commands:
     usage: /ban <player> <length in minutes> <reason>
   banIp:
     description: Ban the specified ip
-    usage: /banIp <ip>
+    usage: /banIp <ip> <length in minutes> <reason>

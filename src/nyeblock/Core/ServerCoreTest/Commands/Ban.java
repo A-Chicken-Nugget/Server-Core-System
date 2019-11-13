@@ -13,10 +13,12 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class Ban extends CommandBase {
+	private Main mainInstance;
 	private DatabaseHandling databaseHandling;
 	
 	public Ban(Main mainInstance) {
 		super(mainInstance);
+		this.mainInstance = mainInstance;
 		databaseHandling = mainInstance.getDatabaseInstance();
 	}
 	
@@ -27,12 +29,19 @@ public class Ban extends CommandBase {
 			if (player != null) {
 				try {
 					int length = Integer.parseInt(args[1]);
-					String reason = "";
+					String tempReason = "";
 					
 					for (int i = 2; i < args.length; i++) {
-						reason += " " + args[i];
+						tempReason += " " + args[i];
 					}
-					databaseHandling.query("INSERT INTO bans (uniqueId,length,added,reason) VALUES ('" + player.getUniqueId() + "'," + length + "," + System.currentTimeMillis()/1000L + ",'" + reason + "')", 0, true);									
+					
+					final String reason = tempReason;
+					Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+			            @Override
+			            public void run() {       			            	
+			            	databaseHandling.query("INSERT INTO bans (uniqueId,length,added,reason) VALUES ('" + player.getUniqueId() + "'," + length + "," + System.currentTimeMillis()/1000L + ",'" + reason + "')", 0, true);									
+			            }
+					});
 					ply.sendMessage(ChatColor.YELLOW.toString() + player.getName() + " banned for " + length + " minutes!");
 					player.kickPlayer("You have been banned.\n\nLength: " + length + " minute(s)\n\nReason:" + reason);
 				} catch (Exception ex) {

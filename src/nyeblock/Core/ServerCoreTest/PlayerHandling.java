@@ -82,9 +82,14 @@ public class PlayerHandling implements Listener {
 					if (pd != null) {						
 						HashMap<Realm,Integer> realmXp = pd.getRealmXp();
 						
-						dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
-						dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
-					}
+						Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+							@Override
+							public void run() {       				            	
+				            	dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
+				            	dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+							}
+						});
+		            }
 				}
 			}
 		}, 0, 20*180);
@@ -627,7 +632,7 @@ public class PlayerHandling implements Listener {
 						if (itemName.equals("hub_menu")) {
 							HubMenu hubMenu = new HubMenu();
 							
-							hubMenu.openMenu(mainInstance,ply);
+							hubMenu.openMenu(mainInstance,ply,1);
 							event.setCancelled(false);
 						} else if (itemName.equals("return_to_hub")) {
 							// Remove player from game
@@ -787,7 +792,7 @@ public class PlayerHandling implements Listener {
 				if (itemName.equals("hub_menu")) {
 					HubMenu hubMenu = new HubMenu();
 
-					hubMenu.openMenu(mainInstance,ply);
+					hubMenu.openMenu(mainInstance,ply,1);
 				} else if (itemName.equals("parkour_menu")) {
 					ParkourMenu parkourMenu = new ParkourMenu();
 

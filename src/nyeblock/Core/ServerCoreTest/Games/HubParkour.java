@@ -61,6 +61,7 @@ public class HubParkour {
 	private Location finishPoint = new Location(world, 68.505, 114.5, -8.509).getBlock().getLocation();
 	//Hologram
 	private Hologram top5Text;
+	private ArrayList<HashMap<String, String>> top5ListText;
 
 	public HubParkour(Main mainInstance) {
 		this.mainInstance = mainInstance;
@@ -77,8 +78,9 @@ public class HubParkour {
 		// Zones timer
 		mainInstance.getTimerInstance().createTimer("parkour_functions", .15, 0, "mainFunctions", false, null, this);
 		
-		// Refresh top 5 times floating text
-		mainInstance.getTimerInstance().createTimer("parkour_top5", 60, 0, "getTop5", false, null, this);
+		//Timers used to update the top 5 text. One if is asynchrous query and one to update the actual text
+		mainInstance.getTimerInstance().createTimer("parkour_getTop5", 60, 0, "getTop5", false, null, this);
+		mainInstance.getTimerInstance().createTimer("parkour_setTop5", 65, 0, "setTop5", false, null, this);
 
 		// Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("parkour_scoreboard", .5, 0, "setScoreboard", false, null, this);
@@ -142,18 +144,27 @@ public class HubParkour {
 		}
 	}
 	/**
-	 * Get the players in parkour
+	 * Query the top players in parkour
 	 */
 	public void getTop5() {
-		ArrayList<HashMap<String, String>> query = mainInstance.getDatabaseInstance().query("SELECT name,time FROM parkourTimes ORDER BY time LIMIT 5", 2, false);
-		
-		if (query.size() > 0) {
+		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+            @Override
+            public void run() {       
+            	top5ListText = mainInstance.getDatabaseInstance().query("SELECT name,time FROM parkourTimes ORDER BY time LIMIT 5", 2, false);
+            }
+		});
+	}
+	/**
+	 * Set the top players in parkour
+	 */
+	public void setTop5() {
+		if (top5ListText.size() > 0) {
 			top5Text.clearLines();
 			top5Text.appendTextLine(ChatColor.YELLOW + "Top 5 Fastest Parkour times");
 			top5Text.appendTextLine(ChatColor.YELLOW + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 			
-			for (int i = 0; i < query.size(); i++) {				
-				HashMap<String, String> queryData = query.get(i);
+			for (int i = 0; i < top5ListText.size(); i++) {				
+				HashMap<String, String> queryData = top5ListText.get(i);
 				
 				top5Text.appendTextLine(ChatColor.YELLOW.toString() + (i + 1) + ".) " + queryData.get("name") + " (" + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(Long.parseLong(queryData.get("time"))) + ChatColor.YELLOW + ")");
 			}

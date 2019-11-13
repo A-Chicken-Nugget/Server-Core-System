@@ -89,7 +89,7 @@ public class Main extends JavaPlugin {
 			HashMap<Realm,Integer> realmXp = playerHandling.getPlayerData(ply).getRealmXp();
 			
 			dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-playerHandling.getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
-			dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+			dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
 		}
 	}
 	
