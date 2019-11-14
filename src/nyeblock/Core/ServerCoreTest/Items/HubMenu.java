@@ -90,6 +90,8 @@ public class HubMenu {
 			pvpMetaLore.add(ChatColor.YELLOW + "Fight against other players");
 			pvpMetaLore.add(ChatColor.YELLOW + "with the items the gamemode you");
 			pvpMetaLore.add(ChatColor.YELLOW + "choose provides.");
+			pvpMetaLore.add(ChatColor.RESET.toString());
+			pvpMetaLore.add(ChatColor.YELLOW + "");
 			pvpMeta.setLore(pvpMetaLore);
 			pvp.setItemMeta(pvpMeta);
 			

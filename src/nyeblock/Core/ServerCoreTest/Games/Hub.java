@@ -30,22 +30,22 @@ public class Hub {
 	private ArrayList<Player> players = new ArrayList<Player>();
 	private TextAnimation boardAnim = new TextAnimation("Hub board animation", new ArrayList<String>() {
 		{
-			add("§7NyeBlock");
-			add("§bN§7yeBlock");
-			add("§bNy§7eBlock");
-			add("§bNye§7Block");
-			add("§bNyeB§7lock");
-			add("§bNyeBl§7ock");
-			add("§bNyeBlo§7ck");
-			add("§bNyeBloc§7k");
-			add("§bNyeBlock");
-			add("§7N§byeBlock");
-			add("§7Ny§beBlock");
-			add("§7Nye§bBlock");
-			add("§7NyeB§block");
-			add("§7NyeBl§bock");
-			add("§7NyeBlo§bck");
-			add("§7NyeBloc§bk");
+			add("�7NyeBlock");
+			add("�bN�7yeBlock");
+			add("�bNy�7eBlock");
+			add("�bNye�7Block");
+			add("�bNyeB�7lock");
+			add("�bNyeBl�7ock");
+			add("�bNyeBlo�7ck");
+			add("�bNyeBloc�7k");
+			add("�bNyeBlock");
+			add("�7N�byeBlock");
+			add("�7Ny�beBlock");
+			add("�7Nye�bBlock");
+			add("�7NyeB�block");
+			add("�7NyeBl�bock");
+			add("�7NyeBlo�bck");
+			add("�7NyeBloc�bk");
 		}
 	}, 250);
 	
@@ -55,7 +55,7 @@ public class Hub {
 		//Floating text
 		Hologram spawnText = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),-9.498,116,-7.467));
 		spawnText.appendTextLine(ChatColor.YELLOW + "Welcome to " + ChatColor.BOLD + "NyeBlock");
-		spawnText.appendTextLine(ChatColor.YELLOW + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+		spawnText.appendTextLine(ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A");
 		spawnText.appendTextLine(ChatColor.YELLOW + "Choose a game to play with the Game menu item!");
 		spawnText.appendTextLine(ChatColor.YELLOW + "Don't feel like playing a game? Try out the parkour!");
 		spawnText.appendItemLine(new ItemStack(Material.NETHER_STAR));
