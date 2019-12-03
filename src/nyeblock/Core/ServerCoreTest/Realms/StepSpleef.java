@@ -5,17 +5,23 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
+import org.bukkit.FireworkEffect.Type;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
@@ -23,7 +29,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({"deprecation","serial"})
@@ -51,7 +57,7 @@ public class StepSpleef extends GameBase {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
-		realm = Realm.STEPSPLEEF;
+		realm = UserRealm.STEPSPLEEF;
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
@@ -92,6 +98,7 @@ public class StepSpleef extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
+		mainInstance.getTimerInstance().deleteTimer(worldName + "_fireworks");
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
@@ -278,6 +285,24 @@ public class StepSpleef extends GameBase {
 			
 			messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 			soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
+			mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
+				@Override
+				public void run() {
+					List<Color> c = new ArrayList<Color>();
+	                c.add(Color.GREEN);
+	                c.add(Color.RED);
+	                c.add(Color.BLUE);
+	                c.add(Color.ORANGE);
+	                c.add(Color.YELLOW);
+	                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();
+					
+					Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
+					FireworkMeta fireworkMeta = firework.getFireworkMeta();
+					fireworkMeta.addEffect(effect);
+					fireworkMeta.setPower(2);
+					firework.setFireworkMeta(fireworkMeta);
+				}
+			});
 			giveXP(ply,"Winning",150);
 			
 			//Print players xp summary
@@ -435,9 +460,9 @@ public class StepSpleef extends GameBase {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
+			playerData.setRealm(UserRealm.HUB,true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
+			mainInstance.getGameInstance().joinGame(ply, UserRealm.HUB);
 		}
 		
 		//Unhide player from all players in the game

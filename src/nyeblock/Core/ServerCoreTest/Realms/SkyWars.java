@@ -22,7 +22,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
@@ -56,7 +56,7 @@ public class SkyWars extends GameBase {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
-		realm = Realm.SKYWARS;
+		realm = UserRealm.SKYWARS;
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
@@ -541,9 +541,9 @@ public class SkyWars extends GameBase {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
+			playerData.setRealm(UserRealm.HUB,true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
+			mainInstance.getGameInstance().joinGame(ply, UserRealm.HUB);
 		}
 		
 		//Unhide player from all players in the game

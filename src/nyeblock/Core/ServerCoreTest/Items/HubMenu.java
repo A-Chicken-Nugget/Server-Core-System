@@ -10,7 +10,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 
 public class HubMenu extends MenuBase {
 	public HubMenu() {
@@ -29,7 +29,7 @@ public class HubMenu extends MenuBase {
 		kitPvpMeta.setLocalizedName("kitPvP");
 		kitPvpMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 		ArrayList<String> kitPvpMetaLore = new ArrayList<String>();
-		kitPvpMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(Realm.KITPVP) + ChatColor.YELLOW + " games active");
+		kitPvpMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(UserRealm.KITPVP) + ChatColor.YELLOW + " games active");
 		kitPvpMetaLore.add(ChatColor.RESET.toString());
 		kitPvpMetaLore.add(ChatColor.YELLOW + "Fight other players and");
 		kitPvpMetaLore.add(ChatColor.YELLOW + "try to kill as many as possible.");
@@ -42,7 +42,7 @@ public class HubMenu extends MenuBase {
 		super.addOption("Game Menu", 11, kitPvp, new Runnable() {
             @Override
             public void run() {       
-            	mainInstance.getGameInstance().joinGame(player, Realm.KITPVP);
+            	mainInstance.getGameInstance().joinGame(player, UserRealm.KITPVP);
             	player.closeInventory();
             }
 		});
@@ -53,7 +53,7 @@ public class HubMenu extends MenuBase {
 		skyWarsMeta.setLocalizedName("skyWars");
 		skyWarsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 		ArrayList<String> skyWarsMetaLore = new ArrayList<String>();
-		skyWarsMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(Realm.SKYWARS) + ChatColor.YELLOW + " games active");
+		skyWarsMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(UserRealm.SKYWARS) + ChatColor.YELLOW + " games active");
 		skyWarsMetaLore.add(ChatColor.RESET.toString());
 		skyWarsMetaLore.add(ChatColor.YELLOW + "Each player starts with their");
 		skyWarsMetaLore.add(ChatColor.YELLOW + "own island. You must craft and");
@@ -80,7 +80,7 @@ public class HubMenu extends MenuBase {
 		stepSpleefMeta.setLocalizedName("stepSpleef");
 		stepSpleefMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 		ArrayList<String> stepSpleefMetaLore = new ArrayList<String>();
-		stepSpleefMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(Realm.STEPSPLEEF) + ChatColor.YELLOW + " games active");
+		stepSpleefMetaLore.add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(UserRealm.STEPSPLEEF) + ChatColor.YELLOW + " games active");
 		stepSpleefMetaLore.add(ChatColor.RESET.toString());
 		stepSpleefMetaLore.add(ChatColor.YELLOW + "Dodge and weave to survive");
 		stepSpleefMetaLore.add(ChatColor.YELLOW + "when the blocks you've walked");
@@ -93,7 +93,7 @@ public class HubMenu extends MenuBase {
 		super.addOption("Game Menu", 15, stepSpleef, new Runnable() {
             @Override
             public void run() {       
-            	mainInstance.getGameInstance().joinGame(player, Realm.STEPSPLEEF);
+            	mainInstance.getGameInstance().joinGame(player, UserRealm.STEPSPLEEF);
             	player.closeInventory();
             }
 		});
@@ -197,7 +197,7 @@ public class HubMenu extends MenuBase {
 			public void run() {
 				player.closeInventory();
 				mainInstance.getPlayerHandlingInstance().getPlayerData(player).setCustomDataKey("pvp_type", "1");
-				mainInstance.getGameInstance().joinGame(player, Realm.PVP);
+				mainInstance.getGameInstance().joinGame(player, UserRealm.PVP);
 			}
 		});
 		//Sword/Armor
@@ -255,7 +255,7 @@ public class HubMenu extends MenuBase {
 			public void run() {
 				player.closeInventory();
 				mainInstance.getPlayerHandlingInstance().getPlayerData(player).setCustomDataKey("pvp_type", "1");
-				mainInstance.getGameInstance().joinGame(player, Realm.PVP);
+				mainInstance.getGameInstance().joinGame(player, UserRealm.PVP);
 			}
 		});
 		//Sword/Armor

@@ -9,18 +9,18 @@ import org.bukkit.World;
 import org.bukkit.util.Vector;
 
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 
 public class GameMapInfo {
 	@SuppressWarnings("serial")
 	//Get vectors for specific maps used in games
 	public ArrayList<HashMap<String,Location>> getMapInfo(GameBase game) {
 		ArrayList<HashMap<String,Location>> mapInfo = null;
-		Realm realm = game.getRealm();
+		UserRealm realm = game.getRealm();
 		World world = Bukkit.getWorld(game.getWorldName());
 		String map = game.getMap();
 		
-		if (realm == Realm.KITPVP) {
+		if (realm == UserRealm.KITPVP) {
 			//concrete
 			if (map.equalsIgnoreCase("concrete")) {
 				mapInfo = new ArrayList<HashMap<String,Location>>() {{
@@ -76,7 +76,7 @@ public class GameMapInfo {
 					}});
 				}};
 			}
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (realm == UserRealm.STEPSPLEEF) {
 			//concrete
 			if (map.equalsIgnoreCase("concrete")) {
 				mapInfo = new ArrayList<HashMap<String,Location>>() {{
@@ -93,7 +93,7 @@ public class GameMapInfo {
 					}});
 				}};
 			} 
-		} else if (realm == Realm.SKYWARS) {
+		} else if (realm == UserRealm.SKYWARS) {
 			//first
 			if (map.equalsIgnoreCase("first")) {
 				mapInfo = new ArrayList<HashMap<String,Location>>() {{
@@ -136,7 +136,7 @@ public class GameMapInfo {
 					}});
 				}};
 			}
-		} else if (realm == Realm.PVP) {
+		} else if (realm == UserRealm.PVP) {
 			//nether
 			if (map.equalsIgnoreCase("nether")) {
 				mapInfo = new ArrayList<HashMap<String,Location>>() {{

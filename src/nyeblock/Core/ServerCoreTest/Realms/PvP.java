@@ -5,13 +5,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.FireworkEffect.Type;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
@@ -22,9 +28,7 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
-import nyeblock.Core.ServerCoreTest.Misc.Enums;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 
 @SuppressWarnings({"deprecation","serial"})
 public class PvP extends GameBase {
@@ -52,7 +56,7 @@ public class PvP extends GameBase {
 		super(mainInstance,worldName);
 		
 		this.worldName = worldName;
-		realm = Realm.PVP;
+		realm = UserRealm.PVP;
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
@@ -73,6 +77,7 @@ public class PvP extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
+		mainInstance.getTimerInstance().deleteTimer(worldName + "_fireworks");
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
@@ -150,11 +155,15 @@ public class PvP extends GameBase {
 							for (Player ply : players) {
 								PlayerData pd = playerHandling.getPlayerData(ply);
 								
-								ply.setVelocity(new Vector(0,0,0));
 								ply.teleport(getPlayerSpawn(ply));
 								
 								pd.setPermission("nyeblock.canMove",false);								
 								ply.getInventory().clear(8);
+								
+								//Reset
+								ply.setFireTicks(0);
+								ply.setHealth(20);
+								ply.setVelocity(new Vector(0,0,0));
 							}
 						}
 					}
@@ -190,7 +199,7 @@ public class PvP extends GameBase {
     */
 	public void setScoreboard() {
 		//Check if team has won
-		if (active && !endStarted) {
+		if (gameBegun && !endStarted) {
 			for (int team = 0; team < 2; team++) {
 				int playersLeft = 0;
 				
@@ -205,6 +214,7 @@ public class PvP extends GameBase {
 					endStarted = true;
 					canUsersJoin = false;
 					String namesString = "";
+					ArrayList<Player> players = new ArrayList<>();
 					
 					for (Map.Entry<Location,Player> entry : teamsSetup.get(team == 0 ? 1 : 0).entrySet()) {
 						if (entry.getValue() != null) {
@@ -213,8 +223,32 @@ public class PvP extends GameBase {
 							} else {
 								namesString += " and " + entry.getValue().getName();
 							}
+							players.add(entry.getValue());
 						}
 					}
+					
+					mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
+						@Override
+						public void run() {
+							List<Color> c = new ArrayList<Color>();
+			                c.add(Color.GREEN);
+			                c.add(Color.RED);
+			                c.add(Color.BLUE);
+			                c.add(Color.ORANGE);
+			                c.add(Color.YELLOW);
+			                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();
+							
+			                for (Player ply : players) {
+			                	if (!ply.getAllowFlight()) {			                		
+			                		Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
+			                		FireworkMeta fireworkMeta = firework.getFireworkMeta();
+			                		fireworkMeta.addEffect(effect);
+			                		fireworkMeta.setPower(2);
+			                		firework.setFireworkMeta(fireworkMeta);
+			                	}
+			                }
+						}
+					});
 					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + namesString + " won!");
 					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
@@ -417,9 +451,9 @@ public class PvP extends GameBase {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
+			playerData.setRealm(UserRealm.HUB,true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
+			mainInstance.getGameInstance().joinGame(ply, UserRealm.HUB);
 		}
 		
 		//Unhide player from all players in the game

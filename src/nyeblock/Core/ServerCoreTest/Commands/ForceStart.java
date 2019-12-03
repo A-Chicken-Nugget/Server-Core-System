@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.Realm;
 
 public class ForceStart extends CommandBase {
 	PlayerHandling playerHandling;
@@ -16,7 +17,7 @@ public class ForceStart extends CommandBase {
 	}
 	
 	public void execute(Player ply, String[] args) {
-		GameBase game = playerHandling.getPlayerData(ply).getCurrentGame();
+		Realm game = playerHandling.getPlayerData(ply).getCurrentRealm();
 		
 		if (game != null) {
 			if (game.getPlayerCount() > 1) {				

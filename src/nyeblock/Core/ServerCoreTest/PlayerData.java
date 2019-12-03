@@ -31,9 +31,10 @@ import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.MenuBase;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
 import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
@@ -53,12 +54,12 @@ public class PlayerData {
 	private String ip;
 	private UserGroup userGroup;
 	private PermissionAttachment permissions;
-	private Realm realm;
+	private UserRealm realm;
 	private boolean queuingGame = false;
 	private HashMap<String,String> customData = new HashMap<>();
-	private HashMap<Realm,Integer> realmXp = new HashMap<>();
+	private HashMap<UserRealm,Integer> realmXp = new HashMap<>();
 	private MenuBase openedMenu;
-	private GameBase currentGame;
+	private nyeblock.Core.ServerCoreTest.Realms.Realm currentGame;
 	private boolean isSpectating = false;
 	//Scoreboard
 	private Scoreboard board;
@@ -69,7 +70,7 @@ public class PlayerData {
     * @param realm - realm to give the xp should be added to
     * @param amount - amount of xp added to the specified realm
     */
-	public void giveXP(Realm realm, int amount) {
+	public void giveXP(UserRealm realm, int amount) {
 		realmXp.put(realm, realmXp.get(realm) + amount);
 	}
 	/**
@@ -101,7 +102,7 @@ public class PlayerData {
 	/**
     * Get the players current game
     */
-	public GameBase getCurrentGame() {
+	public Realm getCurrentRealm() {
 		return currentGame;
 	}
 	/**
@@ -115,7 +116,7 @@ public class PlayerData {
 	* Get the players realm xp hashmap
 	* @return hashmap of realms and their associated xp 
 	*/
-	public HashMap<Realm,Integer> getRealmXp() {
+	public HashMap<UserRealm,Integer> getRealmXp() {
 		return realmXp;
 	}
 	/**
@@ -151,7 +152,7 @@ public class PlayerData {
     * Get the players current realm
     * @return the players realm
     */
-	public Realm getRealm() {
+	public UserRealm getRealm() {
 		return realm;
 	}
 	/**
@@ -182,7 +183,7 @@ public class PlayerData {
 	/**
     * Set the players current game
     */
-	public void setCurrentGame(GameBase game) {
+	public void setCurrentGame(Realm game) {
 		currentGame = game;
 	}
 	/**
@@ -213,7 +214,7 @@ public class PlayerData {
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
-		setRealm(Realm.HUB, true, false);
+		setRealm(UserRealm.HUB, true, false);
 		
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
@@ -226,9 +227,9 @@ public class PlayerData {
             		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
             		
             		//Set the players realm xp
-            		realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
-            		realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
-            		realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
+            		realmXp.put(UserRealm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
+            		realmXp.put(UserRealm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
+            		realmXp.put(UserRealm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
             	} else {
             		//Insert the user in the userXP table
             		mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + ply.getUniqueId() + "')", 0, true);
@@ -237,9 +238,9 @@ public class PlayerData {
             		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
             		
             		//Set the players realm xp
-            		realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
-            		realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
-            		realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
+            		realmXp.put(UserRealm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
+            		realmXp.put(UserRealm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
+            		realmXp.put(UserRealm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
             	}
             }
 		});
@@ -255,7 +256,7 @@ public class PlayerData {
     * Set the players permissions based on their current realm
     */
 	public void setPermissions() {
-		if (realm == Realm.HUB) {
+		if (realm == UserRealm.HUB) {
 			permissions.setPermission("nyeblock.canPlaceBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -267,7 +268,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
 			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.KITPVP) {
+		} else if (realm == UserRealm.KITPVP) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -279,7 +280,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
 			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (realm == UserRealm.STEPSPLEEF) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -291,7 +292,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
 			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.SKYWARS) {
+		} else if (realm == UserRealm.SKYWARS) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -303,7 +304,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
 			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.PVP) {
+		} else if (realm == UserRealm.PVP) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -331,7 +332,7 @@ public class PlayerData {
 	public void setItems() {
 		player.getInventory().clear();
 		
-		if (realm == Realm.HUB) {
+		if (realm == UserRealm.HUB) {
 			//Game Menu
 			HubMenu hubMenu = new HubMenu();
 			ItemStack hm = hubMenu.give();
@@ -343,12 +344,12 @@ public class PlayerData {
 			ItemStack hp = hidePlayers.give();
 			player.getInventory().setItem(6, hp);
 			
-		} else if (realm == Realm.KITPVP) {
+		} else if (realm == UserRealm.KITPVP) {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
 			//Select kit
-			KitSelector selectKit = new KitSelector(Realm.KITPVP);
+			KitSelector selectKit = new KitSelector(UserRealm.KITPVP);
 			player.getInventory().setItem(7, selectKit.give());
 			//Sword
 			ItemStack sword = new ItemStack(Material.IRON_SWORD);
@@ -370,11 +371,11 @@ public class PlayerData {
 			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			player.getInventory().setArmorContents(armor);
-		} else if (realm == Realm.STEPSPLEEF) {
+		} else if (realm == UserRealm.STEPSPLEEF) {
 			if (currentGame != null) {
 				if (currentGame.isInServer(player) && currentGame.isGameActive()) {
 					//Select player
-					PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.STEPSPLEEF,player);
+					PlayerSelector selectPlayer = new PlayerSelector(mainInstance,UserRealm.STEPSPLEEF,player);
 					player.getInventory().setItem(4, selectPlayer.give());
 				}
 			}
@@ -382,16 +383,16 @@ public class PlayerData {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
-		} else if (realm == Realm.SKYWARS) {
+		} else if (realm == UserRealm.SKYWARS) {
 			if (currentGame != null) {
 				if (currentGame.isInServer(player)) {
 					if (currentGame.isGameActive()) {						
 						//Select player
-						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.SKYWARS,player);
+						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,UserRealm.SKYWARS,player);
 						player.getInventory().setItem(4, selectPlayer.give());
 					} else {						
 						//Select kit
-						KitSelector selectKit = new KitSelector(Realm.SKYWARS);
+						KitSelector selectKit = new KitSelector(UserRealm.SKYWARS);
 						player.getInventory().setItem(4, selectKit.give());
 					}
 				}
@@ -399,10 +400,10 @@ public class PlayerData {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
-		} else if (realm == Realm.PVP) {
+		} else if (realm == UserRealm.PVP) {
 			if (currentGame != null && currentGame.isGameActive()) {						
 				//Select player
-				PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.PVP,player);
+				PlayerSelector selectPlayer = new PlayerSelector(mainInstance,UserRealm.PVP,player);
 				player.getInventory().setItem(4, selectPlayer.give());
 			}
 			//Return to hub
@@ -416,7 +417,7 @@ public class PlayerData {
     * @param updatePermissions - should their permissions be updated?
     * @param updateItems - should their items be updated?
     */
-	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems) {
+	public void setRealm(UserRealm realm, boolean updatePermissions, boolean updateItems) {
 		this.realm = realm;
 		if (updatePermissions) {			
 			setPermissions();

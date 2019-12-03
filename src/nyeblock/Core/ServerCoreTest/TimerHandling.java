@@ -9,7 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 
 public class TimerHandling {
@@ -36,8 +36,8 @@ public class TimerHandling {
 									params[i] = Player.class;
 								} else if (args[i] instanceof Boolean) {
 									params[i] = Boolean.class; 
-								} else if (args[i] instanceof Realm) {
-									params[i] = Realm.class;
+								} else if (args[i] instanceof UserRealm) {
+									params[i] = UserRealm.class;
 								} else if (args[i] instanceof GameBase) {
 									params[i] = GameBase.class;
 								}
@@ -86,6 +86,22 @@ public class TimerHandling {
 								}
 							}
 						}
+					}
+					timesRan.put(name, ran+1);
+				}
+			}, 0, (int)(delay*20));
+			timers.put(name, task);
+		}
+	}
+	public void createTimer2(String name, double delay, int timesToRun, Runnable runnable) {
+		if (timers.get(name) == null) {
+			timesRan.put(name, 0);
+			BukkitTask task = Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"), new Runnable() {
+				@Override
+				public void run() {
+					int ran = timesRan.get(name);
+					if (timesRan.get(name) != 0) {
+						runnable.run();
 					}
 					timesRan.put(name, ran+1);
 				}

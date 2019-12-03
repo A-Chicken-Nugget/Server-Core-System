@@ -10,19 +10,20 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.Realm;
 
 public class PlayerSelector {
 	private Main mainInstance;
 	private Player player;
 	private ArrayList<Player> players = new ArrayList<>();
 	
-	public PlayerSelector(Main mainInstance, Realm realm, Player player) {
+	public PlayerSelector(Main mainInstance, UserRealm realm, Player player) {
 		this.mainInstance = mainInstance;
 		this.player = player;
 		
-		GameBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentGame();
+		Realm game = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm();
 		
 		if (game.isInServer(player)) {			
 			players = game.getPlayersInGame();

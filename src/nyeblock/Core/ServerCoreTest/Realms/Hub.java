@@ -23,7 +23,7 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 
 @SuppressWarnings({"deprecation","serial"})
-public class Hub {
+public class Hub extends Realm {
 	private Main mainInstance;
 	private PlayerHandling playerHandlingInstance;
 	private World world = Bukkit.getWorld("world");
@@ -50,6 +50,7 @@ public class Hub {
 	}, 250);
 	
 	public Hub(Main mainInstance) {
+		super(mainInstance);
 		this.mainInstance = mainInstance;
 		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
 		
@@ -123,6 +124,8 @@ public class Hub {
 		//Add player
 		players.add(ply);
 		
+		pd.setCurrentGame(this);
+		
 		//Update joining players hidden/shown players
 		for (Player ply2 : Bukkit.getOnlinePlayers()) {
 			if (players.contains(ply2)) {
@@ -189,7 +192,7 @@ public class Hub {
 	/**
 	* When a player leaves the hub
 	*/
-	public void playerLeave(Player ply) {
+	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
 		
 		//Clear scoreboard info

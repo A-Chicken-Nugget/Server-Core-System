@@ -21,24 +21,23 @@ import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.SchematicHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 import nyeblock.Core.ServerCoreTest.Misc.XY;
 
-public abstract class GameBase {
+public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm {
 	//Instances
 	protected Main mainInstance;
 	protected PlayerHandling playerHandling;
 	//Game info
-	protected Realm realm;
+	protected UserRealm realm;
 	protected String worldName;
 	protected String map;
 	protected int minPlayers;
 	protected int maxPlayers;
 	protected boolean gameBegun = false;
 	//Player data
-	protected ArrayList<Player> players = new ArrayList<>();
+//	protected ArrayList<Player> players = new ArrayList<>();
 	protected ArrayList<HashMap<Location,Player>> teamsSetup = new ArrayList<>();
-	protected HashMap<Player,HashMap<String,Integer>> playerXP = new HashMap<>();
 	//Game points
 	protected ArrayList<Location> spawns = new ArrayList<>();
 	protected Vector safeZonePoint1;
@@ -56,6 +55,7 @@ public abstract class GameBase {
 	EditSession editSession;
 	
 	public GameBase(Main mainInstance, String worldName) {
+		super(mainInstance);
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		
@@ -104,7 +104,7 @@ public abstract class GameBase {
 			
 			spawnPoints.removeAll(Collections.singleton(null));
 			
-			if (realm == Realm.KITPVP) {	
+			if (realm == UserRealm.KITPVP) {	
 				//Set grace points
 				this.safeZonePoint1 = safeZonePoint1.toVector();
 				this.safeZonePoint2 = safeZonePoint2.toVector();
@@ -153,110 +153,12 @@ public abstract class GameBase {
 		forceStart = true;
 	}
 	/**
-    * Sends a message in chat to all players in the game
-    * @param message - the message to send.
-    */
-	public void messageToAll(String message) {
-		for(Player ply : players) {
-			ply.sendMessage(ChatColor.BOLD + "§7Nye§bBlock §7\u00BB " + ChatColor.RESET + message);
-		}
-	}
-	/**
-    * Checks to see if the provided player is in the game
-    * @param player - the player to check for.
-    */
-	public boolean isInServer(Player ply) {
-		boolean found = false;
-		
-		for(Player player : players) {
-			if (ply.getName().equalsIgnoreCase(player.getName())) {
-				found = true;
-			}
-		}
-		return found;
-	}
-	/**
-    * Print a title to all players in the game
-    * @param top - top text
-    * @param bottom - bottom text
-    * @param fadeIn - fade in time (ms)
-    * @param fadeOut - fade out time (ms)
-    */
-	public void titleToAll(String top, String bottom, int fadeIn, int fadeOut) {
-		for(Player ply : players) {
-			ply.sendTitle(top, bottom, fadeIn, 70, fadeOut);
-		}
-	}
-	/**
-    * Play sound to all players in the game
-    * @param sound - sound that should be played
-    * @param pitch - pitch that should be played
-    */
-	public void soundToAll(Sound sound, float pitch) {
-		for(Player ply : players) {
-			ply.playSound(ply.getLocation(), sound, 10, pitch);
-		}
-	}
-	/**
     * Get the status of the game
     * @return status of the game
     */
 	public boolean isGameActive() {
 		return gameBegun;
 	}
-	/**
-    * Sub class player join method
-    * @param ply - Player joining the game
-    */
-	public void playerJoin(Player ply) {};
-	/**
-    * Super class player join method
-    * @param ply - Player joining the game
-    */
-	public void join(Player ply) {
-		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-		
-		//Set the players current game
-		pd.setCurrentGame(this);
-		
-		//Add to players list
-		players.add(ply);
-		
-		//Setup player xp
-		playerXP.put(ply, new HashMap<String,Integer>());
-		
-		//Show player has joined	
-		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
-		
-		//Update joining players hidden/shown players
-		for (Player ply2 : Bukkit.getOnlinePlayers()) {
-			if (players.contains(ply2)) {
-				if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
-					ply.showPlayer(mainInstance,ply2);
-				}
-			} else {								
-				if (ply.canSee(ply2)) {
-					ply.hidePlayer(mainInstance,ply2);
-				}
-			}
-		}
-		
-		//Update current players hidden/shown players
-		for (Player ply2 : players) {
-			if (!ply2.canSee(ply)) {
-				ply2.showPlayer(mainInstance,ply);
-			}
-		}
-		
-		playerJoin(ply);
-	};
-	/**
-    * Sub class player leave method
-    * @param ply - Player joining the game
-    * @param showLeaveMessage - Should a leave message be shown
-    * @param moveToHub - Should the player be moved to the hub
-    */
-	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {};
 	public String getPlayerKit(Player ply) { return null; };
 	public void setPlayerKit(Player ply, String kit) {};
 	public void playerDeath(Player killed,Player killer) {};
@@ -327,9 +229,9 @@ public abstract class GameBase {
     * Get the time when this game was created
     * @return time when the game was created
     */
-	public ArrayList<Player> getPlayersInGame() {
-		return players;
-	}
+//	public ArrayList<Player> getPlayersInGame() {
+//		return players;
+//	}
 	/**
     * Get the time when this game was created
     * @return time when the game was created
@@ -347,7 +249,7 @@ public abstract class GameBase {
 	/**
 	* Get the realm of this game
 	*/
-	public Realm getRealm() {
+	public UserRealm getRealm() {
 		return realm;
 	}
 	/**

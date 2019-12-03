@@ -31,7 +31,7 @@ import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 @SuppressWarnings({"deprecation","serial"})
-public class HubParkour {
+public class HubParkour extends Realm {
 	private Main mainInstance;
 	private PlayerHandling playerHandling;
 	private DatabaseHandling databaseInstance;
@@ -64,6 +64,7 @@ public class HubParkour {
 	private ArrayList<HashMap<String, String>> top5ListText;
 
 	public HubParkour(Main mainInstance) {
+		super(mainInstance);
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		databaseInstance = mainInstance.getDatabaseInstance();
@@ -191,7 +192,9 @@ public class HubParkour {
 						playerBestTimes.put(ply.getName(), 0L);
 						
 						//Leave the hub
-						mainInstance.getHubInstance().playerLeave(ply);
+						mainInstance.getHubInstance().playerLeave(ply,false,false);
+						
+						pd.setCurrentGame(this);
 						
 						//Show players in game
 						for (Player ply2 : Bukkit.getOnlinePlayers()) {

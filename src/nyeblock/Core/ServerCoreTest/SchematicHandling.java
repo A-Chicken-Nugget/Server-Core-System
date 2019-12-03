@@ -32,7 +32,7 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.session.ClipboardHolder;
 
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 import nyeblock.Core.ServerCoreTest.Misc.XY;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 
@@ -52,7 +52,7 @@ public class SchematicHandling {
 	
 	//Create a schematic in a world based on the game
 	public String setSchematic(Main mainInstance,GameBase game) {
-		Realm realm = game.getRealm();
+		UserRealm realm = game.getRealm();
 		XY gamePos = game.getGamePos();
 		
 		String schemToUse = null;
