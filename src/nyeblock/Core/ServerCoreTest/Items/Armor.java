@@ -4,7 +4,6 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import nyeblock.Core.ServerCoreTest.Misc.ArmorRating;
-import nyeblock.Core.ServerCoreTest.Misc.WeaponDamage;
 
 public class Armor extends ItemStack 
 {

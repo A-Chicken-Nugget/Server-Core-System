@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Games;
+package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -25,37 +24,39 @@ import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 
 @SuppressWarnings({"deprecation","serial"})
 public class Hub {
+	private Main mainInstance;
 	private PlayerHandling playerHandlingInstance;
 	private World world = Bukkit.getWorld("world");
 	private ArrayList<Player> players = new ArrayList<Player>();
 	private TextAnimation boardAnim = new TextAnimation("Hub board animation", new ArrayList<String>() {
 		{
-			add("§7NyeBlock");
-			add("§bN§7yeBlock");
-			add("§bNy§7eBlock");
-			add("§bNye§7Block");
-			add("§bNyeB§7lock");
-			add("§bNyeBl§7ock");
-			add("§bNyeBlo§7ck");
-			add("§bNyeBloc§7k");
-			add("§bNyeBlock");
-			add("§7N§byeBlock");
-			add("§7Ny§beBlock");
-			add("§7Nye§bBlock");
-			add("§7NyeB§block");
-			add("§7NyeBl§bock");
-			add("§7NyeBlo§bck");
-			add("§7NyeBloc§bk");
+			add("Â§7NyeBlock");
+			add("Â§bNÂ§7yeBlock");
+			add("Â§bNyÂ§7eBlock");
+			add("Â§bNyeÂ§7Block");
+			add("Â§bNyeBÂ§7lock");
+			add("Â§bNyeBlÂ§7ock");
+			add("Â§bNyeBloÂ§7ck");
+			add("Â§bNyeBlocÂ§7k");
+			add("Â§bNyeBlock");
+			add("Â§7NÂ§byeBlock");
+			add("Â§7NyÂ§beBlock");
+			add("Â§7NyeÂ§bBlock");
+			add("Â§7NyeBÂ§block");
+			add("Â§7NyeBlÂ§bock");
+			add("Â§7NyeBloÂ§bck");
+			add("Â§7NyeBlocÂ§bk");
 		}
 	}, 250);
 	
 	public Hub(Main mainInstance) {
+		this.mainInstance = mainInstance;
 		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
 		
 		//Floating text
 		Hologram spawnText = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),-9.498,116,-7.467));
 		spawnText.appendTextLine(ChatColor.YELLOW + "Welcome to " + ChatColor.BOLD + "NyeBlock");
-		spawnText.appendTextLine(ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A");
+		spawnText.appendTextLine(ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A");
 		spawnText.appendTextLine(ChatColor.YELLOW + "Choose a game to play with the Game menu item!");
 		spawnText.appendTextLine(ChatColor.YELLOW + "Don't feel like playing a game? Try out the parkour!");
 		spawnText.appendItemLine(new ItemStack(Material.NETHER_STAR));
@@ -108,6 +109,9 @@ public class Hub {
 					}
 				}
 			}
+			
+			//Set gamemode
+//			ply.setGameMode(GameMode.ADVENTURE);
 		}
 	}
 	/**
@@ -118,6 +122,26 @@ public class Hub {
 		
 		//Add player
 		players.add(ply);
+		
+		//Update joining players hidden/shown players
+		for (Player ply2 : Bukkit.getOnlinePlayers()) {
+			if (players.contains(ply2)) {
+				if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+					ply.showPlayer(mainInstance,ply2);
+				}
+			} else {								
+				if (ply.canSee(ply2)) {
+					ply.hidePlayer(mainInstance,ply2);
+				}
+			}
+		}
+		
+		//Update current players hidden/shown players
+		for (Player ply2 : players) {
+			if (!ply2.canSee(ply)) {
+				ply2.showPlayer(mainInstance,ply);
+			}
+		}
 		
 		//Setup team
 		pd.setScoreBoardTeams(new String[] {"default"});

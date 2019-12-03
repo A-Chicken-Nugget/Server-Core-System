@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Games;
+package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,9 +17,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
-import com.connorlinfoot.actionbarapi.ActionBarAPI;
-
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -50,7 +50,7 @@ public class SkyWars extends GameBase {
 	// CONSTRUCTOR
 	//
 	
-	public SkyWars(Main mainInstance, String worldName, int duration, int maxPlayers) {
+	public SkyWars(Main mainInstance, String worldName, int duration, int minPlayers, int maxPlayers) {
 		super(mainInstance,worldName);
 		
 		this.mainInstance = mainInstance;
@@ -58,6 +58,7 @@ public class SkyWars extends GameBase {
 		this.worldName = worldName;
 		realm = Realm.SKYWARS;
 		this.duration = duration;
+		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
 		
 		//Scoreboard timer
@@ -113,12 +114,12 @@ public class SkyWars extends GameBase {
 				ply.getInventory().clear();
 				setPlayerKit(ply,playerKits.get(ply.getName()));
 			}
-			titleToAll(ChatColor.YELLOW + "Go!"," ");
+			titleToAll(ChatColor.YELLOW + "Go!"," ",0,10);
 			soundToAll(Sound.BLOCK_NOTE_BLOCK_BELL,1f);
 		} else {      
 			if (timeLeft != lastNumber) {   
 				lastNumber = timeLeft;
-				titleToAll(ChatColor.YELLOW + "Game starts in...",ChatColor.GREEN.toString() + timeLeft);
+				titleToAll(ChatColor.YELLOW + "Game starts in...",ChatColor.GREEN.toString() + timeLeft,(timeLeft == 5 ? 10 : 0),0);
 				soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
 			}
 		}
@@ -204,13 +205,15 @@ public class SkyWars extends GameBase {
 			
 			//Check if the server has been empty for 6 seconds
 			if (emptyCount >= 10) {
+				canUsersJoin = false;
+				
 				mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
 				mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
 				
 				//Delete world from server
 				mainInstance.getMultiverseInstance().deleteWorld(worldName);
 				//Remove game from games array
-				mainInstance.getGameInstance().removeGame(realm,worldName);
+				mainInstance.getGameInstance().removeGameFromList(gamePos);
 			}
 		}
 	}
@@ -413,22 +416,26 @@ public class SkyWars extends GameBase {
 		boolean isSpectating = playersSpectating.contains(killed);
 		
 		//Add player to ghost mode
-		if (!isSpectating) {			
+		if (gameBegun && !isSpectating) {	
+			PlayerData pd = playerHandling.getPlayerData(killed);
+			
+			pd.setSpectatingStatus(true);
+			killed.setAllowFlight(true);
 			playersSpectating.add(killed);
-			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
+			
+			killed.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around."));
 			
 			//Unhide spectators
 			for (Player ply : playersSpectating) {
-				killed.showPlayer(ply);
+				killed.showPlayer(mainInstance,ply);
 			}
 			
 			//Hide player from players in the active game
 			for (Player ply : playersInGame) {
-				ply.hidePlayer(killed);
+				ply.hidePlayer(mainInstance,killed);
 			}
 			
 			//Set permissions
-			PlayerData pd = playerHandling.getPlayerData(killed);
 			pd.setPermission("nyeblock.canBreakBlocks", false);
 			pd.setPermission("nyeblock.canUseInventory", false);
 			pd.setPermission("nyeblock.canDamage", false);
@@ -440,7 +447,7 @@ public class SkyWars extends GameBase {
 		if (killer != null) {
 			//Update the killers kill count
 			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
-			ActionBarAPI.sendActionBar(killer,ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName(), 40);
+			killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName()));
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
 		} else {
 			if (!isSpectating) {
@@ -454,8 +461,8 @@ public class SkyWars extends GameBase {
 		}});
 		
 		//Set random spawn
-		Vector randSpawn = getRandomSpawnPoint();
-		killed.teleport(new Location(Bukkit.getWorld(worldName),randSpawn.getX(),randSpawn.getY(),randSpawn.getZ()));
+		Location randSpawn = getRandomSpawnPoint();
+		killed.teleport(randSpawn);
 	}
 	/**
     * Handle when a player joins the game
@@ -463,16 +470,11 @@ public class SkyWars extends GameBase {
 	public void playerJoin(Player ply) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
-		if (!active) {			
-			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
-		}
-		
 		//Setup team
 		pd.setScoreBoardTeams(new String[] {"default"});
 		pd.createHealthTags();
 		
 		//Add player to arrays
-		players.add(ply);
 		playerKills.put(ply.getName(), 0);
 		playerKits.put(ply.getName(),"default");
 		
@@ -483,8 +485,8 @@ public class SkyWars extends GameBase {
 				playerSpots.put(i,ply.getName());
 				foundSpot = true;
 				
-				Vector spawn = spawns.get(i);
-				ply.teleport(new Location(Bukkit.getWorld(worldName),spawn.getX(),spawn.getY(),spawn.getZ()));				
+				Location spawn = spawns.get(i);
+				ply.teleport(spawn);				
 			}
 		}
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Sky Wars",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);

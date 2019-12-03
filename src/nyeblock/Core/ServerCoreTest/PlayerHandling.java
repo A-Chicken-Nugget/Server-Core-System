@@ -3,7 +3,6 @@ package nyeblock.Core.ServerCoreTest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -32,33 +31,34 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.util.Vector;
+import org.bukkit.projectiles.ProjectileSource;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 
 import net.md_5.bungee.api.ChatColor;
-import nyeblock.Core.ServerCoreTest.Games.KitPvP;
-import nyeblock.Core.ServerCoreTest.Games.SkyWars;
-import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Misc.TabListPerWorld;
 
 @SuppressWarnings("deprecation")
@@ -95,38 +95,39 @@ public class PlayerHandling implements Listener {
 		}, 0, 20*180);
 		
 		//Manage players tab lists
-		Bukkit.getScheduler().runTaskTimer(mainInstance, new Runnable() {
-			@Override
-			public void run() {
-				TabListPerWorld tlpw = new TabListPerWorld();
-				Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
-				
-				for (Player ply : onlinePlayers) {
-					World plyWorld = ply.getWorld();
-					PlayerData pd = getPlayerData(ply);
-					boolean hidePlayers = false;
-					
-					if (pd != null) {						
-						hidePlayers = Boolean.parseBoolean(getPlayerData(ply).getCustomDataKey("hide_players"));
-					}
-					if (plyWorld.getName().equals("world") && hidePlayers) {
-						for (Player ply2 : onlinePlayers) {
-							ply.hidePlayer(ply2);
-						}
-					} else {							
-						for (Player ply2 : onlinePlayers) {
-							World ply2World = ply2.getWorld();
-							
-							if (!plyWorld.getName().equals(ply2World.getName())) {
-								tlpw.hideForWorld(plyWorld, ply2);
-							} else {
-								tlpw.showForWorld(ply2World, ply2);
-							}
-						}
-					}
-				}
-			}
-		}, 0, 20*3);
+//		Bukkit.getScheduler().runTaskTimer(mainInstance, new Runnable() {
+//			@Override
+//			public void run() {
+//				TabListPerWorld tlpw = new TabListPerWorld();
+//				Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+//				
+//				for (Player ply : onlinePlayers) {
+//					World plyWorld = ply.getWorld();
+//					PlayerData pd = getPlayerData(ply);
+//					boolean hidePlayers = false;
+//					
+//					if (pd != null) {						
+//						hidePlayers = Boolean.parseBoolean(pd.getCustomDataKey("hide_players"));
+//						
+//						if (plyWorld.getName().equals("world") && hidePlayers) {
+//							for (Player ply2 : onlinePlayers) {
+//								ply.hidePlayer(ply2);
+//							}
+//						} else {							
+//							for (Player ply2 : onlinePlayers) {
+//								World ply2World = ply2.getWorld();
+//								
+//								if (!plyWorld.getName().equals(ply2World.getName())) {
+//									tlpw.hideForWorld(plyWorld, ply2);
+//								} else {
+//									tlpw.showForWorld(ply2World, ply2);
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}, 0, 20*3);
 	}
 	
 	//
@@ -135,14 +136,7 @@ public class PlayerHandling implements Listener {
 
 	// Get a specific players player data
 	public PlayerData getPlayerData(Player ply) {
-		PlayerData plyData = null;
-
-		for (Map.Entry<String, PlayerData> entry : playersData.entrySet()) {
-			if (ply.getName().equalsIgnoreCase(entry.getKey())) {
-				plyData = entry.getValue();
-			}
-		}
-		return plyData;
+		return playersData.get(ply.getName());
 	}
 	
 	//
@@ -167,7 +161,7 @@ public class PlayerHandling implements Listener {
 		ArrayList<Player> playersToRemove = new ArrayList<Player>();
 		PlayerData playerData = playersData.get(ply.getName());
 
-		event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ": " + event.getMessage());
+		event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET + event.getMessage());
 
 		for (Player player : event.getRecipients()) {
 			if (!playerWorld.equalsIgnoreCase(player.getWorld().getName())) {
@@ -187,7 +181,7 @@ public class PlayerHandling implements Listener {
 		Player ply = (Player)event.getEntity();
 		
 		if (ply != null && ply instanceof Player) {			
-			if (!getPlayerData(ply).getPermission("nyeblock.canLoseHunger")) {
+			if (!ply.hasPermission("nyeblock.canLoseHunger")) {
 				if (event.getFoodLevel() < 20) {
 					event.setFoodLevel(20);
 				}
@@ -321,16 +315,19 @@ public class PlayerHandling implements Listener {
 		event.setQuitMessage("");
 
 		// If the player is in a game, remove them
-		mainInstance.getGameInstance().removePlayerFromGame(ply, pd.getRealm());
-		
-		//If player is in hub
-		if (mainInstance.getHubInstance().getPlayers().contains(ply)) {
-			mainInstance.getHubInstance().playerLeave(ply);
-		}
-		
-		//If player is in parkour
-		if (mainInstance.getHubParkourInstance().getPlayers().contains(ply)) {
-			mainInstance.getHubParkourInstance().playerLeave(ply);
+		GameBase game = pd.getCurrentGame();
+		if (game != null) {
+			game.playerLeave(ply, true, false);
+		} else {
+			//If player is in hub
+			if (mainInstance.getHubInstance().getPlayers().contains(ply)) {
+				mainInstance.getHubInstance().playerLeave(ply);
+			}
+			
+			//If player is in parkour
+			if (mainInstance.getHubParkourInstance().getPlayers().contains(ply)) {
+				mainInstance.getHubParkourInstance().playerLeave(ply);
+			}
 		}
 
 		//Update play time
@@ -354,58 +351,47 @@ public class PlayerHandling implements Listener {
 			event.setRespawnLocation(Bukkit.getWorld("world").getSpawnLocation());
 			playerData.setItems();
 		} else if (playerData.getRealm() == Realm.KITPVP) {
-			GameHandling gh = mainInstance.getGameInstance();
-			KitPvP game = null;
+			GameBase game = playerData.getCurrentGame();
 
-			for (KitPvP gm : gh.getKitPvpGames()) {
-				if (gm.isInServer(ply)) {
-					game = gm;
-				}
-			}
-			if (game != null) {
-				Vector randSpawn = game.getRandomSpawnPoint();
-				event.setRespawnLocation(new Location(Bukkit.getWorld(ply.getWorld().getName()), randSpawn.getX(),
-						randSpawn.getY(), randSpawn.getZ()));
-				playerData.setItems();
-				game.setPlayerKit(ply, game.getPlayerKit(ply));
-			}
+			Location randSpawn = game.getRandomSpawnPoint();
+			event.setRespawnLocation(randSpawn);
+			playerData.setItems();
+			game.setPlayerKit(ply, game.getPlayerKit(ply));
 		} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
-			GameHandling gh = mainInstance.getGameInstance();
-
-			for (StepSpleef gm : gh.getStepSpleefGames()) {
-				if (gm.isInServer(ply)) {
-					Vector randSpawn = gm.getRandomSpawnPoint();
-					event.setRespawnLocation(new Location(Bukkit.getWorld(ply.getWorld().getName()), randSpawn.getX(),
-							randSpawn.getY(), randSpawn.getZ()));
-					playerData.setItems();
-					ply.setAllowFlight(true);
-				}
-			}
+			GameBase game = playerData.getCurrentGame();
+			
+			Location randSpawn = game.getRandomSpawnPoint();
+			event.setRespawnLocation(randSpawn);
+			playerData.setItems();
 		} else if (playerData.getRealm() == Realm.SKYWARS) {
-			GameHandling gh = mainInstance.getGameInstance();
+			GameBase game = playerData.getCurrentGame();
 
-			for (SkyWars gm : gh.getSkyWarsGames()) {
-				if (gm.isInServer(ply)) {
-					Vector randSpawn = gm.getRandomSpawnPoint();
-					event.setRespawnLocation(new Location(Bukkit.getWorld(ply.getWorld().getName()), randSpawn.getX(),
-							randSpawn.getY(), randSpawn.getZ()));
-					playerData.setItems();
-					ply.setAllowFlight(true);
-				}
-			}
+			Location randSpawn = game.getRandomSpawnPoint();
+			event.setRespawnLocation(randSpawn);
+			playerData.setItems();
+		} else if (playerData.getRealm() == Realm.PVP) {
+			GameBase game = playerData.getCurrentGame();
+
+			playerData.setItems();
+			ply.setFireTicks(0);
+			event.setRespawnLocation(game.getPlayerSpawn(ply));
+		}
+	}
+	//Handle when a player moves
+	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent event) {
+		Player ply = event.getPlayer();
+		
+		if (!ply.hasPermission("nyeblock.canMove")) {
+			event.setCancelled(true);
 		}
 	}
 	// Handle when a player attempts to drop an item
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent event) {
 		Player ply = event.getPlayer();
-		PlayerData playerData = playersData.get(ply.getName());
 
-		if (ply.hasPermission("nyeblock.canDropItems")) {
-			if (!playerData.getPermission("nyeblock.canDropItems")) {
-				event.setCancelled(true);
-			}
-		} else {
+		if (!ply.hasPermission("nyeblock.canDropItems")) {
 			event.setCancelled(true);
 		}
 	}
@@ -413,26 +399,17 @@ public class PlayerHandling implements Listener {
 	@EventHandler
 	public void onBlockPlace(BlockPlaceEvent event) {
 		Player ply = event.getPlayer();
-		PlayerData playerData = playersData.get(ply.getName());
 		
-		if (ply.hasPermission("nyeblock.canPlaceBlocks")) {
-			if (!playerData.getPermission("nyeblock.canPlaceBlocks")) {
-				event.setCancelled(true);
-			}
+		if (!ply.hasPermission("nyeblock.canPlaceBlocks")) {
+			event.setCancelled(true);
 		}
 	}
 	// Handle when a block is broken
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent event) {
 		Player ply = event.getPlayer();
-		PlayerData playerData = playersData.get(ply.getName());
-
-		// Check if the player has the proper permission to break blocks
-		if (ply.hasPermission("nyeblock.canBreakBlocks")) {
-			if (!playerData.getPermission("nyeblock.canBreakBlocks")) {
-				event.setCancelled(true);
-			}
-		} else {
+		
+		if (!ply.hasPermission("nyeblock.canBreakBlocks")) {
 			event.setCancelled(true);
 		}
 	}
@@ -442,38 +419,36 @@ public class PlayerHandling implements Listener {
 		if (event.getDamager() instanceof Player && event.getEntity() instanceof Player) {
 			Player damager = (Player) event.getDamager();
 			Player damaged = (Player) event.getEntity();
+			PlayerData damagerpd = getPlayerData(damager);
+			PlayerData damagedpd = getPlayerData(damaged);
 
-			if (damager instanceof Player) {
-				PlayerData playerData = playersData.get(damager.getName());
-
-				if (!playerData.getPermission("nyeblock.canDamage")) {
-					event.setCancelled(true);
-				}
-			}
-			if (damaged instanceof Player) {
-				PlayerData playerData = playersData.get(damager.getName());
-
-				if (!playerData.getPermission("nyeblock.canBeDamaged")) {
-					event.setCancelled(true);
-				}
+			if (!damager.hasPermission("nyeblock.canDamage")) {
+				event.setCancelled(true);
+			} else if (!damaged.hasPermission("nyeblock.canBeDamaged")) {
+				event.setCancelled(true);
+			} else if (damagedpd.getRealm() == Realm.PVP && damagedpd.getTeam() != null && damagedpd.getTeam().equals(damagerpd.getTeam())) {
+				event.setCancelled(true);
+			} else if (damaged.getHealth() <= 0) {
+				event.setCancelled(true);
 			}
 		}
 	}
 	// Handle when the player falls
 	@EventHandler
 	public void onDamageEvent(EntityDamageEvent event) {
-		Entity ply = event.getEntity();
+		Entity ent = event.getEntity();
 
-		if (ply instanceof Player) {
+		if (ent instanceof Player) {
+			Player ply = (Player)ent;
 			PlayerData playerData = playersData.get(ply.getName());
 
 			if (playerData != null) {				
-				if (!playerData.getPermission("nyeblock.canBeDamaged")) {
+				if (!ply.hasPermission("nyeblock.canBeDamaged")) {
 					event.setCancelled(true);
 				} else {
 					if (event.getCause() == DamageCause.FALL) {
-						if (!playerData.getPermission("nyeblock.canTakeFallDamage")
-								|| playerData.getPermission("nyeblock.tempNoDamageOnFall")) {
+						if (!ply.hasPermission("nyeblock.canTakeFallDamage")
+								|| ply.hasPermission("nyeblock.tempNoDamageOnFall")) {
 							playerData.setPermission("nyeblock.tempNoDamageOnFall", false);
 							event.setCancelled(true);
 						}
@@ -484,13 +459,17 @@ public class PlayerHandling implements Listener {
 			}
 		}
 	}
+	//Handle when a player is hit by a projectile
 	@EventHandler
 	public void onProjectileHit(ProjectileHitEvent event) {
 		Projectile projectile = event.getEntity();
-		Player attacked = (Player)event.getHitEntity();
-		Player attacker = (Player)event.getEntity().getShooter();
+		Entity entAttacked = event.getHitEntity();
+		ProjectileSource entAttacker = event.getEntity().getShooter();
 		
-		if (attacked instanceof Player && attacker instanceof Player) {
+		if (entAttacked instanceof Player && entAttacker instanceof Player) {
+			Player attacked = (Player)event.getHitEntity();
+			Player attacker = (Player)event.getEntity().getShooter();
+			
 			if (projectile instanceof Snowball) {
 				attacked.damage(0.0001);
 				attacked.setVelocity(attacked.getVelocity().add(attacked.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(1)));
@@ -502,8 +481,18 @@ public class PlayerHandling implements Listener {
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		Player killed = event.getEntity();
 		Player attacker = event.getEntity().getKiller();
+		
 		// Remove default death message
 		event.setDeathMessage("");
+		
+		//Force player to respawn
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
+			@Override
+			public void run() {				
+				killed.spigot().respawn();
+			}
+		});
+		
 		PlayerData playerData = playersData.get(killed.getName());
 
 		if (playerData.getRealm() == Realm.HUB) {
@@ -511,56 +500,58 @@ public class PlayerHandling implements Listener {
 		} else if (playerData.getRealm() == Realm.KITPVP) {
 			event.getDrops().clear();
 
-			for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-				if (game.isInServer(killed)) {
-					if (attacker instanceof Player) {
-						game.playerDeath(killed, attacker);
-						for (int i = 0; i < 10; i++) {
-							attacker.playEffect(killed.getLocation(), Effect.SMOKE, 1);
-						}
-						attacker.playSound(attacker.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
-					} else {
-						game.playerDeath(killed, null);
-					}
+			GameBase game = playerData.getCurrentGame();
+			
+			if (attacker instanceof Player) {
+				game.playerDeath(killed, attacker);
+				for (int i = 0; i < 10; i++) {
+					attacker.playEffect(killed.getLocation(), Effect.SMOKE, 1);
 				}
+				attacker.playSound(attacker.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
+			} else {
+				game.playerDeath(killed, null);
 			}
 		} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
 			event.getDrops().clear();
+			
+			GameBase game = playerData.getCurrentGame();
 
-			for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
-				if (game.isInServer(killed)) {
-					game.playerDeath(killed);
-				}
-			}
+			game.playerDeath(killed,null);
 		} else if (playerData.getRealm() == Realm.SKYWARS) {
-			for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-				if (game.isInServer(killed)) {
-					if (attacker instanceof Player) {
-						game.playerDeath(killed, attacker);
-						for (int i = 0; i < 10; i++) {
-							attacker.playEffect(killed.getLocation(), Effect.SMOKE, 1);
-						}
-						attacker.playSound(attacker.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
-					} else {
-						game.playerDeath(killed, null);
-					}
+			GameBase game = playerData.getCurrentGame();
+			
+			if (attacker instanceof Player) {
+				game.playerDeath(killed, attacker);
+				for (int i = 0; i < 10; i++) {
+					attacker.playEffect(killed.getLocation(), Effect.SMOKE, 1);
 				}
+				attacker.playSound(attacker.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
+			} else {
+				game.playerDeath(killed, null);
+			}
+		} else if (playerData.getRealm() == Realm.PVP) {
+			GameBase game = playerData.getCurrentGame();
+			
+			if (attacker instanceof Player) {
+				game.playerDeath(killed, attacker);
+				for (int i = 0; i < 10; i++) {
+					attacker.playEffect(killed.getLocation(), Effect.SMOKE, 1);
+				}
+				attacker.playSound(attacker.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
+			} else {
+				game.playerDeath(killed, null);
 			}
 		}
-		killed.remove();
 	}
 	// Handle when a player shoots a bow
 	@EventHandler
 	public void onPlayerShootBow(EntityShootBowEvent event) {
 		Player ply = (Player) event.getEntity();
+		GameBase game = getPlayerData(ply).getCurrentGame();
 
 		if (ply instanceof Player) {
-			for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-				if (game.isInServer(ply)) {
-					if (game.isInGraceBounds(ply)) {
-						event.setCancelled(true);
-					}
-				}
+			if (game.isInGraceBounds(ply)) {
+				event.setCancelled(true);
 			}
 		}
 	}
@@ -576,16 +567,12 @@ public class PlayerHandling implements Listener {
 	// Handle potion splashes
 	@EventHandler
 	public void onPotionSpash(PotionSplashEvent event) {
-
 		if (event.getEntity() instanceof Player) {
 			Player ply = (Player) event.getEntity();
+			GameBase game = getPlayerData(ply).getCurrentGame();
 
-			for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-				if (game.isInServer(ply)) {
-					if (game.isInGraceBounds(ply)) {
-						event.setCancelled(true);
-					}
-				}
+			if (game.isInGraceBounds(ply)) {
+				event.setCancelled(true);
 			}
 		}
 	}
@@ -594,8 +581,17 @@ public class PlayerHandling implements Listener {
 	public void onItemSwapEvent(PlayerSwapHandItemsEvent event) {
 		Player ply = event.getPlayer();
 		
-		if (!getPlayerData(ply).getPermission("nyeblock.canSwapItems")) {
+		if (!ply.hasPermission("nyeblock.canSwapItems")) {
 			event.setCancelled(true);
+		}
+	}
+	//Handle when the player closes an inventory menu
+	@EventHandler
+	public void onInventoryClose(InventoryCloseEvent event) {
+		Player ply = (Player)event.getPlayer();
+		
+		if (ply.getOpenInventory() == null) {			
+			playersData.get(ply.getName()).setMenu(null);
 		}
 	}
 	// Handle when an item is moved in an inventory menu
@@ -610,12 +606,9 @@ public class PlayerHandling implements Listener {
 				ItemMeta itemMeta = item.getItemMeta();
 				
 				if (itemMeta != null) {
-					// Track items in menus
-					if (event.getView().getTitle().equalsIgnoreCase(ChatColor.DARK_GRAY + "Game Menu")) {
-						event.getView().close();
-						HubMenu hubMenu = new HubMenu();
-						hubMenu.clickItem(ply, itemMeta.getLocalizedName(), mainInstance);
-					} else if (event.getView().getTitle()
+					PlayerData playerData = playersData.get(ply.getName());
+					
+					if (event.getView().getTitle()
 							.equalsIgnoreCase(ChatColor.DARK_GRAY + "Select a Kit")) {
 						event.getView().close();
 						KitSelector selectKit = new KitSelector(getPlayerData(ply).getRealm());
@@ -627,46 +620,34 @@ public class PlayerHandling implements Listener {
 						select.clickItem(ply, itemMeta.getLocalizedName(), mainInstance);
 					} else {
 						String itemName = itemMeta.getLocalizedName();
-						PlayerData playerData = playersData.get(ply.getName());
 						
-						if (itemName.equals("hub_menu")) {
-							HubMenu hubMenu = new HubMenu();
-							
-							hubMenu.openMenu(mainInstance,ply,1);
-							event.setCancelled(false);
-						} else if (itemName.equals("return_to_hub")) {
-							// Remove player from game
-							if (playerData.getRealm() == Realm.KITPVP) {
-								for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-									if (game.isInServer(ply)) {
-										game.playerLeave(ply, true, true);
-									}
-								}
-							} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
-								for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
-									if (game.isInServer(ply)) {
-										game.playerLeave(ply, true, true);
-									}
-								}
-							} else if (playerData.getRealm() == Realm.SKYWARS) {
-								for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-									if (game.isInServer(ply)) {
-										game.playerLeave(ply, true, true);
-									}
-								}
-							}
-							event.setCancelled(false);
-						} else if (itemName.equals("parkour_menu")) {
-							ParkourMenu parkourMenu = new ParkourMenu();
-
-							parkourMenu.openMenu(mainInstance,ply);
-							
-							event.setCancelled(true);
-						} else if (itemName.equals("parkour_start")) {
-							mainInstance.getHubParkourInstance().goToStart(ply);
-						} else if (itemName.equals("kit_selector")) {
-							if (playerData.getRealm() == Realm.KITPVP) {
-								for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
+						if (!event.getView().getTitle().equals("Crafting") && playerData.getMenu() != null) {
+							playerData.getMenu().optionClick(itemName);
+						} else {
+							if (itemName.equals("hub_menu")) {
+								HubMenu hubMenu = new HubMenu(mainInstance,ply);
+								
+								playersData.get(ply.getName()).setMenu(hubMenu);
+								hubMenu.openMenu(ply, "Game Menu");
+							} else if (itemName.equals("return_to_hub")) {
+								GameBase game = getPlayerData(ply).getCurrentGame();
+								
+								// Remove player from game
+								game.playerLeave(ply, true, true);
+								
+								event.setCancelled(false);
+							} else if (itemName.equals("parkour_menu")) {
+								ParkourMenu parkourMenu = new ParkourMenu();
+								
+								parkourMenu.openMenu(mainInstance,ply);
+								
+								event.setCancelled(true);
+							} else if (itemName.equals("parkour_start")) {
+								mainInstance.getHubParkourInstance().goToStart(ply);
+							} else if (itemName.equals("kit_selector")) {
+								GameBase game = getPlayerData(ply).getCurrentGame();
+								
+								if (playerData.getRealm() == Realm.KITPVP) {
 									if (game.isInServer(ply)) {
 										if (game.isInGraceBounds(ply)) {
 											KitSelector selectKit = new KitSelector(Realm.KITPVP);
@@ -674,100 +655,60 @@ public class PlayerHandling implements Listener {
 											selectKit.openMenu(ply, mainInstance);
 										}
 									}
-								}
-							} else if (playerData.getRealm() == Realm.SKYWARS) {
-								for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
+								} else if (playerData.getRealm() == Realm.SKYWARS) {
 									if (game.isInServer(ply)) {
 										KitSelector selectKit = new KitSelector(Realm.SKYWARS);
 										
 										selectKit.openMenu(ply, mainInstance);
 									}
 								}
-							}
-							event.setCancelled(false);
-						} else if (itemName.equals("player_selector")) {
-							int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
-							String worldName = playerData.getCustomDataKey("player_world");
-							
-							if (playerData.getRealm() == Realm.STEPSPLEEF) {
-								for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
-									if (game.getWorldName().equalsIgnoreCase(worldName)) {
-										ArrayList<Player> playersInGame = game.getPlayersInGame();
+								event.setCancelled(false);
+							} else if (itemName.equals("player_selector")) {
+								int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
+								GameBase game = getPlayerData(ply).getCurrentGame();
+								ArrayList<Player> playersInGame = game.getPlayersInGame();
+								
+								if (playersInGame.size() > currentIndex + 1) {
+									Player playerToSpec = playersInGame.get(currentIndex + 1);
+									
+									ply.teleport(playerToSpec);
+									itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+											+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
+											+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+									playerData.setCustomDataKey("player_selector_index",
+											String.valueOf(currentIndex + 1));
+								} else {
+									if (playersInGame.size() > 0) {
+										Player playerToSpec = playersInGame.get(0);
 										
-										if (playersInGame.size() > currentIndex + 1) {
-											Player playerToSpec = playersInGame.get(currentIndex + 1);
-											
-											ply.teleport(playerToSpec);
-											itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-													+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-													+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-											playerData.setCustomDataKey("player_selector_index",
-													String.valueOf(currentIndex + 1));
-										} else {
-											if (playersInGame.size() > 0) {
-												Player playerToSpec = playersInGame.get(0);
-												
-												ply.teleport(playerToSpec);
-												itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-														+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-														+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-												playerData.setCustomDataKey("player_selector_index", "0");
-											} else {
-												itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
-											}
-										}
+										ply.teleport(playerToSpec);
+										itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+												+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
+												+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+										playerData.setCustomDataKey("player_selector_index", "0");
+									} else {
+										itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
 									}
 								}
-							} else if (playerData.getRealm() == Realm.SKYWARS) {
-								for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-									if (game.getWorldName().equalsIgnoreCase(worldName)) {
-										ArrayList<Player> playersInGame = game.getPlayersInGame();
-										
-										if (playersInGame.size() > currentIndex + 1) {
-											Player playerToSpec = playersInGame.get(currentIndex + 1);
-											
-											ply.teleport(playerToSpec);
-											itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-													+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-													+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-											playerData.setCustomDataKey("player_selector_index",
-													String.valueOf(currentIndex + 1));
-										} else {
-											if (playersInGame.size() > 0) {
-												Player playerToSpec = playersInGame.get(0);
-												
-												ply.teleport(playerToSpec);
-												itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-														+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-														+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-												playerData.setCustomDataKey("player_selector_index", "0");
-											} else {
-												itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
-											}
-										}
-									}
+								event.getCurrentItem().setItemMeta(itemMeta);
+								event.setCancelled(false);
+							} else if (itemName.equals("hide_players")) {
+								boolean currentStatus = Boolean.parseBoolean(playerData.getCustomDataKey("hide_players"));
+								
+								if (currentStatus) {
+									playerData.setCustomDataKey("hide_players", "false");
+									itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.RED.toString() + ChatColor.BOLD + "Disabled");
+								} else {
+									playerData.setCustomDataKey("hide_players", "true");
+									itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.GREEN.toString() + ChatColor.BOLD + "Enabled");
 								}
+								item.setItemMeta(itemMeta);
 							}
-							event.getCurrentItem().setItemMeta(itemMeta);
-							event.setCancelled(false);
-						} else if (itemName.equals("hide_players")) {
-							boolean currentStatus = Boolean.parseBoolean(playerData.getCustomDataKey("hide_players"));
-							
-							if (currentStatus) {
-								playerData.setCustomDataKey("hide_players", "false");
-								itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.RED.toString() + ChatColor.BOLD + "Disabled");
-							} else {
-								playerData.setCustomDataKey("hide_players", "true");
-								itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.GREEN.toString() + ChatColor.BOLD + "Enabled");
-							}
-							item.setItemMeta(itemMeta);
 						}
 					}
 					// Block inventory move
 					if (ply.hasPermission("nyeblock.canUseInventory")) {
-						PlayerData playerData = playersData.get(ply.getName());
-						
-						if (!playerData.getPermission("nyeblock.canUseInventory")) {
+						if (!ply.hasPermission("nyeblock.canUseInventory")) {
 							event.setCancelled(true);
 						}
 					} else {
@@ -790,9 +731,10 @@ public class PlayerHandling implements Listener {
 				String itemName = itemMeta.getLocalizedName();
 
 				if (itemName.equals("hub_menu")) {
-					HubMenu hubMenu = new HubMenu();
-
-					hubMenu.openMenu(mainInstance,ply,1);
+					HubMenu hubMenu = new HubMenu(mainInstance,ply);
+					
+					playersData.get(ply.getName()).setMenu(hubMenu);
+					hubMenu.openMenu(ply, "Game Menu");
 				} else if (itemName.equals("parkour_menu")) {
 					ParkourMenu parkourMenu = new ParkourMenu();
 
@@ -800,115 +742,79 @@ public class PlayerHandling implements Listener {
 					
 					event.setCancelled(true);
 				} else if (itemName.equals("return_to_hub")) {
-					event.setCancelled(true);
-					PlayerData playerData = playersData.get(ply.getName());
+					GameBase game = getPlayerData(ply).getCurrentGame();
 
-					// Remove player from game
-					if (playerData.getRealm() == Realm.KITPVP) {
-						for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-							if (game.isInServer(ply)) {
-								game.playerLeave(ply, true, true);
-							}
-						}
-					} else if (playerData.getRealm() == Realm.STEPSPLEEF) {
-						for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
-							if (game.isInServer(ply)) {
-								game.playerLeave(ply, true, true);
-							}
-						}
-					} else if (playerData.getRealm() == Realm.SKYWARS) {
-						for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-							if (game.isInServer(ply)) {
-								game.playerLeave(ply, true, true);
-							}
-						}
-					}
+					game.playerLeave(ply, true, true);
+					event.setCancelled(true);
 				} else if (itemName.equals("parkour_start")) {
 					mainInstance.getHubParkourInstance().goToStart(ply);
 				} else if (itemName.equals("kit_selector")) {
-					PlayerData playerData = playersData.get(ply.getName());
-
+					PlayerData playerData = getPlayerData(ply);
+					GameBase game = playerData.getCurrentGame();
+					
 					if (playerData.getRealm() == Realm.KITPVP) {
-						for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-							if (game.isInServer(ply)) {
-								if (game.isInGraceBounds(ply)) {
-									KitSelector selectKit = new KitSelector(Realm.KITPVP);
-
-									selectKit.openMenu(ply, mainInstance);
-								}
-							}
-						}
-					} else if (playerData.getRealm() == Realm.SKYWARS) {
-						for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-							if (game.isInServer(ply)) {
-								KitSelector selectKit = new KitSelector(Realm.SKYWARS);
-
+						if (game.isInServer(ply)) {
+							if (game.isInGraceBounds(ply)) {
+								KitSelector selectKit = new KitSelector(Realm.KITPVP);
+								
 								selectKit.openMenu(ply, mainInstance);
 							}
 						}
+					} else if (playerData.getRealm() == Realm.SKYWARS) {
+						if (game.isInServer(ply)) {
+							KitSelector selectKit = new KitSelector(Realm.SKYWARS);
+							
+							selectKit.openMenu(ply, mainInstance);
+						}
 					}
+					event.setCancelled(false);
+					
+//					GameBase currentGame = playersData.get(ply.getName()).getCurrentGame();
+//					XY gamePos = currentGame.getGamePos();
+//					final Location origin = ply.getLocation();
+//					CoreProtectAPI cp = mainInstance.getCoreProtectAPI();
+//					EditSession editSession = currentGame.getEditSession();
+			
+					
+//					EditSession test = WorldEdit.getInstance().getEditSessionFactory().getEditSession(editSession.getWorld(), -1, null, null);
+//					editSession.undo(test);
+//					editSession.flushQueue();
+					//(int)(System.currentTimeMillis()-currentGame.getCreated())
+//					List<String[]> lookup = cp.performLookup(60, null, null, null, null, null, 200, new Location(Bukkit.getWorld("games_world"),(gamePos.x*500)-(500/2),200,(gamePos.y*500)-(500/2)));
+//					
+//					if (lookup != null) {
+//						for (String[] value : lookup) {
+//							ParseResult result = cp.parseResult(value);
+//							
+//							new Location(Bukkit.getWorld("games_world"),result.getX(),result.getY(),result.getZ()).getBlock().setType(Material.AIR);
+//						}
+//					}
 				} else if (itemName.equals("player_selector")) {
 					PlayerData playerData = playersData.get(ply.getName());
 					int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
-					String worldName = playerData.getCustomDataKey("player_world");
+					GameBase game = getPlayerData(ply).getCurrentGame();
+					ArrayList<Player> playersInGame = game.getPlayersInGame();
 
-					if (playerData.getRealm() == Realm.STEPSPLEEF) {
-						for (StepSpleef game : mainInstance.getGameInstance().getStepSpleefGames()) {
-							if (game.getWorldName().equalsIgnoreCase(worldName)) {
-								ArrayList<Player> playersInGame = game.getPlayersInGame();
+					if (playersInGame.size() > currentIndex + 1) {
+						Player playerToSpec = playersInGame.get(currentIndex + 1);
 
-								if (playersInGame.size() > currentIndex + 1) {
-									Player playerToSpec = playersInGame.get(currentIndex + 1);
+						ply.teleport(playerToSpec);
+						itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+								+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
+								+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+						playerData.setCustomDataKey("player_selector_index",
+								String.valueOf(currentIndex + 1));
+					} else {
+						if (playersInGame.size() > 0) {
+							Player playerToSpec = playersInGame.get(0);
 
-									ply.teleport(playerToSpec);
-									itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-											+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-											+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-									playerData.setCustomDataKey("player_selector_index",
-											String.valueOf(currentIndex + 1));
-								} else {
-									if (playersInGame.size() > 0) {
-										Player playerToSpec = playersInGame.get(0);
-
-										ply.teleport(playerToSpec);
-										itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-												+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-												+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-										playerData.setCustomDataKey("player_selector_index", "0");
-									} else {
-										itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
-									}
-								}
-							}
-						}
-					} else if (playerData.getRealm() == Realm.SKYWARS) {
-						for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-							if (game.getWorldName().equalsIgnoreCase(worldName)) {
-								ArrayList<Player> playersInGame = game.getPlayersInGame();
-
-								if (playersInGame.size() > currentIndex + 1) {
-									Player playerToSpec = playersInGame.get(currentIndex + 1);
-
-									ply.teleport(playerToSpec);
-									itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-											+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-											+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-									playerData.setCustomDataKey("player_selector_index",
-											String.valueOf(currentIndex + 1));
-								} else {
-									if (playersInGame.size() > 0) {
-										Player playerToSpec = playersInGame.get(0);
-
-										ply.teleport(playerToSpec);
-										itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-												+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-												+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-										playerData.setCustomDataKey("player_selector_index", "0");
-									} else {
-										itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
-									}
-								}
-							}
+							ply.teleport(playerToSpec);
+							itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+									+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
+									+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+							playerData.setCustomDataKey("player_selector_index", "0");
+						} else {
+							itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
 						}
 					}
 					item.setItemMeta(itemMeta);
@@ -917,38 +823,77 @@ public class PlayerHandling implements Listener {
 					boolean currentStatus = Boolean.parseBoolean(playerData.getCustomDataKey("hide_players"));
 
 					if (currentStatus) {
+						GameBase game = playerData.getCurrentGame();
+						
+						if (game != null) {							
+							for (Player ply2 : game.getPlayersInGame()) {
+								if (!ply.canSee(ply2)) {
+									if (!playerData.getSpectatingStatus()) {									
+										ply.showPlayer(mainInstance,ply2);
+									}
+								}
+							}
+						} else {
+							for (Player ply2 : Bukkit.getOnlinePlayers()) {
+								if (!ply.canSee(ply2)) {
+									if (!playerData.getSpectatingStatus()) {									
+										ply.showPlayer(mainInstance,ply2);
+									}
+								}
+							}
+						}
 						playerData.setCustomDataKey("hide_players", "false");
 						itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.RED.toString() + ChatColor.BOLD + "Disabled");
 					} else {
+						GameBase game = playerData.getCurrentGame();
+						
+						if (game != null) {							
+							for (Player ply2 : playerData.getCurrentGame().getPlayersInGame()) {
+								if (ply.canSee(ply2)) {								
+									ply.hidePlayer(mainInstance,ply2);
+								}
+							}
+						} else {
+							for (Player ply2 : Bukkit.getOnlinePlayers()) {
+								if (ply.canSee(ply2)) {								
+									ply.hidePlayer(mainInstance,ply2);
+								}
+							}
+						}
 						playerData.setCustomDataKey("hide_players", "true");
 						itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.GREEN.toString() + ChatColor.BOLD + "Enabled");
 					}
 					item.setItemMeta(itemMeta);
 				} else if (itemName.equals("kitpvp_wizard_fireball")) {
-					for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-						if (game.isInServer(ply)) {
-							if (!game.isInGraceBounds(ply)) {
-								Location spawnAt = ply.getEyeLocation().toVector()
-										.add(ply.getEyeLocation().getDirection().multiply(3))
-										.toLocation(ply.getWorld());
-								Fireball fireball = ply.getWorld().spawn(spawnAt, Fireball.class);
-								fireball.setDirection(ply.getEyeLocation().getDirection());
-								fireball.setBounce(false);
-								fireball.setIsIncendiary(false);
-								fireball.setYield(1.75F);
-								fireball.setShooter(ply);
-								for (ItemStack itemm : ply.getInventory().getContents()) {
-									if (itemm != null) {
-										if (itemm.getType().equals(Material.FIRE_CHARGE)) {
-											itemm.setAmount(itemm.getAmount() - 1);
-										}
-									}
+					GameBase game = getPlayerData(ply).getCurrentGame();
+					
+					if (!game.isInGraceBounds(ply)) {
+						Location spawnAt = ply.getEyeLocation().toVector()
+								.add(ply.getEyeLocation().getDirection().multiply(3))
+								.toLocation(ply.getWorld());
+						Fireball fireball = ply.getWorld().spawn(spawnAt, Fireball.class);
+						fireball.setDirection(ply.getEyeLocation().getDirection());
+						fireball.setBounce(false);
+						fireball.setIsIncendiary(false);
+						fireball.setYield(1.75F);
+						fireball.setShooter(ply);
+						for (ItemStack itemm : ply.getInventory().getContents()) {
+							if (itemm != null) {
+								if (itemm.getType().equals(Material.FIRE_CHARGE)) {
+									itemm.setAmount(itemm.getAmount() - 1);
 								}
 							}
 						}
 					}
 				}
 			}
+		}
+	}
+	//Handle when a player interacts with an entity
+	@EventHandler
+	public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
+		if (event.getRightClicked().getType().toString().equals("ITEM_FRAME")) {
+			event.setCancelled(true);
 		}
 	}
 }

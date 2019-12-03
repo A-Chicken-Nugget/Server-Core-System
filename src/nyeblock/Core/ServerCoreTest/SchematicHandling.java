@@ -21,6 +21,7 @@ import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
@@ -28,9 +29,12 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.session.ClipboardHolder;
 
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.XY;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 
 public class SchematicHandling {
 	public Set<String> listFilesUsingDirectoryStream(String dir) throws IOException {
@@ -47,10 +51,13 @@ public class SchematicHandling {
 	}
 	
 	//Create a schematic in a world based on the game
-	public String setSchematic(Realm realm, String worldName) {
+	public String setSchematic(Main mainInstance,GameBase game) {
+		Realm realm = game.getRealm();
+		XY gamePos = game.getGamePos();
+		
 		String schemToUse = null;
 		ArrayList<File> schems = new ArrayList<File>();
-		schems.addAll(Arrays.asList(new File(Bukkit.getPluginManager().getPlugin("WorldEdit").getDataFolder().getAbsolutePath() + "/schematics").listFiles()));
+		schems.addAll(Arrays.asList(new File("./plugins/WorldEdit/schematics").listFiles()));
 		ArrayList<File> validSchems = new ArrayList<File>();
 		File schem = new File("");
 		
@@ -70,6 +77,15 @@ public class SchematicHandling {
 		String[] mapName = removeExtension[0].split("_");
 		System.out.println("[Core]: Creating new " + realm.toString() + " game. Using map " + mapName[1]);
 		
+//	    try {
+//			EditSession test = ClipboardFormats.findByFile(schem).load(schem).paste(new BukkitWorld(Bukkit.getWorld("games_world")), BlockVector3.at((gamePos.x*500)-(500/2), 0, (gamePos.y*500)-(500/2)), false, false, (Transform) null);
+//			game.setEditSession(test);
+//			
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		
 		ClipboardFormat format = ClipboardFormats.findByFile(schem);
 		ClipboardReader reader = null;
 		try {
@@ -85,7 +101,7 @@ public class SchematicHandling {
 	    try {
 			Clipboard clipboard = reader.read();
 			
-			com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(Bukkit.getWorld(worldName));
+			com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(Bukkit.getWorld(game.getWorldName()));
 		              
 			EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(adaptedWorld,-1);
 
@@ -103,6 +119,7 @@ public class SchematicHandling {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	    
 	    return schemToUse;
 	}
 }

@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Games;
+package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,10 +37,10 @@ public class HubParkour {
 	private DatabaseHandling databaseInstance;
 	private World world = Bukkit.getWorld("world");
 	// Player data
-	private ArrayList<Player> players = new ArrayList<Player>();
-	private HashMap<String, Integer> playerCheckPoints = new HashMap<>();
-	private HashMap<String, Long> playerTimes = new HashMap<>();
-	private HashMap<String, Long> playerBestTimes = new HashMap<>();
+	private ArrayList<Player> players = new ArrayList<>();
+	private HashMap<String,Integer> playerCheckPoints = new HashMap<>();
+	private HashMap<String,Long> playerTimes = new HashMap<>();
+	private HashMap<String,Long> playerBestTimes = new HashMap<>();
 	// Zone points
 	private Vector parkourZonePoint1 = new Vector(31.412, 113, 8);
 	private Vector parkourZonePoint2 = new Vector(78.510, 130, -20.700);
@@ -71,7 +71,7 @@ public class HubParkour {
 		//Floating text
 		top5Text = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),40.015,116,-16.005));
 		top5Text.appendTextLine(ChatColor.YELLOW + "Top 5 Fastest Parkour times");
-		top5Text.appendTextLine(ChatColor.YELLOW + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+		top5Text.appendTextLine(ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A");
 		top5Text.appendTextLine(ChatColor.YELLOW + "Loading...");
 		top5Text.appendItemLine(new ItemStack(Material.CLOCK));
 
@@ -161,7 +161,7 @@ public class HubParkour {
 		if (top5ListText.size() > 0) {
 			top5Text.clearLines();
 			top5Text.appendTextLine(ChatColor.YELLOW + "Top 5 Fastest Parkour times");
-			top5Text.appendTextLine(ChatColor.YELLOW + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			top5Text.appendTextLine(ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A");
 			
 			for (int i = 0; i < top5ListText.size(); i++) {				
 				HashMap<String, String> queryData = top5ListText.get(i);
@@ -190,7 +190,21 @@ public class HubParkour {
 						playerCheckPoints.put(ply.getName(),-1);
 						playerBestTimes.put(ply.getName(), 0L);
 						
+						//Leave the hub
 						mainInstance.getHubInstance().playerLeave(ply);
+						
+						//Show players in game
+						for (Player ply2 : Bukkit.getOnlinePlayers()) {
+							if (players.contains(ply2)) {
+								if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+									ply.showPlayer(mainInstance,ply2);
+								}
+							} else {								
+								if (ply.canSee(ply2)) {								
+									ply.hidePlayer(mainInstance,ply2);
+								}
+							}
+						}
 						
 						//Clear scoreboard
 						pd.clearScoreboard();
@@ -203,6 +217,8 @@ public class HubParkour {
 							pd.addPlayerToTeam("admin", ply);
 						} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
 							pd.addPlayerToTeam("moderator", ply);
+						} else if (pd.getUserGroup() == UserGroup.TESTER) {
+							pd.addPlayerToTeam("tester", ply);
 						} else {
 							pd.addPlayerToTeam("default", ply);
 						}
@@ -217,6 +233,8 @@ public class HubParkour {
 									pd.addPlayerToTeam("admin", player);
 								} else if (pd2.getUserGroup() == UserGroup.MODERATOR) {
 									pd.addPlayerToTeam("moderator", player);
+								} else if (pd2.getUserGroup() == UserGroup.TESTER) {
+									pd.addPlayerToTeam("tester", ply);
 								} else {					
 									pd.addPlayerToTeam("default", player);
 								}
@@ -226,6 +244,8 @@ public class HubParkour {
 									pd2.addPlayerToTeam("admin", ply);
 								} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
 									pd2.addPlayerToTeam("moderator", ply);
+								} else if (pd.getUserGroup() == UserGroup.TESTER) {
+									pd2.addPlayerToTeam("tester", ply);
 								} else {
 									pd2.addPlayerToTeam("default", ply);
 								}
@@ -248,7 +268,6 @@ public class HubParkour {
 						HidePlayers hidePlayers = new HidePlayers(mainInstance, ply);
 						ItemStack hp = hidePlayers.give();
 						ply.getInventory().setItem(6, hp);
-						//Go to start item
 						ItemStack startItem = new ItemStack(Material.LEAD);
 						ItemMeta startItemMeta = startItem.getItemMeta();
 						startItemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Return to Start" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");

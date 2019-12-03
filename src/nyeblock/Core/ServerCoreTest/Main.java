@@ -2,24 +2,32 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Random;
 
 //import java.io.File;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.World.Environment;
+import org.bukkit.WorldCreator;
+import org.bukkit.WorldType;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 import com.sk89q.worldedit.WorldEdit;
+
 import com.sk89q.worldedit.LocalConfiguration;
 
-import nyeblock.Core.ServerCoreTest.Games.Hub;
-import nyeblock.Core.ServerCoreTest.Games.HubParkour;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Realms.Hub;
+import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 
 public class Main extends JavaPlugin {
 	private PlayerHandling playerHandling;
@@ -30,13 +38,23 @@ public class Main extends JavaPlugin {
 	private TimerHandling timerHandling;
 	private Hub hub;
 	private HubParkour hubParkour;
+//	private CoreProtectAPI coreProtectAPI;
 	
 	//When this plugin is enabled, initialize important classes
 	public void onEnable() {
+		WorldCreator creator = new WorldCreator("games_world");
+		creator.environment(Environment.NORMAL);
+		creator.type(WorldType.FLAT);
+		creator.generateStructures(false);
+		creator.generator("VoidGenerator");
+		creator.createWorld();
+		
 		playerHandling = new PlayerHandling(this);
 		gameHandling = new GameHandling(this);
 		multiverse = (MultiverseCore) getServer().getPluginManager().getPlugin("Multiverse-Core");
 		timerHandling = new TimerHandling();
+//		CoreProtect coreProtect = (CoreProtect) getServer().getPluginManager().getPlugin("CoreProtect");
+//		coreProtectAPI = coreProtect.getAPI();
 		
 		//Set spawn point for hub world
 		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
@@ -73,6 +91,7 @@ public class Main extends JavaPlugin {
 		
 		//Set classes with event handlers
 		getServer().getPluginManager().registerEvents(playerHandling, this);
+		
 	}
 	public void onDisable() {
 		//Delete created game worlds
@@ -117,4 +136,7 @@ public class Main extends JavaPlugin {
 	public HubParkour getHubParkourInstance() {
 		return hubParkour;
 	}
+//	public CoreProtectAPI getCoreProtectAPI() {
+//		return coreProtectAPI;
+//	}
 }

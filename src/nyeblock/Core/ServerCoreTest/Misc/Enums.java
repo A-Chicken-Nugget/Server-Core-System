@@ -4,20 +4,27 @@ import java.util.Arrays;
 
 import org.bukkit.ChatColor;
 
+import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
+import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
+import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
+
 public class Enums {
 	//Realm enums
 	public enum Realm {
-		HUB(1,"Hub"),
-		KITPVP(2,"Kit Pvp"),
-		STEPSPLEEF(3,"Step Spleef"),
-		SKYWARS(4,"Sky Wars");
+		HUB(1,"Hub",KitPvP.class),
+		KITPVP(2,"Kit Pvp",KitPvP.class),
+		STEPSPLEEF(3,"Step Spleef",StepSpleef.class),
+		SKYWARS(4,"Sky Wars",SkyWars.class),
+		PVP(5,"PvP",nyeblock.Core.ServerCoreTest.Realms.PvP.class);
 
 		private int value;  
 		private String name;
+		public Class<?> cls;
 
-		private Realm(int value, String name) {
+		private Realm(int value, String name, Class<?> cls) {
 			this.value = value;
 			this.name = name;
+			this.cls = cls;
 		}
 
 		public int getValue() {
@@ -73,7 +80,66 @@ public class Enums {
 			return tag;
 		}
 	}
-	
+	//PvP realm mode
+	public enum PvPMode {
+		DUELS(1,"Duels"),
+		TWOVTWO(2,"2v2");
+
+		private int value;  
+		private String name;
+
+		private PvPMode(int value, String name) {
+			this.value = value;
+			this.name = name;
+		}
+
+		public static PvPMode fromInt(int pMode) {
+			PvPMode pvPType = null;
+			
+			for (PvPMode mode : PvPMode.values()) {
+				if (mode.getValue() == pMode) {
+					pvPType = mode;
+				}
+			}
+			return pvPType;
+		}
+		public int getValue() {
+			return value;
+		}
+		public String toString() {
+			return name;
+		}
+	} 
+	//PvP realm enums
+	public enum PvPType {
+		FIST(1,"Fist"),
+		WEPSARMOR(2,"Weapons/Armor");
+
+		private int value;  
+		private String name;
+
+		private PvPType(int value, String name) {
+			this.value = value;
+			this.name = name;
+		}
+
+		public static PvPType fromInt(int pMode) {
+			PvPType pvPMode = null;
+			
+			for (PvPType mode : PvPType.values()) {
+				if (mode.getValue() == pMode) {
+					pvPMode = mode;
+				}
+			}
+			return pvPMode;
+		}
+		public int getValue() {
+			return value;
+		}
+		public String toString() {
+			return name;
+		}
+	} 
 	//Chest Value Enums
 	public enum ChestValue {
 		SHIT(2, "Shit"),

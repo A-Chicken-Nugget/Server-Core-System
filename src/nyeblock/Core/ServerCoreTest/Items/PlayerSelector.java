@@ -8,12 +8,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
-import nyeblock.Core.ServerCoreTest.GameHandling;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Games.SkyWars;
-import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 
 public class PlayerSelector {
 	private Main mainInstance;
@@ -24,19 +22,10 @@ public class PlayerSelector {
 		this.mainInstance = mainInstance;
 		this.player = player;
 		
-		GameHandling gh = mainInstance.getGameInstance();
-		if (realm == Realm.STEPSPLEEF) {
-			for (StepSpleef game : gh.getStepSpleefGames()) {
-				if (game.isInServer(player)) {
-					players = game.getPlayersInGame();
-				}
-			}
-		} else if (realm == Realm.SKYWARS) {
-			for (SkyWars game : gh.getSkyWarsGames()) {
-				if (game.isInServer(player)) {
-					players = game.getPlayersInGame();
-				}
-			}
+		GameBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentGame();
+		
+		if (game.isInServer(player)) {			
+			players = game.getPlayersInGame();
 		}
 	}
 	

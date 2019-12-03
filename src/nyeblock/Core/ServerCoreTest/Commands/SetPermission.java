@@ -9,20 +9,22 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.PlayerData;
 
 @SuppressWarnings({"rawtypes","unchecked"})
 public class SetPermission extends CommandBase {
+	private Main mainInstance;
+	
 	public SetPermission(Main mainInstance) {
 		super(mainInstance);
+		this.mainInstance = mainInstance;
 	}
 	
-	public void execute(Player ply, PlayerData pd, String[] args) {
+	public void execute(Player ply, String[] args) {
 		if (args.length >= 3) {
 			Player player = Bukkit.getPlayer(args[0]);
 			
 			if (player != null) {
-				 pd.setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
+				mainInstance.getPlayerHandlingInstance().getPlayerData(player).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
 			} else {
 				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}

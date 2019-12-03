@@ -3,25 +3,16 @@ package nyeblock.Core.ServerCoreTest.Items;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
 
 import nyeblock.Core.ServerCoreTest.Misc.ArmorRating;
-import nyeblock.Core.ServerCoreTest.Misc.Enums;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
 import nyeblock.Core.ServerCoreTest.Misc.WeaponDamage;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Items.Weapon;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.block.Block;
-import org.bukkit.block.data.*;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.Vector;
 
 public class RandomizedItems 
 {

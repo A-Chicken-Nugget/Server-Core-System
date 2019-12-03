@@ -22,7 +22,7 @@ public class Ban extends CommandBase {
 		databaseHandling = mainInstance.getDatabaseInstance();
 	}
 	
-	public void execute(Player ply, PlayerData pd, String[] args) {
+	public void execute(Player ply, String[] args) {
 		if (args.length >= 3) {
 			Player player = Bukkit.getPlayer(args[0]);
 			

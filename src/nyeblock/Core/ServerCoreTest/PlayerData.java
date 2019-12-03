@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -24,15 +25,17 @@ import org.bukkit.util.Vector;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 
-import nyeblock.Core.ServerCoreTest.Games.SkyWars;
-import nyeblock.Core.ServerCoreTest.Games.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
+import nyeblock.Core.ServerCoreTest.Items.MenuBase;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
+import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({"deprecation","unused"})
@@ -50,10 +53,13 @@ public class PlayerData {
 	private String ip;
 	private UserGroup userGroup;
 	private PermissionAttachment permissions;
-	private Realm realm = Realm.HUB;
+	private Realm realm;
 	private boolean queuingGame = false;
 	private HashMap<String,String> customData = new HashMap<>();
 	private HashMap<Realm,Integer> realmXp = new HashMap<>();
+	private MenuBase openedMenu;
+	private GameBase currentGame;
+	private boolean isSpectating = false;
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
@@ -80,6 +86,31 @@ public class PlayerData {
 	// GETTERS
 	//
 	
+	/**
+    * Get if the player is spectating
+    */
+	public String getTeam() {
+		return board.getPlayerTeam(player).getName();
+	}
+	/**
+    * Get if the player is spectating
+    */
+	public boolean getSpectatingStatus() {
+		return isSpectating;
+	}
+	/**
+    * Get the players current game
+    */
+	public GameBase getCurrentGame() {
+		return currentGame;
+	}
+	/**
+	* Get the players open menu
+	* @return instance of the open menu
+	*/
+	public MenuBase getMenu() {
+		return openedMenu;
+	}
 	/**
 	* Get the players realm xp hashmap
 	* @return hashmap of realms and their associated xp 
@@ -131,21 +162,6 @@ public class PlayerData {
 		return userGroup;
 	}
 	/**
-    * Get the value of a players permission
-    * @param permission - name of the permission to get.
-    * @return the value of the specified permission
-    */
-	public boolean getPermission(String permission) {
-		boolean value = false;
-		
-		for (Map.Entry<String, Boolean> entry : permissions.getPermissions().entrySet()) {
-			if (permission.equalsIgnoreCase(entry.getKey())) {
-				value = entry.getValue();
-			}
-		}
-		return value;
-	}
-	/**
     * Get the players queuing status
     * @return the players queuing status
     */
@@ -157,6 +173,24 @@ public class PlayerData {
 	// SETTERS
 	//
 	
+	/**
+    * Set if the player is spectating
+    */
+	public void setSpectatingStatus(boolean status) {
+		isSpectating = status;
+	}
+	/**
+    * Set the players current game
+    */
+	public void setCurrentGame(GameBase game) {
+		currentGame = game;
+	}
+	/**
+    * Set the players open menu
+    */
+	public void setMenu(MenuBase menu) {
+		openedMenu = menu;
+	}
 	/**
     * Set the players data
     * @param mainInstance - plugin instance
@@ -171,15 +205,15 @@ public class PlayerData {
 	public void setData(Main mainInstance, Player ply, int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
 		this.mainInstance = mainInstance;
 		databaseHandlingInstance = mainInstance.getDatabaseInstance();
-		this.player = ply;
+		player = ply;
 		this.id = id;
-		permissions = new PermissionAttachment(mainInstance, ply);
+		permissions = ply.addAttachment(mainInstance);
 		this.points = points;
 		this.xp = xp;
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
-		setPermissions();
+		setRealm(Realm.HUB, true, false);
 		
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
@@ -209,6 +243,13 @@ public class PlayerData {
             	}
             }
 		});
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
+			@Override
+			public void run() {				
+				// Teleport to spawn
+				ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
+			}
+		});
 	}
 	/**
     * Set the players permissions based on their current realm
@@ -225,17 +266,19 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
+			permissions.setPermission("nyeblock.canMove", true);
 		} else if (realm == Realm.KITPVP) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
 			permissions.setPermission("nyeblock.canDamage", true);
-			permissions.setPermission("nyeblock.canBeDamaged", true);
+			permissions.setPermission("nyeblock.canBeDamaged", false);
 			permissions.setPermission("nyeblock.canTakeFallDamage", true);
 			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
+			permissions.setPermission("nyeblock.canMove", true);
 		} else if (realm == Realm.STEPSPLEEF) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
@@ -247,6 +290,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
+			permissions.setPermission("nyeblock.canMove", true);
 		} else if (realm == Realm.SKYWARS) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
@@ -258,6 +302,19 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canDropItems", false);
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
+			permissions.setPermission("nyeblock.canMove", true);
+		} else if (realm == Realm.PVP) {
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canBreakBlocks", false);
+			permissions.setPermission("nyeblock.canUseInventory", false);
+			permissions.setPermission("nyeblock.canDamage", false);
+			permissions.setPermission("nyeblock.canBeDamaged", true);
+			permissions.setPermission("nyeblock.canTakeFallDamage", true);
+			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
+			permissions.setPermission("nyeblock.canDropItems", false);
+			permissions.setPermission("nyeblock.canLoseHunger", false);
+			permissions.setPermission("nyeblock.canSwapItems", false);
+			permissions.setPermission("nyeblock.canMove", true);
 		}
 	}
 	/**
@@ -314,15 +371,11 @@ public class PlayerData {
 			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			player.getInventory().setArmorContents(armor);
 		} else if (realm == Realm.STEPSPLEEF) {
-			GameHandling gh = mainInstance.getGameInstance();
-			
-			for (StepSpleef game : gh.getStepSpleefGames()) {
-				if (game.isInServer(player)) {
-					if (game.isGameActive()) {
-						//Select player
-						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.STEPSPLEEF,player);
-						player.getInventory().setItem(4, selectPlayer.give());
-					}
+			if (currentGame != null) {
+				if (currentGame.isInServer(player) && currentGame.isGameActive()) {
+					//Select player
+					PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.STEPSPLEEF,player);
+					player.getInventory().setItem(4, selectPlayer.give());
 				}
 			}
 			
@@ -330,22 +383,28 @@ public class PlayerData {
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
 		} else if (realm == Realm.SKYWARS) {
-			GameHandling gh = mainInstance.getGameInstance();
-			
-			for (SkyWars game : gh.getSkyWarsGames()) {
-				if (game.isInServer(player)) {
-					if (game.isGameActive()) {
+			if (currentGame != null) {
+				if (currentGame.isInServer(player)) {
+					if (currentGame.isGameActive()) {						
 						//Select player
 						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.SKYWARS,player);
 						player.getInventory().setItem(4, selectPlayer.give());
-					} else {
+					} else {						
 						//Select kit
 						KitSelector selectKit = new KitSelector(Realm.SKYWARS);
 						player.getInventory().setItem(4, selectKit.give());
 					}
 				}
 			}
-			
+			//Return to hub
+			ReturnToHub returnToHub = new ReturnToHub();
+			player.getInventory().setItem(8, returnToHub.give());
+		} else if (realm == Realm.PVP) {
+			if (currentGame != null && currentGame.isGameActive()) {						
+				//Select player
+				PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.PVP,player);
+				player.getInventory().setItem(4, selectPlayer.give());
+			}
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
@@ -365,14 +424,25 @@ public class PlayerData {
 		if (updateItems) {			
 			setItems();
 		}
+		
+		//Reset game
+		currentGame = null;
 		//Remove potion effects
 		for(PotionEffect effect : player.getActivePotionEffects())
 		{
 		    player.removePotionEffect(effect.getType());
 		}
-		
+		//Reset flying
+		player.setFlying(false);
+		//Reset health/food
 		player.setHealth(20);
 		player.setFoodLevel(20);
+		//Remove fire
+		player.setFireTicks(0);
+		//Reset title
+		player.sendTitle("", "", 0, 0, 0);
+		//Reset spectating status
+		setSpectatingStatus(false);
 	}
 	/**
     * Set the players queuing status. If true then the player can queue, if false then they cannot
@@ -412,7 +482,7 @@ public class PlayerData {
 	public void setScoreBoardTeams(String[] teams) {
 		for (int i = 0; i < teams.length; i++) {			
 			Team team = board.registerNewTeam(teams[i]);
-			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.FOR_OWN_TEAM);
 		}
 		//Admin user group
 		Team team = board.registerNewTeam("admin");

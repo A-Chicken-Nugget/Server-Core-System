@@ -13,9 +13,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Games.KitPvP;
-import nyeblock.Core.ServerCoreTest.Games.SkyWars;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 
 public class KitSelector {
 	private Realm realm;
@@ -36,13 +35,10 @@ public class KitSelector {
 	public void openMenu(Player ply, Main mainInstance) {
 		Inventory menu = Bukkit.createInventory(null, 9, ChatColor.DARK_GRAY + "Select a Kit");
 		String kitSelected = null;
+		GameBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentGame();
 		
 		if (realm == Realm.KITPVP) {
-			for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-				if (game.isInServer(ply)) {
-					kitSelected = game.getPlayerKit(ply);
-				}
-			}
+			kitSelected = game.getPlayerKit(ply);
 			
 			//Knight kit
 			ItemStack knight = new ItemStack(Material.IRON_CHESTPLATE);
@@ -127,11 +123,7 @@ public class KitSelector {
 			menu.setItem(7, wizard);
 			ply.openInventory(menu);
 		} else if (realm == Realm.SKYWARS) {
-			for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-				if (game.isInServer(ply)) {
-					kitSelected = game.getPlayerKit(ply);
-				}
-			}
+			kitSelected = game.getPlayerKit(ply);
 			
 			//Default kit
 			ItemStack defaultItems = new ItemStack(Material.WOODEN_SWORD);
@@ -219,58 +211,49 @@ public class KitSelector {
 	}
 	public void clickItem(Player ply, String item, Main mainInstance) {
 		boolean kitChanged = false;
+		GameBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentGame();
 		
 		if (realm == Realm.KITPVP) {
 			if (item.equalsIgnoreCase("knight")) {
-				for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-					if (game.isInServer(ply)) {
-						if (!game.getPlayerKit(ply).equalsIgnoreCase("knight")) {
-							kitChanged = true;
-							game.setPlayerKit(ply, "knight");
-							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						}
+				if (game.isInServer(ply)) {
+					if (!game.getPlayerKit(ply).equalsIgnoreCase("knight")) {
+						kitChanged = true;
+						game.setPlayerKit(ply, "knight");
+						ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 					}
 				}
 			} else if (item.equalsIgnoreCase("brawler")) {
-				for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-					if (game.isInServer(ply)) {
-						if (!game.getPlayerKit(ply).equalsIgnoreCase("brawler")) {
-							kitChanged = true;
-							game.setPlayerKit(ply, "brawler");
-							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						}
+				if (game.isInServer(ply)) {
+					if (!game.getPlayerKit(ply).equalsIgnoreCase("brawler")) {
+						kitChanged = true;
+						game.setPlayerKit(ply, "brawler");
+						ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 					}
 				}
 			} else if (item.equalsIgnoreCase("archer")) {
-				for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-					if (game.isInServer(ply)) {
-						if (!game.getPlayerKit(ply).equalsIgnoreCase("archer")) {
-							kitChanged = true;
-							game.setPlayerKit(ply, "archer");
-							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						}
+				if (game.isInServer(ply)) {
+					if (!game.getPlayerKit(ply).equalsIgnoreCase("archer")) {
+						kitChanged = true;
+						game.setPlayerKit(ply, "archer");
+						ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 					}
 				}
 			} else if (item.equalsIgnoreCase("wizard")) {
-				for (KitPvP game : mainInstance.getGameInstance().getKitPvpGames()) {
-					if (game.isInServer(ply)) {
-						if (!game.getPlayerKit(ply).equalsIgnoreCase("wizard")) {
-							kitChanged = true;
-							game.setPlayerKit(ply, "wizard");
-							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						}
+				if (game.isInServer(ply)) {
+					if (!game.getPlayerKit(ply).equalsIgnoreCase("wizard")) {
+						kitChanged = true;
+						game.setPlayerKit(ply, "wizard");
+						ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 					}
 				}
 			}
 		} else if (realm == Realm.SKYWARS) {
 			if (item.equalsIgnoreCase("default")) {
-				for (SkyWars game : mainInstance.getGameInstance().getSkyWarsGames()) {
-					if (game.isInServer(ply)) {
-						if (!game.getPlayerKit(ply).equalsIgnoreCase("default")) {
-							kitChanged = true;
-							game.setPlayerKit(ply, "default");
-							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						}
+				if (game.isInServer(ply)) {
+					if (!game.getPlayerKit(ply).equalsIgnoreCase("default")) {
+						kitChanged = true;
+						game.setPlayerKit(ply, "default");
+						ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 					}
 				}
 			}

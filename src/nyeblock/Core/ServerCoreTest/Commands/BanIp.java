@@ -22,7 +22,7 @@ public class BanIp extends CommandBase {
 		databaseHandling = mainInstance.getDatabaseInstance();
 	}
 	
-	public void execute(Player ply, PlayerData pd, String[] args) {
+	public void execute(Player ply, String[] args) {
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
             public void run() {                   	

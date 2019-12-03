@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 
 public class TimerHandling {
 	private HashMap<String,BukkitTask> timers = new HashMap<String,BukkitTask>();
@@ -37,6 +38,8 @@ public class TimerHandling {
 									params[i] = Boolean.class; 
 								} else if (args[i] instanceof Realm) {
 									params[i] = Realm.class;
+								} else if (args[i] instanceof GameBase) {
+									params[i] = GameBase.class;
 								}
 							}
 						}
