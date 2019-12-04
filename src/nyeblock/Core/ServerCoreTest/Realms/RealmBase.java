@@ -12,12 +12,12 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 
-public abstract class Realm {
+public abstract class RealmBase {
 	private Main mainInstance;
 	protected ArrayList<Player> players = new ArrayList<>();
 	protected HashMap<Player,HashMap<String,Integer>> playerXP = new HashMap<>();
 	
-	public Realm(Main mainInstance) {
+	public RealmBase(Main mainInstance) {
 		this.mainInstance = mainInstance;
 	}
 	

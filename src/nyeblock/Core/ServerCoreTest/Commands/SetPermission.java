@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings({"rawtypes","unchecked"})
 public class SetPermission extends CommandBase {

@@ -28,7 +28,7 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings({"deprecation","serial"})
 public class PvP extends GameBase {
@@ -56,7 +56,7 @@ public class PvP extends GameBase {
 		super(mainInstance,worldName);
 		
 		this.worldName = worldName;
-		realm = UserRealm.PVP;
+		realm = Realm.PVP;
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
@@ -451,9 +451,9 @@ public class PvP extends GameBase {
 			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			
 			//Set player realms/items/permissions
-			playerData.setRealm(UserRealm.HUB,true,true);
+			playerData.setRealm(Realm.HUB,true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, UserRealm.HUB);
+			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
 		}
 		
 		//Unhide player from all players in the game

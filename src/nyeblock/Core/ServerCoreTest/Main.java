@@ -25,7 +25,7 @@ import com.sk89q.worldedit.WorldEdit;
 
 import com.sk89q.worldedit.LocalConfiguration;
 
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.Hub;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 
@@ -105,10 +105,10 @@ public class Main extends JavaPlugin {
 		//Save every players play time and xp
 		DatabaseHandling dh = this.getDatabaseInstance();
 		for (Player ply : Bukkit.getWorld("world").getPlayers()) {
-			HashMap<UserRealm,Integer> realmXp = playerHandling.getPlayerData(ply).getRealmXp();
+			HashMap<Realm,Integer> realmXp = playerHandling.getPlayerData(ply).getRealmXp();
 			
 			dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-playerHandling.getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
-			dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(UserRealm.KITPVP) + ", skywars = " + realmXp.get(UserRealm.SKYWARS) + ", stepspleef = " + realmXp.get(UserRealm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
+			dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
 		}
 	}
 	

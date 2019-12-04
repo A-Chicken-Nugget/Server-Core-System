@@ -10,7 +10,7 @@ import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
 
 public class Enums {
 	//Realm enums
-	public enum UserRealm {
+	public enum Realm {
 		HUB(1,"Hub",KitPvP.class),
 		KITPVP(2,"Kit Pvp",KitPvP.class),
 		STEPSPLEEF(3,"Step Spleef",StepSpleef.class),
@@ -21,7 +21,7 @@ public class Enums {
 		private String name;
 		public Class<?> cls;
 
-		private UserRealm(int value, String name, Class<?> cls) {
+		private Realm(int value, String name, Class<?> cls) {
 			this.value = value;
 			this.name = name;
 			this.cls = cls;

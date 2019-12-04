@@ -13,14 +13,14 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
-import nyeblock.Core.ServerCoreTest.Realms.Realm;
+import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 
 public class KitSelector {
-	private UserRealm realm;
+	private Realm realm;
 	
-	public KitSelector(UserRealm realm) {
+	public KitSelector(Realm realm) {
 		this.realm = realm;
 	}
 	
@@ -36,9 +36,9 @@ public class KitSelector {
 	public void openMenu(Player ply, Main mainInstance) {
 		Inventory menu = Bukkit.createInventory(null, 9, ChatColor.DARK_GRAY + "Select a Kit");
 		String kitSelected = null;
-		Realm game = mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentRealm();
+		RealmBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentRealm();
 		
-		if (realm == UserRealm.KITPVP) {
+		if (realm == Realm.KITPVP) {
 			kitSelected = game.getPlayerKit(ply);
 			
 			//Knight kit
@@ -123,7 +123,7 @@ public class KitSelector {
 			menu.setItem(5, archer);
 			menu.setItem(7, wizard);
 			ply.openInventory(menu);
-		} else if (realm == UserRealm.SKYWARS) {
+		} else if (realm == Realm.SKYWARS) {
 			kitSelected = game.getPlayerKit(ply);
 			
 			//Default kit
@@ -212,9 +212,9 @@ public class KitSelector {
 	}
 	public void clickItem(Player ply, String item, Main mainInstance) {
 		boolean kitChanged = false;
-		Realm game = mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentRealm();
+		RealmBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentRealm();
 		
-		if (realm == UserRealm.KITPVP) {
+		if (realm == Realm.KITPVP) {
 			if (item.equalsIgnoreCase("knight")) {
 				if (game.isInServer(ply)) {
 					if (!game.getPlayerKit(ply).equalsIgnoreCase("knight")) {
@@ -248,7 +248,7 @@ public class KitSelector {
 					}
 				}
 			}
-		} else if (realm == UserRealm.SKYWARS) {
+		} else if (realm == Realm.SKYWARS) {
 			if (item.equalsIgnoreCase("default")) {
 				if (game.isInServer(ply)) {
 					if (!game.getPlayerKit(ply).equalsIgnoreCase("default")) {

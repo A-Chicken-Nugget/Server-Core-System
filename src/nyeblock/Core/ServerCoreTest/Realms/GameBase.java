@@ -21,15 +21,15 @@ import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.SchematicHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.XY;
 
-public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm {
+public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.RealmBase {
 	//Instances
 	protected Main mainInstance;
 	protected PlayerHandling playerHandling;
 	//Game info
-	protected UserRealm realm;
+	protected Realm realm;
 	protected String worldName;
 	protected String map;
 	protected int minPlayers;
@@ -104,7 +104,7 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 			
 			spawnPoints.removeAll(Collections.singleton(null));
 			
-			if (realm == UserRealm.KITPVP) {	
+			if (realm == Realm.KITPVP) {	
 				//Set grace points
 				this.safeZonePoint1 = safeZonePoint1.toVector();
 				this.safeZonePoint2 = safeZonePoint2.toVector();
@@ -249,7 +249,7 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	/**
 	* Get the realm of this game
 	*/
-	public UserRealm getRealm() {
+	public Realm getRealm() {
 		return realm;
 	}
 	/**

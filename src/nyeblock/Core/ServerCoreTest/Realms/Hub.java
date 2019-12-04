@@ -23,29 +23,29 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 
 @SuppressWarnings({"deprecation","serial"})
-public class Hub extends Realm {
+public class Hub extends RealmBase {
 	private Main mainInstance;
 	private PlayerHandling playerHandlingInstance;
 	private World world = Bukkit.getWorld("world");
 	private ArrayList<Player> players = new ArrayList<Player>();
 	private TextAnimation boardAnim = new TextAnimation("Hub board animation", new ArrayList<String>() {
 		{
-			add("Â§7NyeBlock");
-			add("Â§bNÂ§7yeBlock");
-			add("Â§bNyÂ§7eBlock");
-			add("Â§bNyeÂ§7Block");
-			add("Â§bNyeBÂ§7lock");
-			add("Â§bNyeBlÂ§7ock");
-			add("Â§bNyeBloÂ§7ck");
-			add("Â§bNyeBlocÂ§7k");
-			add("Â§bNyeBlock");
-			add("Â§7NÂ§byeBlock");
-			add("Â§7NyÂ§beBlock");
-			add("Â§7NyeÂ§bBlock");
-			add("Â§7NyeBÂ§block");
-			add("Â§7NyeBlÂ§bock");
-			add("Â§7NyeBloÂ§bck");
-			add("Â§7NyeBlocÂ§bk");
+			add("§7NyeBlock");
+			add("§bN§7yeBlock");
+			add("§bNy§7eBlock");
+			add("§bNye§7Block");
+			add("§bNyeB§7lock");
+			add("§bNyeBl§7ock");
+			add("§bNyeBlo§7ck");
+			add("§bNyeBloc§7k");
+			add("§bNyeBlock");
+			add("§7N§byeBlock");
+			add("§7Ny§beBlock");
+			add("§7Nye§bBlock");
+			add("§7NyeB§block");
+			add("§7NyeBl§bock");
+			add("§7NyeBlo§bck");
+			add("§7NyeBloc§bk");
 		}
 	}, 250);
 	

@@ -31,7 +31,7 @@ import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 @SuppressWarnings({"deprecation","serial"})
-public class HubParkour extends Realm {
+public class HubParkour extends RealmBase {
 	private Main mainInstance;
 	private PlayerHandling playerHandling;
 	private DatabaseHandling databaseInstance;

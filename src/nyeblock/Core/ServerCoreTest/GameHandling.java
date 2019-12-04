@@ -15,7 +15,7 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Misc.Enums;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.PvP;
@@ -33,7 +33,7 @@ public class GameHandling {
     * @param realm - Realm of the game to find
     * @return game that has available player slots and is of the provided realm
     */
-	public GameBase findGame(UserRealm realm) {
+	public GameBase findGame(Realm realm) {
 		GameBase gameToJoin = null;
 		
 		for (int x = 0; x < 200; x++) {
@@ -112,7 +112,7 @@ public class GameHandling {
     * Get the number of games active for the given realm
     * @param gamePos - The position of the game in the games list
     */
-	public int getGamesCount(UserRealm realm) {
+	public int getGamesCount(Realm realm) {
 		int count = 0;
 		
 		for (int x = 0; x < 200; x++) {		
@@ -132,17 +132,17 @@ public class GameHandling {
 	}
 	
 	//Handles the player joining games
-	public void joinGame(Player ply, UserRealm realm) {
+	public void joinGame(Player ply, Realm realm) {
 		PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
 		PlayerData pd = ph.getPlayerData(ply);
 		
 		if (!pd.isQueuingGame()) {
-			if (realm == UserRealm.HUB) {
+			if (realm == Realm.HUB) {
 				ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
 				pd.setCurrentGame(null);
 				
 				mainInstance.getHubInstance().playerJoin(ply);
-			} else if (realm == UserRealm.KITPVP) {
+			} else if (realm == Realm.KITPVP) {
 				pd.setQueuingStatus(true);
 				GameBase gameToJoin = findGame(realm);
 				
@@ -162,7 +162,7 @@ public class GameHandling {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				}
-			} else if (realm == UserRealm.STEPSPLEEF) {
+			} else if (realm == Realm.STEPSPLEEF) {
 				pd.setQueuingStatus(true);
 				GameBase gameToJoin = findGame(realm);
 				
@@ -182,7 +182,7 @@ public class GameHandling {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				}
-			} else if (realm == UserRealm.SKYWARS) {
+			} else if (realm == Realm.SKYWARS) {
 				pd.setQueuingStatus(true);
 				GameBase gameToJoin = findGame(realm);
 				
@@ -202,7 +202,7 @@ public class GameHandling {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				}
-			} else if (realm == UserRealm.PVP) {
+			} else if (realm == Realm.PVP) {
 				PvPMode mode = PvPMode.fromInt(Integer.parseInt(pd.getCustomDataKey("pvp_mode")));
 				PvPType type = PvPType.fromInt(Integer.parseInt(pd.getCustomDataKey("pvp_type")));
 				
@@ -257,7 +257,7 @@ public class GameHandling {
 		}
 	} 
 	public void checkWorld(Player ply, GameBase game) {
-		UserRealm realm = game.getRealm();
+		Realm realm = game.getRealm();
 		PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 		
 		if (game.getJoinStatus()) {			

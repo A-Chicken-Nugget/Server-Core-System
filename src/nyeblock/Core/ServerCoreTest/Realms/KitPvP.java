@@ -30,7 +30,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
@@ -58,7 +58,7 @@ public class KitPvP extends GameBase {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.worldName = worldName;
-		realm = UserRealm.KITPVP;
+		realm = Realm.KITPVP;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		startTime = System.currentTimeMillis() / 1000L;
@@ -576,9 +576,9 @@ public class KitPvP extends GameBase {
 		}
 		if (moveToHub) {
 			//Set player realms/items/permissions
-			playerData.setRealm(UserRealm.HUB,true,true);
+			playerData.setRealm(Realm.HUB,true,true);
 			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, UserRealm.HUB);
+			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
 		}
 	}
 }
