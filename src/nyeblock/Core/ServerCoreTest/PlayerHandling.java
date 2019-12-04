@@ -1,7 +1,6 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -58,9 +57,7 @@ import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserRealm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
-import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.TabListPerWorld;
 
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
@@ -94,41 +91,6 @@ public class PlayerHandling implements Listener {
 				}
 			}
 		}, 0, 20*180);
-		
-		//Manage players tab lists
-//		Bukkit.getScheduler().runTaskTimer(mainInstance, new Runnable() {
-//			@Override
-//			public void run() {
-//				TabListPerWorld tlpw = new TabListPerWorld();
-//				Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
-//				
-//				for (Player ply : onlinePlayers) {
-//					World plyWorld = ply.getWorld();
-//					PlayerData pd = getPlayerData(ply);
-//					boolean hidePlayers = false;
-//					
-//					if (pd != null) {						
-//						hidePlayers = Boolean.parseBoolean(pd.getCustomDataKey("hide_players"));
-//						
-//						if (plyWorld.getName().equals("world") && hidePlayers) {
-//							for (Player ply2 : onlinePlayers) {
-//								ply.hidePlayer(ply2);
-//							}
-//						} else {							
-//							for (Player ply2 : onlinePlayers) {
-//								World ply2World = ply2.getWorld();
-//								
-//								if (!plyWorld.getName().equals(ply2World.getName())) {
-//									tlpw.hideForWorld(plyWorld, ply2);
-//								} else {
-//									tlpw.showForWorld(ply2World, ply2);
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}, 0, 20*3);
 	}
 	
 	//
