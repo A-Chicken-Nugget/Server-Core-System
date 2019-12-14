@@ -16,3 +16,6 @@ commands:
   banIp:
     description: Ban the specified ip
     usage: /banIp <ip> <length in minutes> <reason>
+  leave:
+    description: Leave the current game you are in
+    usage: /leave

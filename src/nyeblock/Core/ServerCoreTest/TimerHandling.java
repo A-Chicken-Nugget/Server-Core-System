@@ -102,6 +102,26 @@ public class TimerHandling {
 					int ran = timesRan.get(name);
 					if (timesRan.get(name) != 0) {
 						runnable.run();
+						
+						if (timesToRun != 0 && ran+1 >= timesToRun) {
+							Iterator<Map.Entry<String, BukkitTask>> timersItr = timers.entrySet().iterator();
+							while(timersItr.hasNext())
+							{
+								Map.Entry<String, BukkitTask> entry = timersItr.next();
+								if (entry.getKey().equals(name)) {
+									entry.getValue().cancel();
+									timersItr.remove();
+								}
+							}
+							Iterator<Map.Entry<String, Integer>> timesRanItr = timesRan.entrySet().iterator();
+							while(timesRanItr.hasNext())
+							{
+								Map.Entry<String, Integer> entry = timesRanItr.next();
+								if (entry.getKey().equals(name)) {
+									timesRanItr.remove();
+								}
+							}
+						}
 					}
 					timesRan.put(name, ran+1);
 				}

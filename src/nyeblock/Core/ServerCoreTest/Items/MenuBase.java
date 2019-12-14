@@ -15,6 +15,7 @@ public abstract class MenuBase {
 	protected Main mainInstance;
 	protected Player player;
 	private HashMap<String,HashMap<Integer,ItemStack>> menus = new HashMap<String,HashMap<Integer,ItemStack>>();
+	private HashMap<String,Integer> menuSize = new HashMap<>();
 	private HashMap<String,Runnable> optionActions = new HashMap<String,Runnable>();
 	
 	/**
@@ -52,6 +53,13 @@ public abstract class MenuBase {
 			menus.get(menuName).put(pos, item);
 		}
 		optionActions.put(item.getItemMeta().getLocalizedName(), action);
+	}
+	/**
+	 * Set the size of the menu
+	 * @param size - Number of slots in the menu
+	 */
+	public void setSize(String name, int size) {
+		menuSize.put(name,size);
 	}
 	/**
 	 * Open a specific sub menu within the menu

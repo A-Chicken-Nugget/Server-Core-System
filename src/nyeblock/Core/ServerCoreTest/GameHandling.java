@@ -43,11 +43,15 @@ public class GameHandling {
 				if (currentGame != null && currentGame.getRealm().equals(realm)) {
 					if (gameToJoin != null) {		
 						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
-								&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()) {			
+								&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()
+								&& gameToJoin.getJoinStatus()) {			
 							gameToJoin = currentGame;
 						}
 					} else {						
-						gameToJoin = currentGame;
+						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
+								&& currentGame.getJoinStatus()) {			
+							gameToJoin = currentGame;
+						}
 					}
 				}
 			}
@@ -55,25 +59,39 @@ public class GameHandling {
 		return gameToJoin;
 	}
 	/**
-    * Find the game that the provided player is in
-    * @param ply - The player to search for
-    * @return the game the player is in
+    * Find a game in the games list
+    * @param realm - Realm of the game to find
+    * @param mode - Mode of the pvp
+    * @param type - Type of the pvp
+    * @return game that has available player slots and is of the provided realm
     */
-	public GameBase findPlayerGame(Player ply) {
-		GameBase game = null;
+	public GameBase findGame(Realm realm, PvPMode mode, PvPType type) {
+		GameBase gameToJoin = null;
 		
 		for (int x = 0; x < 200; x++) {
 			for (int y = 0; y < 200; y++) {
 				GameBase currentGame = games[x][y];
+				PvP pvpGame = ((PvP)currentGame);
 				
-				if (currentGame != null) {
-					if (currentGame.isInServer(ply)) {
-						game = currentGame;
+				if (currentGame != null && currentGame.getRealm().equals(realm) 
+						&& pvpGame.getPvPMode().equals(mode)
+						&& pvpGame.getPvPType().equals(type)) {
+					if (gameToJoin != null) {		
+						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
+								&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()
+								&& gameToJoin.getJoinStatus()) {			
+							gameToJoin = currentGame;
+						}
+					} else {						
+						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
+								&& currentGame.getJoinStatus()) {			
+							gameToJoin = currentGame;
+						}
 					}
 				}
 			}
 		}
-		return game;
+		return gameToJoin;
 	}
 	/**
     * Find an available slot and add the provided game to that slot
@@ -131,6 +149,13 @@ public class GameHandling {
 		this.mainInstance = mainInstance;
 	}
 	
+	/**
+    * Sub class player leave method
+    * @param ply - Player joining the game
+    * @param showLeaveMessage - Should a leave message be shown
+    * @param runLeaveMethod - Should the leave method of the current realm be ran
+    * @param moveToHub - Should the player be moved to the hub
+    */
 	//Handles the player joining games
 	public void joinGame(Player ply, Realm realm) {
 		PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
@@ -139,10 +164,11 @@ public class GameHandling {
 		if (!pd.isQueuingGame()) {
 			if (realm == Realm.HUB) {
 				ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
-				pd.setCurrentGame(null);
 				
-				mainInstance.getHubInstance().playerJoin(ply);
-			} else if (realm == Realm.KITPVP) {
+				mainInstance.getHubInstance().join(ply, false);
+			} else if (realm == Realm.PARKOUR) {
+				mainInstance.getHubParkourInstance().join(ply, false);
+			} if (realm == Realm.KITPVP) {
 				pd.setQueuingStatus(true);
 				GameBase gameToJoin = findGame(realm);
 				
@@ -209,7 +235,7 @@ public class GameHandling {
 				if (mode == PvPMode.DUELS) {
 					if (type == PvPType.FIST) {						
 						pd.setQueuingStatus(true);
-						GameBase gameToJoin = findGame(realm);
+						GameBase gameToJoin = findGame(realm,mode,type);
 						
 						//If no games are found, create one
 						if (gameToJoin == null) {
@@ -231,7 +257,7 @@ public class GameHandling {
 				} else if (mode == PvPMode.TWOVTWO) {
 					if (type == PvPType.FIST) {
 						pd.setQueuingStatus(true);
-						GameBase gameToJoin = findGame(realm);
+						GameBase gameToJoin = findGame(realm,mode,type);
 						
 						//If no games are found, create one
 						if (gameToJoin == null) {
@@ -257,26 +283,21 @@ public class GameHandling {
 		}
 	} 
 	public void checkWorld(Player ply, GameBase game) {
-		Realm realm = game.getRealm();
 		PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+				
+		mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
 		
-		if (game.getJoinStatus()) {			
-			mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
+		if (game.getJoinStatus() && game.getPlayerCount() < game.getMaxPlayers()) {						
+			mainInstance.getPlayerHandlingInstance().getPlayerData(ply).clearScoreboard();
+			mainInstance.getHubInstance().leave(ply, true, null);
 			
-			if (game.getJoinStatus() && game.getPlayerCount() < game.getMaxPlayers()) {						
-				mainInstance.getPlayerHandlingInstance().getPlayerData(ply).clearScoreboard();
-				mainInstance.getHubInstance().playerLeave(ply,false,false);
-				
-				//Set player data
-				playerData.setRealm(realm,true,true);
-				//Join game
-				game.join(ply);
-				
-				playerData.setQueuingStatus(false);
-			} else {
-				playerData.setQueuingStatus(false);
-				ply.sendMessage(ChatColor.YELLOW + "Unable to join game. Please try again.");
-			}
+			//Join game
+			game.join(ply,true);
+			
+			playerData.setQueuingStatus(false);
+		} else {
+			playerData.setQueuingStatus(false);
+			ply.sendMessage(ChatColor.YELLOW + "Unable to join game. Please try again.");
 		}
 	}
 }

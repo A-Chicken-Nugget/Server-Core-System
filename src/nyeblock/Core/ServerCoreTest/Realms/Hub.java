@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -11,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scoreboard.Team;
 
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
@@ -19,6 +21,7 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 
@@ -27,32 +30,32 @@ public class Hub extends RealmBase {
 	private Main mainInstance;
 	private PlayerHandling playerHandlingInstance;
 	private World world = Bukkit.getWorld("world");
-	private ArrayList<Player> players = new ArrayList<Player>();
 	private TextAnimation boardAnim = new TextAnimation("Hub board animation", new ArrayList<String>() {
 		{
-			add("§7NyeBlock");
-			add("§bN§7yeBlock");
-			add("§bNy§7eBlock");
-			add("§bNye§7Block");
-			add("§bNyeB§7lock");
-			add("§bNyeBl§7ock");
-			add("§bNyeBlo§7ck");
-			add("§bNyeBloc§7k");
-			add("§bNyeBlock");
-			add("§7N§byeBlock");
-			add("§7Ny§beBlock");
-			add("§7Nye§bBlock");
-			add("§7NyeB§block");
-			add("§7NyeBl§bock");
-			add("§7NyeBlo§bck");
-			add("§7NyeBloc§bk");
+			add("Â§7NyeBlock");
+			add("Â§bNÂ§7yeBlock");
+			add("Â§bNyÂ§7eBlock");
+			add("Â§bNyeÂ§7Block");
+			add("Â§bNyeBÂ§7lock");
+			add("Â§bNyeBlÂ§7ock");
+			add("Â§bNyeBloÂ§7ck");
+			add("Â§bNyeBlocÂ§7k");
+			add("Â§bNyeBlock");
+			add("Â§7NÂ§byeBlock");
+			add("Â§7NyÂ§beBlock");
+			add("Â§7NyeÂ§bBlock");
+			add("Â§7NyeBÂ§block");
+			add("Â§7NyeBlÂ§bock");
+			add("Â§7NyeBloÂ§bck");
+			add("Â§7NyeBlocÂ§bk");
 		}
 	}, 250);
 	
 	public Hub(Main mainInstance) {
-		super(mainInstance);
+		super(mainInstance,false);
 		this.mainInstance = mainInstance;
 		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
+		realm = Realm.HUB;
 		
 		//Floating text
 		Hologram spawnText = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),-9.498,116,-7.467));
@@ -64,6 +67,20 @@ public class Hub extends RealmBase {
 		
 		//Main functions timer
 		mainInstance.getTimerInstance().createTimer("hub_functions", .5, 0, "mainFunctions", false, null, this);
+		
+		ArrayList<String> hints = new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "Use the " + ChatColor.BOLD + "GAME MENU " + ChatColor.RESET.toString() + ChatColor.YELLOW + "item to browse the available game modes!");
+			add(ChatColor.YELLOW + "Check out the parkour! Look for the signs showing where the parkour is.");
+			add(ChatColor.YELLOW + "View the nyeblock website @ " + ChatColor.GREEN + "http://nyeblock.com/" + ChatColor.YELLOW + ".");
+		}};
+		
+		//Hint messages timer
+		mainInstance.getTimerInstance().createTimer2("hint_messages", 90, 0, new Runnable() {
+			@Override
+			public void run() {
+				messageToAll(hints.get(new Random().nextInt(hints.size())));
+			}
+		});
 	}
 	
 	/**
@@ -95,24 +112,6 @@ public class Hub extends RealmBase {
 			scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
 			pd.setScoreboardTitle(boardAnim.getMessage());
 			pd.updateObjectiveScores(scores);
-			
-			//Check hide players status
-			if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
-				for (Player ply2 : world.getPlayers()) {
-					if (ply.canSee(ply2) && ply != ply2) {
-						ply.hidePlayer(ply2);
-					}
-				}
-			} else {
-				for (Player ply2 : world.getPlayers()) {
-					if (!ply.canSee(ply2) && ply != ply2) {
-						ply.showPlayer(ply2);
-					}
-				}
-			}
-			
-			//Set gamemode
-//			ply.setGameMode(GameMode.ADVENTURE);
 		}
 	}
 	/**
@@ -121,44 +120,11 @@ public class Hub extends RealmBase {
 	public void playerJoin(Player ply) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
 		
-		//Add player
-		players.add(ply);
-		
-		pd.setCurrentGame(this);
-		
-		//Update joining players hidden/shown players
-		for (Player ply2 : Bukkit.getOnlinePlayers()) {
-			if (players.contains(ply2)) {
-				if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
-					ply.showPlayer(mainInstance,ply2);
-				}
-			} else {								
-				if (ply.canSee(ply2)) {
-					ply.hidePlayer(mainInstance,ply2);
-				}
-			}
-		}
-		
-		//Update current players hidden/shown players
-		for (Player ply2 : players) {
-			if (!ply2.canSee(ply)) {
-				ply2.showPlayer(mainInstance,ply);
-			}
-		}
-		
 		//Setup team
-		pd.setScoreBoardTeams(new String[] {"default"});
+		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		
 		//Add player to proper team
-		if (pd.getUserGroup() == UserGroup.ADMIN) {
-			pd.addPlayerToTeam("admin", ply);
-		} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
-			pd.addPlayerToTeam("moderator", ply);
-		} else if (pd.getUserGroup() == UserGroup.TESTER) {
-			pd.addPlayerToTeam("tester", ply);
-		} else {
-			pd.addPlayerToTeam("default", ply);
-		}
+		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
 		
 		//Add players to teams
 		for (Player player : players) {
@@ -166,26 +132,10 @@ public class Hub extends RealmBase {
 			
 			if (player != ply) {
 				//Update joining player team
-				if (pd2.getUserGroup() == UserGroup.ADMIN) {
-					pd.addPlayerToTeam("admin", player);
-				} else if (pd2.getUserGroup() == UserGroup.MODERATOR) {
-					pd.addPlayerToTeam("moderator", player);
-				} else if (pd2.getUserGroup() == UserGroup.TESTER) {
-					pd.addPlayerToTeam("tester", ply);
-				} else {					
-					pd.addPlayerToTeam("default", player);
-				}
+				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
 				
 				//Update current players teams
-				if (pd.getUserGroup() == UserGroup.ADMIN) {
-					pd2.addPlayerToTeam("admin", ply);
-				} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
-					pd2.addPlayerToTeam("moderator", ply);
-				} else if (pd.getUserGroup() == UserGroup.TESTER) {
-					pd2.addPlayerToTeam("tester", ply);
-				} else {
-					pd2.addPlayerToTeam("default", ply);
-				}
+				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
 			}
 		}
 	}
@@ -198,14 +148,11 @@ public class Hub extends RealmBase {
 		//Clear scoreboard info
 		pd.clearScoreboard();
 		
-		//Remove player
-		players.remove(ply);
-		
 		//Remove players from teams
 		for (Player player : players) {
 			PlayerData pd2 = playerHandlingInstance.getPlayerData(player);
 			
-			pd2.removePlayerFromTeam("default", ply);
+			pd2.removePlayerFromTeam(pd.getUserGroup().toString(), ply);
 		}
 	}
 }

@@ -17,6 +17,7 @@ import nyeblock.Core.ServerCoreTest.Commands.Ban;
 import nyeblock.Core.ServerCoreTest.Commands.BanIp;
 import nyeblock.Core.ServerCoreTest.Commands.CommandBase;
 import nyeblock.Core.ServerCoreTest.Commands.ForceStart;
+import nyeblock.Core.ServerCoreTest.Commands.Leave;
 import nyeblock.Core.ServerCoreTest.Commands.SetPermission;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
@@ -41,6 +42,8 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 		commandPermissions.put("banIp", Arrays.asList(UserGroup.ADMIN));
 		commands.put(new ForceStart(mainInstance).getInstance(),"force-start");
 		commandPermissions.put("force-start", Arrays.asList(UserGroup.ADMIN));
+		commands.put(new Leave(mainInstance).getInstance(),"leave");
+		commandPermissions.put("leave", null);
 		
 		//
 		// END COMMANDS
@@ -62,7 +65,7 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 			
 			for (Map.Entry<CommandBase,String> entry : commands.entrySet()) {
 				if (label.equalsIgnoreCase(entry.getValue())) {
-					if (commandPermissions.get(entry.getValue()).contains(playerData.getUserGroup())) {
+					if (commandPermissions.get(entry.getValue()) == null || commandPermissions.get(entry.getValue()).contains(playerData.getUserGroup())) {
 						entry.getKey().execute(ply,args);
 					} else {
 						ply.sendMessage(ChatColor.RED + "I'm sorry, but you do not have permission to perform this command. Please contact the server administrators if you believe that this is a mistake.");

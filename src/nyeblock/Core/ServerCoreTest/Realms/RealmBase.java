@@ -11,25 +11,37 @@ import org.bukkit.entity.Player;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public abstract class RealmBase {
 	private Main mainInstance;
 	protected ArrayList<Player> players = new ArrayList<>();
-	protected HashMap<Player,HashMap<String,Integer>> playerXP = new HashMap<>();
+	protected Realm realm;
+	protected int minPlayers = 0;
+	protected int maxPlayers = 0;
+	protected boolean isGame;
+	protected ArrayList<ChatColor> colorList = new ArrayList<ChatColor>() {{
+		add(ChatColor.BLUE);
+		add(ChatColor.GREEN);
+		add(ChatColor.YELLOW);
+		add(ChatColor.DARK_GREEN);
+		add(ChatColor.DARK_BLUE);
+		add(ChatColor.DARK_PURPLE);
+		add(ChatColor.LIGHT_PURPLE);
+		add(ChatColor.DARK_RED);
+		add(ChatColor.RED);
+		add(ChatColor.AQUA);
+	}};
 	
-	public RealmBase(Main mainInstance) {
+	public RealmBase(Main mainInstance,boolean isGame) {
 		this.mainInstance = mainInstance;
+		this.isGame = isGame;
 	}
 	
-	/**
-    * Sends a message in chat to all players in the game
-    * @param message - the message to send.
-    */
-	public void messageToAll(String message) {
-		for(Player ply : players) {
-			ply.sendMessage(ChatColor.BOLD + "§7Nye§bBlock §7\u00BB " + ChatColor.RESET + message);
-		}
-	}
+	//
+	// RANDOM METHODS
+	//
+	
 	/**
     * Checks to see if the provided player is in the game
     * @param player - the player to check for.
@@ -43,6 +55,15 @@ public abstract class RealmBase {
 			}
 		}
 		return found;
+	}
+	/**
+    * Sends a message in chat to all players in the game
+    * @param message - the message to send.
+    */
+	public void messageToAll(String message) {
+		for(Player ply : players) {
+			ply.sendMessage(ChatColor.BOLD + "§7Nye§bBlock §7\u00BB " + ChatColor.RESET + message);
+		}
 	}
 	/**
     * Print a title to all players in the game
@@ -67,112 +88,157 @@ public abstract class RealmBase {
 		}
 	}
 	/**
+    * Player join method
+    * @param ply - Player joining
+    */
+	public void playerJoin(Player ply) {}
+	/**
+    * Game player join method
+    * @param ply - Player joining the game
+    */
+	public void gameJoin(Player ply) {}
+	/**
+    * Super class player join method
+    * @param ply - Player joining
+    * @param isGame - Is the player joining a game
+    */
+	public void join(Player ply, boolean isGame) {
+		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+		
+		//Set the players current game
+		if (pd.getCurrentRealm() != this) {
+			pd.setCurrentRealm(this);
+		}
+		
+		//Add to players list
+		boolean found = false;
+		for (int i = 0; i < players.size(); i++) {
+			if (players.get(i).getName().equalsIgnoreCase(ply.getName())) {
+				if (players.get(i) != ply) {
+					players.set(i, ply);
+				}
+				found = true;
+			}
+		}
+		if (!found) {
+			players.add(ply);
+		}
+		
+		//Update playerdata
+		pd.setRealm(realm,true,true,true);
+		
+		//Show/hide players accordingly
+		for (Player ply2 : Bukkit.getOnlinePlayers()) {
+			if (players.contains(ply2)) {
+				if (!ply.canSee(ply2)) {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+							ply.showPlayer(mainInstance,ply2);
+						}
+					} else {
+						ply.showPlayer(mainInstance,ply2);						
+					}
+				}
+				if (!ply2.canSee(ply)) {
+					PlayerData pd2 = mainInstance.getPlayerHandlingInstance().getPlayerData(ply2);
+					
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (!Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
+							ply2.showPlayer(mainInstance,ply);
+						}
+					} else {
+						ply2.showPlayer(mainInstance,ply);						
+					}
+				}
+			} else {
+				if (ply.canSee(ply2)) {					
+					ply.hidePlayer(mainInstance,ply2);
+				}
+				if (ply2.canSee(ply)) {
+					ply2.hidePlayer(mainInstance,ply);
+				}
+			}
+		}
+		
+		//Run the proper join method depending on the type of realm
+		if (isGame) {
+			gameJoin(ply);
+		} else {
+			playerJoin(ply);
+		}
+	}
+	/**
+    * Is the realm a game
+    * @return If the realm is a game
+    */
+	public boolean isAGame() {
+		return isGame;
+	}
+	/**
+    * Sub class player leave method
+    * @param ply - Player joining the game
+    * @param showLeaveMessage - Should a leave message be shown
+    * @param runLeaveMethod - Should the leave method of the current realm be ran
+    * @param moveToHub - Should the player be moved to the hub
+    */
+	public void playerLeave(Player ply, boolean showLeaveMessage) {};
+	public void leave(Player ply, boolean showLeaveMessage, Realm destination) {
+		players.removeAll(new ArrayList<Player>() {{
+			add(ply);
+		}});
+				
+		playerLeave(ply,showLeaveMessage);
+		
+		if (destination != null) {			
+			mainInstance.getGameInstance().joinGame(ply, destination);
+		}
+	}
+	public void playerDeath(Player killed, Player attacker) {}
+	public boolean isInGraceBounds(Player ply) { return false; }
+	
+	//
+	// GETTERS
+	//
+	
+	/**
+    * Get the max amount of players the realm can have
+    */
+	public int getMaxPlayers() {
+		return maxPlayers;
+	}
+	/**
+    * Get the min amount of players the realm can have
+    */
+	public int getMinPlayers() {
+		return minPlayers;
+	}
+	/**
     * Get the time when this game was created
     * @return time when the game was created
     */
 	public ArrayList<Player> getPlayersInGame() {
 		return players;
 	}
+	public Location getRandomSpawnPoint() { return null; }
+	public String getPlayerKit(Player ply) { return null; }
+	public Location getPlayerSpawn(Player ply) { return null; }
 	/**
-    * Sub class player join method
-    * @param ply - Player joining the game
-    */
-	public void playerJoin(Player ply) {};
+	 * Get the realm of this game
+	 */
+	public Realm getRealm() {
+		return realm;
+	}
 	/**
-    * Super class player join method
-    * @param ply - Player joining the game
+    * Get the current amount of players in the game
     */
-	public void join(Player ply) {
-		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-		
-		//Set the players current game
-		pd.setCurrentGame(this);
-		
-		//Add to players list
-		players.add(ply);
-		
-		//Setup player xp
-		playerXP.put(ply, new HashMap<String,Integer>());
-		
-		//Show player has joined	
-		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
-		
-		//Update joining players hidden/shown players
-		for (Player ply2 : Bukkit.getOnlinePlayers()) {
-			if (players.contains(ply2)) {
-				if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
-					ply.showPlayer(mainInstance,ply2);
-				}
-			} else {								
-				if (ply.canSee(ply2)) {
-					ply.hidePlayer(mainInstance,ply2);
-				}
-			}
-		}
-		
-		//Update current players hidden/shown players
-		for (Player ply2 : players) {
-			if (!ply2.canSee(ply)) {
-				ply2.showPlayer(mainInstance,ply);
-			}
-		}
-		
-		playerJoin(ply);
-	};
-
-	public boolean isGameActive() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-    * Sub class player leave method
-    * @param ply - Player joining the game
-    * @param showLeaveMessage - Should a leave message be shown
-    * @param moveToHub - Should the player be moved to the hub
-    */
-	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {};
-	public void leave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
-		playerLeave(ply,showLeaveMessage,moveToHub);
-	}
-
-	public Location getRandomSpawnPoint() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getPlayerKit(Player ply) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public void setPlayerKit(Player ply, Object playerKit) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public Location getPlayerSpawn(Player ply) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public void playerDeath(Player killed, Player attacker) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public boolean isInGraceBounds(Player ply) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	public int getPlayerCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return players.size();
 	}
+	
 
-	public void forceStart() {
-		// TODO Auto-generated method stub
-		
-	}
+	//
+	// SETTERS
+	//
+	
+	public void setPlayerKit(Player ply, String kit) {}
 }

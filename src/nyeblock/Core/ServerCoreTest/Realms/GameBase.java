@@ -29,25 +29,22 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	protected Main mainInstance;
 	protected PlayerHandling playerHandling;
 	//Game info
-	protected Realm realm;
 	protected String worldName;
 	protected String map;
-	protected int minPlayers;
-	protected int maxPlayers;
 	protected boolean gameBegun = false;
 	//Player data
-//	protected ArrayList<Player> players = new ArrayList<>();
 	protected ArrayList<HashMap<Location,Player>> teamsSetup = new ArrayList<>();
+	protected HashMap<Player,HashMap<String,Integer>> playerXP = new HashMap<>();
 	//Game points
 	protected ArrayList<Location> spawns = new ArrayList<>();
 	protected Vector safeZonePoint1;
 	protected Vector safeZonePoint2;
 	//Etc
+	protected boolean active = true;
 	protected int emptyCount = 0;
 	protected boolean canUsersJoin = false;
 	protected boolean forceStart = false;
-	protected PvPMode pvpMode;
-	protected PvPType pvpType;
+	protected int playTimeCount = 0;
 	
 	protected XY gamePos;
 	protected boolean isSchemSet = false;
@@ -55,7 +52,7 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	EditSession editSession;
 	
 	public GameBase(Main mainInstance, String worldName) {
-		super(mainInstance);
+		super(mainInstance,true);
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		
@@ -138,7 +135,7 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 			ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\n" +
 			ChatColor.BOLD + "GAME SUMMARY" +
 			ChatColor.RESET + ChatColor.YELLOW + "\n \n" +
-			xp + "\n \n" +
+			(totalXP == 0 ? "No XP received" : xp) + "\n \n" +
 			"Total XP Received: " + totalXP + "\n" +
 			ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A"
 		);
@@ -163,11 +160,27 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	public void setPlayerKit(Player ply, String kit) {};
 	public void playerDeath(Player killed,Player killer) {};
 	public boolean isInGraceBounds(Player ply) { return false; };
+	/**
+    * Game player join method
+    * @param ply - Player joining the game
+    */
+	public void gameJoin(Player ply) {
+		//Setup player xp
+		playerXP.put(ply, new HashMap<String,Integer>());
+		
+		playerJoin(ply);
+		
+		//Show player has joined	
+		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
+	}
 	
 	//
 	// GETTERS
 	//
 	
+	public boolean getActiveStatus() {
+		return active;
+	}
 	public void giveXP(Player ply, String type, int amount) {
 		HashMap<String,Integer> xpStats = playerXP.get(ply);
 		
@@ -176,9 +189,6 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 		} else {
 			xpStats.put(type,amount);
 		}
-	}
-	public PvPMode getPvPMode() {
-		return pvpMode;
 	}
 	public EditSession getEditSession() {
 		return editSession;
@@ -247,12 +257,6 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 		return gamePos;
 	}
 	/**
-	* Get the realm of this game
-	*/
-	public Realm getRealm() {
-		return realm;
-	}
-	/**
     * Get instance of this game
     */
 	public GameBase getInstance() {
@@ -269,18 +273,6 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
     */
 	public String getMap() {
 		return map;
-	}
-	/**
-    * Get the current amount of players in the game
-    */
-	public int getPlayerCount() {
-		return players.size();
-	}
-	/**
-    * Get the max amount of players the game can have
-    */
-	public int getMaxPlayers() {
-		return maxPlayers;
 	}
 	/**
     * Get the world name

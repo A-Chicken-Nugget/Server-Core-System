@@ -2,12 +2,14 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -55,14 +57,16 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
+import nyeblock.Core.ServerCoreTest.Items.ShopMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
-	private HashMap<String, PlayerData> playersData = new HashMap<String, PlayerData>();
+	private HashMap<UUID, PlayerData> playersData = new HashMap<UUID, PlayerData>();
 	private World world = Bukkit.getWorld("world");
 	private boolean worldsChecked = false;
 
@@ -99,7 +103,7 @@ public class PlayerHandling implements Listener {
 
 	// Get a specific players player data
 	public PlayerData getPlayerData(Player ply) {
-		return playersData.get(ply.getName());
+		return playersData.get(ply.getUniqueId());
 	}
 	
 	//
@@ -111,8 +115,6 @@ public class PlayerHandling implements Listener {
 	public void onCreatureSpawn(CreatureSpawnEvent event) {
 		if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CUSTOM) {
 			event.setCancelled(true);
-		} else {
-			System.out.println("Spawning: " + event.getEntity().getName());
 		}
 	}
 
@@ -122,7 +124,7 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		String playerWorld = ply.getWorld().getName();
 		ArrayList<Player> playersToRemove = new ArrayList<Player>();
-		PlayerData playerData = playersData.get(ply.getName());
+		PlayerData playerData = playersData.get(ply.getUniqueId());
 
 		event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET + event.getMessage());
 
@@ -197,61 +199,81 @@ public class PlayerHandling implements Listener {
 		// Remove default join message
 		event.setJoinMessage("");
 		
-		// Setup player data. If they don't have a profile in the database, create one.
-		final PlayerData playerData = new PlayerData();
-		playerData.createScoreboard(ply);
-		
-		//Run database queries asynchronously
-		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
-            @Override
-            public void run() {            	
-            	ArrayList<HashMap<String, String>> userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 7, false);
-            	String ip = ply.getAddress().toString().split(":")[0].replace("/","");
-            	
-            	//If the player exists in the users table
-            	if (userQuery.size() > 0) {
-            		HashMap<String, String> userQueryData = userQuery.get(0);
-            		
-            		playerData.setData(mainInstance, ply, Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
-            				Double.parseDouble(userQueryData.get("timePlayed")), ip,
-            				UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))));
-            		
-            		//If the players ip has changed from whats in the DB
-            		if (!userQueryData.get("ip").equals(ip)) {
-            			//Insert ip into the ipLogs table
-                		mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", 0, true);
-                		mainInstance.getDatabaseInstance().query("UPDATE users SET ip = '" + ip + "' WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
-            		}
-            		
-            		//If the player does not exists in the users table
-            	} else {
-            		//Insert the user into the users table
-            		mainInstance.getDatabaseInstance().query("INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ip + "')", 0, true);
-            		
-            		//Insert ip into the ipLogs table
-            		mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", 0, true);
-            		
-            		//Get the users data from the users table. This is done to get their db id
-            		userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 1, false);
-            		HashMap<String, String> userQueryData = userQuery.get(0);
-            		playerData.setData(mainInstance, ply, Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER);
-            		
-            		// Let everyone know this is a new player
-            		for (Player player : world.getPlayers()) {
-            			player.sendMessage(ChatColor.YELLOW + "Welcome " + ChatColor.BOLD + ply.getName()
-            			+ ChatColor.RESET.toString() + ChatColor.YELLOW + " for their first time on the server!");
-            		}
-            	}
-            	playersData.put(ply.getName(), playerData);
-            	playerData.setItems();
-            	
-            	//Add player to hub
-            	mainInstance.getHubInstance().playerJoin(ply);
-            }
-		});
-		
-		// Teleport to spawn
-		ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
+		if (getPlayerData(ply) == null) {
+			// Setup player data. If they don't have a profile in the database, create one.
+			final PlayerData playerData = new PlayerData(mainInstance,ply);
+			
+			//Run database queries asynchronously
+			Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+				@Override
+				public void run() {            	
+					ArrayList<HashMap<String, String>> userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 7, false);
+					String ip = ply.getAddress().toString().split(":")[0].replace("/","");
+					
+					//If the player exists in the users table
+					if (userQuery.size() > 0) {
+						HashMap<String, String> userQueryData = userQuery.get(0);
+						
+						playerData.setData(Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
+								Double.parseDouble(userQueryData.get("timePlayed")), ip,
+								UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))));
+						
+						//If the players ip has changed from whats in the DB
+						if (!userQueryData.get("ip").equals(ip)) {
+							//Insert ip into the ipLogs table
+							mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", 0, true);
+							mainInstance.getDatabaseInstance().query("UPDATE users SET ip = '" + ip + "' WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+						}
+						
+						//If the player does not exists in the users table
+					} else {
+						//Insert the user into the users table
+						mainInstance.getDatabaseInstance().query("INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ip + "')", 0, true);
+						
+						//Insert ip into the ipLogs table
+						mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", 0, true);
+						
+						//Get the users data from the users table. This is done to get their db id
+						userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+						HashMap<String, String> userQueryData = userQuery.get(0);
+						playerData.setData(Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER);
+						
+						// Let everyone know this is a new player
+						for (Player player : world.getPlayers()) {
+							player.sendMessage(ChatColor.YELLOW + "Welcome " + ChatColor.BOLD + ply.getName()
+							+ ChatColor.RESET.toString() + ChatColor.YELLOW + " for their first time on the server!");
+						}
+					}
+					mainInstance.getHubInstance().join(ply, false);
+				}
+			});
+			playersData.put(ply.getUniqueId(), playerData);
+			
+			playerData.setRealm(Realm.HUB,false,false,true);
+		} else {
+			PlayerData pd = getPlayerData(ply);
+			
+			pd.setPlayer(ply);
+			if (pd.getRealm() != Realm.HUB) {
+				RealmBase realm = pd.getCurrentRealm();
+				
+				if (realm.isAGame()) {
+					GameBase game = (GameBase)realm;
+					
+					if (game.getPlayerCount() < game.getMaxPlayers() 
+							&& game.getJoinStatus()) {
+						realm.join(ply, true);
+					} else {
+						ply.sendMessage(ChatColor.YELLOW + "Unable to rejoin " + realm.getRealm().toString() + " game. It is not longer active.");
+						mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
+					}
+				} else {
+					realm.join(ply, true);
+				}
+			} else {
+				pd.getCurrentRealm().join(ply, false);
+			}
+		}
 
 		// Check if there are any undeleted worlds that weren't deleted on the previous server shutdown
 		if (!worldsChecked) {
@@ -270,33 +292,39 @@ public class PlayerHandling implements Listener {
 	// Handle when a player leaves the server
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent event) {
-		System.out.println("////////////RAN1");
 		Player ply = event.getPlayer();
-		PlayerData pd = playersData.get(ply.getName());
+		PlayerData pd = playersData.get(ply.getUniqueId());
 		DatabaseHandling dh = mainInstance.getDatabaseInstance();
 
 		// Remove default quit message
 		event.setQuitMessage("");
-
-		// If the player is in a game, remove them
-		pd.getCurrentRealm().leave(ply, true, false);
-
-		//Update play time
-		dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
 		
-		//Update realm xp
-		HashMap<Realm,Integer> realmXp = pd.getRealmXp();
-		dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
-		
-		//Remove player data
-		playersData.remove(ply.getName());
+		//Leave realm
+		pd.getCurrentRealm().leave(ply, true, null);
+
+		mainInstance.getTimerInstance().createTimer2("leave_" + ply.getUniqueId(), 60, 1, new Runnable() {
+			@Override
+			public void run() {
+				if (!ply.isOnline()) {
+					//Update play time
+					dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
+					
+					//Update realm xp
+					HashMap<Realm,Integer> realmXp = pd.getRealmXp();
+					dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+					
+					//Remove player data
+					playersData.remove(ply.getUniqueId());
+				}
+			}
+		});
 	}
 
 	// Handle when a player respawns
 	@EventHandler
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
 		Player ply = event.getPlayer();
-		PlayerData playerData = playersData.get(ply.getName());
+		PlayerData playerData = playersData.get(ply.getUniqueId());
 
 		if (playerData.getRealm() == Realm.HUB) {
 			event.setRespawnLocation(Bukkit.getWorld("world").getSpawnLocation());
@@ -391,7 +419,7 @@ public class PlayerHandling implements Listener {
 
 		if (ent instanceof Player) {
 			Player ply = (Player)ent;
-			PlayerData playerData = playersData.get(ply.getName());
+			PlayerData playerData = playersData.get(ply.getUniqueId());
 
 			if (playerData != null) {				
 				if (!ply.hasPermission("nyeblock.canBeDamaged")) {
@@ -444,7 +472,7 @@ public class PlayerHandling implements Listener {
 			}
 		});
 		
-		PlayerData playerData = playersData.get(killed.getName());
+		PlayerData playerData = playersData.get(killed.getUniqueId());
 
 		if (playerData.getRealm() == Realm.HUB) {
 			event.getDrops().clear();
@@ -489,7 +517,7 @@ public class PlayerHandling implements Listener {
 					attacker.playEffect(killed.getLocation(), Effect.SMOKE, 1);
 				}
 				attacker.playSound(attacker.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
-			} else {
+			} else {				
 				game.playerDeath(killed, null);
 			}
 		}
@@ -512,6 +540,11 @@ public class PlayerHandling implements Listener {
 		Entity ent = event.getEntity();
 
 		if (ent instanceof Fireball) {
+			Location loc = ent.getLocation();
+
+			for (Player player :  event.getLocation().getWorld().getPlayers()) {
+                player.spawnParticle(Particle.SMOKE_LARGE, loc, 100, 0, new Random().nextInt(50)*.01, 0, 0.1);
+            }
 			event.setCancelled(true);
 		}
 	}
@@ -542,7 +575,7 @@ public class PlayerHandling implements Listener {
 		Player ply = (Player)event.getPlayer();
 		
 		if (ply.getOpenInventory() == null) {			
-			playersData.get(ply.getName()).setMenu(null);
+			playersData.get(ply.getUniqueId()).setMenu(null);
 		}
 	}
 	// Handle when an item is moved in an inventory menu
@@ -557,7 +590,7 @@ public class PlayerHandling implements Listener {
 				ItemMeta itemMeta = item.getItemMeta();
 				
 				if (itemMeta != null) {
-					PlayerData playerData = playersData.get(ply.getName());
+					PlayerData playerData = playersData.get(ply.getUniqueId());
 					
 					if (event.getView().getTitle()
 							.equalsIgnoreCase(ChatColor.DARK_GRAY + "Select a Kit")) {
@@ -578,13 +611,18 @@ public class PlayerHandling implements Listener {
 							if (itemName.equals("hub_menu")) {
 								HubMenu hubMenu = new HubMenu(mainInstance,ply);
 								
-								playersData.get(ply.getName()).setMenu(hubMenu);
+								playersData.get(ply.getUniqueId()).setMenu(hubMenu);
 								hubMenu.openMenu(ply, "Game Menu");
+							} else if (itemName.equals("shop_menu")) {
+								ShopMenu shopMenu = new ShopMenu(mainInstance,ply);
+								
+								playersData.get(ply.getUniqueId()).setMenu(shopMenu);
+								shopMenu.openMenu(ply, "Game Menu");
 							} else if (itemName.equals("return_to_hub")) {
 								RealmBase game = getPlayerData(ply).getCurrentRealm();
 								
 								// Remove player from game
-								game.leave(ply, true, true);
+								game.leave(ply, true, Realm.HUB);
 								
 								event.setCancelled(false);
 							} else if (itemName.equals("parkour_menu")) {
@@ -684,7 +722,7 @@ public class PlayerHandling implements Listener {
 				if (itemName.equals("hub_menu")) {
 					HubMenu hubMenu = new HubMenu(mainInstance,ply);
 					
-					playersData.get(ply.getName()).setMenu(hubMenu);
+					playersData.get(ply.getUniqueId()).setMenu(hubMenu);
 					hubMenu.openMenu(ply, "Game Menu");
 				} else if (itemName.equals("parkour_menu")) {
 					ParkourMenu parkourMenu = new ParkourMenu();
@@ -693,9 +731,7 @@ public class PlayerHandling implements Listener {
 					
 					event.setCancelled(true);
 				} else if (itemName.equals("return_to_hub")) {
-					RealmBase game = getPlayerData(ply).getCurrentRealm();
-
-					game.leave(ply, true, true);
+					getPlayerData(ply).getCurrentRealm().leave(ply, true, Realm.HUB);
 					event.setCancelled(true);
 				} else if (itemName.equals("parkour_start")) {
 					mainInstance.getHubParkourInstance().goToStart(ply);
@@ -741,7 +777,7 @@ public class PlayerHandling implements Listener {
 //						}
 //					}
 				} else if (itemName.equals("player_selector")) {
-					PlayerData playerData = playersData.get(ply.getName());
+					PlayerData playerData = playersData.get(ply.getUniqueId());
 					int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
 					RealmBase game = getPlayerData(ply).getCurrentRealm();
 					ArrayList<Player> playersInGame = game.getPlayersInGame();
@@ -770,7 +806,7 @@ public class PlayerHandling implements Listener {
 					}
 					item.setItemMeta(itemMeta);
 				} else if (itemName.equals("hide_players")) {
-					PlayerData playerData = playersData.get(ply.getName());
+					PlayerData playerData = playersData.get(ply.getUniqueId());
 					boolean currentStatus = Boolean.parseBoolean(playerData.getCustomDataKey("hide_players"));
 
 					if (currentStatus) {
@@ -828,13 +864,13 @@ public class PlayerHandling implements Listener {
 						fireball.setIsIncendiary(false);
 						fireball.setYield(1.75F);
 						fireball.setShooter(ply);
-						for (ItemStack itemm : ply.getInventory().getContents()) {
-							if (itemm != null) {
-								if (itemm.getType().equals(Material.FIRE_CHARGE)) {
-									itemm.setAmount(itemm.getAmount() - 1);
-								}
-							}
-						}
+//						for (ItemStack itemm : ply.getInventory().getContents()) {
+//							if (itemm != null) {
+//								if (itemm.getType().equals(Material.FIRE_CHARGE)) {
+//									itemm.setAmount(itemm.getAmount() - 1);
+//								}
+//							}
+//						}
 					}
 				}
 			}
@@ -843,8 +879,8 @@ public class PlayerHandling implements Listener {
 	//Handle when a player interacts with an entity
 	@EventHandler
 	public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
-		if (event.getRightClicked().getType().toString().equals("ITEM_FRAME")) {
-			event.setCancelled(true);
-		}
+//		if (event.getRightClicked().getType().toString().equals("ITEM_FRAME")) {
+//			event.setCancelled(true);
+//		}
 	}
 }

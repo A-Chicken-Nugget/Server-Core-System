@@ -137,10 +137,12 @@ public class GameMapInfo {
 				}};
 			}
 		} else if (realm == Realm.PVP) {
+			PvP pvpGame = ((PvP)game);
+			
 			//nether
 			if (map.equalsIgnoreCase("nether")) {
 				mapInfo = new ArrayList<HashMap<String,Location>>() {{
-					if (game.getPvPMode() == PvPMode.DUELS) {
+					if (pvpGame.getPvPMode() == PvPMode.DUELS) {
 						//Points
 						add(new HashMap<String,Location>() {{
 							put("spawn_1", new Location(world,7.503,54,6.493,0,1.5F));

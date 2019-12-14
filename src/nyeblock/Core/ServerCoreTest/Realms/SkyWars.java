@@ -15,6 +15,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
@@ -79,11 +80,13 @@ public class SkyWars extends GameBase {
 		
 		for (Player ply : tempPlayers) {			
 			//Unhide all players who might be hidden for certain players
-			for (Player player : tempPlayers) {					
-				player.showPlayer(ply);
+			for (Player player : tempPlayers) {
+				if (!ply.canSee(player)) {					
+					player.showPlayer(mainInstance,ply);
+				}
 			}
 			
-			playerLeave(ply,false,true);
+			leave(ply,false,Realm.HUB);
 		}
 	}
 	/**
@@ -94,6 +97,7 @@ public class SkyWars extends GameBase {
 		
 		if (timeLeft <= 0) {
 			gameBegun = true;
+			canUsersJoin = false;
 			startTime = System.currentTimeMillis() / 1000L;
 			for(Player ply : players) {
 				playersInGame.add(ply);
@@ -142,36 +146,6 @@ public class SkyWars extends GameBase {
 				}
 			}
 		}
-		//Set player gamemodes
-		for(Player ply : players) {
-			PlayerData pd = playerHandling.getPlayerData(ply);
-			
-			if (!active) {
-				if (ply.getGameMode() != GameMode.SURVIVAL && !UserGroup.isStaff(pd.getUserGroup())) {
-					ply.setGameMode(GameMode.SURVIVAL);
-				}
-			} else {
-				if (gameBegun && ply.getGameMode() == GameMode.SURVIVAL) {
-					boolean isPlaying = false;
-					boolean isFlying = true;
-    				
-    				for(Player player : playersInGame) {
-    					if (ply.getName().equalsIgnoreCase(player.getName())) {
-    						isPlaying = true;
-    						if (!ply.isFlying()) {
-    							isFlying = false;
-    						}
-    					}
-    				}
-    				if (!isPlaying) {
-    					ply.setGameMode(GameMode.ADVENTURE);
-    					if (!isFlying) {
-    						ply.setFlying(true);
-    					}
-    				}
-				}
-			}
-		}
 		//Check if the server is empty
 		if (players.size() > 0) {        			
 			if (emptyCount != 0) {
@@ -192,6 +166,9 @@ public class SkyWars extends GameBase {
 					}
 					readyCount++;
 				} else {
+					if (readyCount > 0) {
+						readyCount = 0;
+					}
 					if (messageCount >= 20) {
 						messageCount = 0;
 						
@@ -221,11 +198,22 @@ public class SkyWars extends GameBase {
     * Set the players scoreboard
     */
 	public void setScoreboard() {
+		//Give players xp for play time
+		playTimeCount++;
+		if (playTimeCount >= 180 && !endStarted) {
+			playTimeCount = 0;
+			for (Player ply : players) {
+				giveXP(ply,"Play time",5);
+				ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
+			}
+		}
+		
 		//Check if player has won
 		if (playersInGame.size() == 1 && active) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 					endStarted = true;
+					canUsersJoin = false;
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
@@ -471,8 +459,24 @@ public class SkyWars extends GameBase {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Setup team
-		pd.setScoreBoardTeams(new String[] {"default"});
+		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		pd.createHealthTags();
+		
+		//Add player to proper team
+		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
+		
+		//Add players to teams
+		for (Player player : players) {
+			PlayerData pd2 = playerHandling.getPlayerData(player);
+			
+			if (player != ply) {
+				//Update joining player team
+				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
+				
+				//Update current players teams
+				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
+			}
+		}
 		
 		//Add player to arrays
 		playerKills.put(ply.getName(), 0);
@@ -500,13 +504,8 @@ public class SkyWars extends GameBase {
 	/**
     * Handle when a player leaves the game
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
+	public void playerLeave(Player ply, boolean showLeaveMessage) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
-		
-		//Remove player from players list
-		players.removeAll(new ArrayList<Player>() {{
-			add(ply);
-		}});
 		
 		//Remove player from the current game
 		playersInGame.removeAll(new ArrayList<Player>() {{
@@ -536,19 +535,6 @@ public class SkyWars extends GameBase {
 			if (!active) {				
 				messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
 			}
-		}
-		if (moveToHub) {
-			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-			
-			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
-			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
-		}
-		
-		//Unhide player from all players in the game
-		for (Player player : players) {
-			player.showPlayer(ply);
 		}
 	}
 }

@@ -22,6 +22,7 @@ import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
@@ -103,11 +104,13 @@ public class StepSpleef extends GameBase {
 		
 		for (Player ply : tempPlayers) {			
 			//Unhide all players who might be hidden for certain players
-			for (Player player : tempPlayers) {					
-				player.showPlayer(ply);
+			for (Player player : tempPlayers) {
+				if (!ply.canSee(player)) {					
+					player.showPlayer(mainInstance,ply);
+				}
 			}
 			
-			playerLeave(ply,false,true);
+			leave(ply,false,nyeblock.Core.ServerCoreTest.Misc.Enums.Realm.HUB);
 		}
 	}
 	/**
@@ -118,6 +121,7 @@ public class StepSpleef extends GameBase {
 		
 		if (timeLeft <= 0) {
 			gameBegun = true;
+			canUsersJoin = false;
 			startTime = System.currentTimeMillis() / 1000L;
 			for(Player ply : players) {
 				playersInGame.add(ply);
@@ -236,6 +240,7 @@ public class StepSpleef extends GameBase {
 							for(Player ply : players) {
 								Location spawn = getRandomSpawnPoint();
 								ply.setVelocity(new Vector(0,0,0));
+								ply.setHealth(20);
 								ply.teleport(spawn);
 							}
 							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
@@ -245,7 +250,7 @@ public class StepSpleef extends GameBase {
 					}
 					readyCount++;
 				} else {
-					if (readyCount != 0) {
+					if (readyCount > 0) {
 						readyCount = 0;
 					}
 					if (messageCount >= 20) {
@@ -278,9 +283,20 @@ public class StepSpleef extends GameBase {
     * Set the players scoreboard
     */
 	public void setScoreboard() {
+		//Give players xp for play time
+		playTimeCount++;
+		if (playTimeCount >= 180 && !endStarted) {
+			playTimeCount = 0;
+			for (Player ply : players) {
+				giveXP(ply,"Play time",5);
+				ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
+			}
+		}
+		
 		//Check if player has won
 		if (playersInGame.size() == 1 && !endStarted) {
 			endStarted = true;
+			canUsersJoin = false;
 			Player ply = playersInGame.get(0);
 			
 			messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
@@ -421,25 +437,41 @@ public class StepSpleef extends GameBase {
     * Handle when a player joins the game
     */
 	public void playerJoin(Player ply) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
 		//Teleport player to random spawn
 		Location randSpawn = getRandomSpawnPoint();
 		ply.teleport(randSpawn);
+		
+		//Setup team
+		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
+		
+		//Add player to proper team
+		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
+		
+		//Add players to teams
+		for (Player player : players) {
+			PlayerData pd2 = playerHandling.getPlayerData(player);
+			
+			if (player != ply) {
+				//Update joining player team
+				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
+				
+				//Update current players teams
+				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
+			}
+		}
 		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
 	}
 	/**
     * Handle when a player leaves the game
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
+	public void playerLeave(Player ply, boolean showLeaveMessage) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Clear scoreboard
 		pd.clearScoreboard();
-		
-		//Remove player from players list
-		players.removeAll(new ArrayList<Player>() {{
-			add(ply);
-		}});
 		
 		//Remove player from the current game
 		playersInGame.removeAll(new ArrayList<Player>() {{
@@ -455,19 +487,6 @@ public class StepSpleef extends GameBase {
 			if (!active) {				
 				messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
 			}
-		}
-		if (moveToHub) {
-			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-			
-			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
-			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
-		}
-		
-		//Unhide player from all players in the game
-		for (Player player : players) {
-			player.showPlayer(ply);
 		}
 	}
 }

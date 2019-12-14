@@ -13,6 +13,7 @@ import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitTask;
@@ -29,6 +30,7 @@ import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.MenuBase;
+import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
@@ -48,22 +50,36 @@ public class PlayerData {
 	private Player player;
 	private int id;
 	private int points;
-	private int xp;
 	private double timePlayed;
 	private long timeJoined = System.currentTimeMillis() / 1000L;
 	private String ip;
-	private UserGroup userGroup;
+	private UserGroup userGroup = UserGroup.USER;
 	private PermissionAttachment permissions;
-	private Realm realm;
-	private boolean queuingGame = false;
+	private Realm realm = Realm.HUB;
 	private HashMap<String,String> customData = new HashMap<>();
 	private HashMap<Realm,Integer> realmXp = new HashMap<>();
 	private MenuBase openedMenu;
-	private nyeblock.Core.ServerCoreTest.Realms.RealmBase currentGame;
+	private RealmBase currentGame;
 	private boolean isSpectating = false;
+	private boolean queuingGame = false;
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
+	
+	public PlayerData(Main mainInstance, Player ply) {
+		this.mainInstance = mainInstance;
+		databaseHandlingInstance = mainInstance.getDatabaseInstance();
+		player = ply;
+		
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
+			@Override
+			public void run() {				
+				// Teleport to spawn
+				player.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
+				createScoreboard();
+			}
+		});
+	}
 	
 	/**
     * Give the player xp
@@ -71,16 +87,69 @@ public class PlayerData {
     * @param amount - amount of xp added to the specified realm
     */
 	public void giveXP(Realm realm, int amount) {
-		realmXp.put(realm, realmXp.get(realm) + amount);
+		if (realmXp.get(realm) != null) {			
+			realmXp.put(realm, realmXp.get(realm) + amount);
+		} else {
+			realmXp.put(realm, amount);
+		}
 	}
 	/**
-	* Create the players scoreboard
-	*/
-	public void createScoreboard(Player ply) {
+    * Creates a scoreboard for the player
+    */
+	public void createScoreboard() {
 		board = Bukkit.getScoreboardManager().getNewScoreboard();
 		objective = board.registerNewObjective("scoreboard", "");
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-		ply.setScoreboard(board);
+		player.setScoreboard(board);
+	}
+	/**
+    * Clear the players scoreboard teams, scores and health tags
+    */
+	public void clearScoreboard() {
+		for (Team team : board.getTeams()) {
+			team.unregister();
+		}
+		for (String score : board.getEntries()) {
+			board.resetScores(score);
+		}
+		for (Objective objective : board.getObjectives()) {
+			if (objective.getName().equals("healthtag")) {
+				objective.unregister();
+			}
+		}
+	}
+	/**
+    * Add the given player to a specific team within the players scoreboard
+    * @param teamName - name of the team to add the player to.
+    * @param ply - player to add to the specified team.
+    */
+	public void addPlayerToTeam(String teamName, Player ply) {
+		board.getTeam(teamName).addPlayer(ply);
+	}
+	/**
+    * Remove a player from a specific team within the players scoreboard
+    * @param teamName - name of the team to remove the player from.
+    * @param ply - player to remove from the specified team.
+    */
+	public void removePlayerFromTeam(String teamName, Player ply) {
+		for (Team team : board.getTeams()) {
+			if (team.getName().equals(teamName)) {
+				if (team.hasPlayer(ply)) {					
+					team.removePlayer(ply);
+				}
+			}
+		}
+	}
+	/**
+    * Create health tags to be displayed with the players scoreboard
+    */
+	public void createHealthTags() {
+		if (board.getObjective("healthtag") == null) {			
+			Objective healthTag = board.registerNewObjective("healthtag", "health");
+			healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
+			healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
+			player.setHealth(player.getHealth() - 0.0001);
+		}
 	}
 	
 	//
@@ -175,6 +244,14 @@ public class PlayerData {
 	//
 	
 	/**
+	* Update the player and set the scoreboard to the new player
+	*/
+	public void setPlayer(Player ply) {
+		player = ply;
+		permissions = player.addAttachment(mainInstance);
+		player.setScoreboard(board);
+	}
+	/**
     * Set if the player is spectating
     */
 	public void setSpectatingStatus(boolean status) {
@@ -183,7 +260,7 @@ public class PlayerData {
 	/**
     * Set the players current game
     */
-	public void setCurrentGame(RealmBase game) {
+	public void setCurrentRealm(RealmBase game) {
 		currentGame = game;
 	}
 	/**
@@ -203,24 +280,19 @@ public class PlayerData {
     * @param ip - players ip
     * @param userGroup - players user group
     */
-	public void setData(Main mainInstance, Player ply, int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
-		this.mainInstance = mainInstance;
-		databaseHandlingInstance = mainInstance.getDatabaseInstance();
-		player = ply;
+	public void setData(int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
 		this.id = id;
-		permissions = ply.addAttachment(mainInstance);
+		permissions = player.addAttachment(mainInstance);
 		this.points = points;
-		this.xp = xp;
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
-		setRealm(Realm.HUB, true, false);
 		
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
             public void run() {                   	
             	//Get the players realm xp
-            	ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
+            	ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 5, false);
             	
             	//If the player exists in the userXP table
             	if (realmXPQuery.size() > 0) {
@@ -232,9 +304,9 @@ public class PlayerData {
             		realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
             	} else {
             		//Insert the user in the userXP table
-            		mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + ply.getUniqueId() + "')", 0, true);
+            		mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
             		
-            		realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + ply.getUniqueId() + "'", 5, false);
+            		realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 5, false);
             		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
             		
             		//Set the players realm xp
@@ -244,13 +316,7 @@ public class PlayerData {
             	}
             }
 		});
-		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
-			@Override
-			public void run() {				
-				// Teleport to spawn
-				ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
-			}
-		});
+		setPermissions();
 	}
 	/**
     * Set the players permissions based on their current realm
@@ -344,7 +410,25 @@ public class PlayerData {
 			ItemStack hp = hidePlayers.give();
 			player.getInventory().setItem(6, hp);
 			
-		} else if (realm == Realm.KITPVP) {
+		} else if (realm == Realm.PARKOUR) {
+			//Parkour menu
+			ParkourMenu parkourMenu = new ParkourMenu();
+			ItemStack pm = parkourMenu.give();
+			player.getInventory().setItem(4, pm);
+			
+			//Hide players
+			HidePlayers hidePlayers = new HidePlayers(mainInstance, player);
+			ItemStack hp = hidePlayers.give();
+			player.getInventory().setItem(6, hp);
+			
+			//Go to start
+			ItemStack startItem = new ItemStack(Material.LEAD);
+			ItemMeta startItemMeta = startItem.getItemMeta();
+			startItemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Return to Start" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+			startItemMeta.setLocalizedName("parkour_start");
+			startItem.setItemMeta(startItemMeta);
+			player.getInventory().setItem(2, startItem);
+		} if (realm == Realm.KITPVP) {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
@@ -373,7 +457,7 @@ public class PlayerData {
 			player.getInventory().setArmorContents(armor);
 		} else if (realm == Realm.STEPSPLEEF) {
 			if (currentGame != null) {
-				if (currentGame.isInServer(player) && currentGame.isGameActive()) {
+				if (currentGame.isInServer(player) && ((GameBase)currentGame).isGameActive()) {
 					//Select player
 					PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.STEPSPLEEF,player);
 					player.getInventory().setItem(4, selectPlayer.give());
@@ -386,7 +470,7 @@ public class PlayerData {
 		} else if (realm == Realm.SKYWARS) {
 			if (currentGame != null) {
 				if (currentGame.isInServer(player)) {
-					if (currentGame.isGameActive()) {						
+					if (((GameBase)currentGame).isGameActive()) {						
 						//Select player
 						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.SKYWARS,player);
 						player.getInventory().setItem(4, selectPlayer.give());
@@ -401,7 +485,7 @@ public class PlayerData {
 			ReturnToHub returnToHub = new ReturnToHub();
 			player.getInventory().setItem(8, returnToHub.give());
 		} else if (realm == Realm.PVP) {
-			if (currentGame != null && currentGame.isGameActive()) {						
+			if (currentGame != null && ((GameBase)currentGame).isGameActive()) {						
 				//Select player
 				PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.PVP,player);
 				player.getInventory().setItem(4, selectPlayer.give());
@@ -417,33 +501,33 @@ public class PlayerData {
     * @param updatePermissions - should their permissions be updated?
     * @param updateItems - should their items be updated?
     */
-	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems) {
+	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems, boolean resetPlayer) {
 		this.realm = realm;
+		
 		if (updatePermissions) {			
 			setPermissions();
 		}
 		if (updateItems) {			
 			setItems();
 		}
-		
-		//Reset game
-		currentGame = null;
-		//Remove potion effects
-		for(PotionEffect effect : player.getActivePotionEffects())
-		{
-		    player.removePotionEffect(effect.getType());
+		if (resetPlayer) {
+			//Remove potion effects
+			for(PotionEffect effect : player.getActivePotionEffects())
+			{
+				player.removePotionEffect(effect.getType());
+			}
+			//Reset flying
+			player.setAllowFlight(false);
+			//Reset health/food
+			player.setHealth(20);
+			player.setFoodLevel(20);
+			//Remove fire
+			player.setFireTicks(0);
+			//Reset title
+			player.sendTitle("", "", 0, 0, 0);
+			//Reset spectating status
+			setSpectatingStatus(false);
 		}
-		//Reset flying
-		player.setFlying(false);
-		//Reset health/food
-		player.setHealth(20);
-		player.setFoodLevel(20);
-		//Remove fire
-		player.setFireTicks(0);
-		//Reset title
-		player.sendTitle("", "", 0, 0, 0);
-		//Reset spectating status
-		setSpectatingStatus(false);
 	}
 	/**
     * Set the players queuing status. If true then the player can queue, if false then they cannot
@@ -477,72 +561,34 @@ public class PlayerData {
 		}
 	}
 	/**
-    * Set the players scoreboard teams from the given string array
+    * Set the players scoreboard teams and adds the given teams
     * @param teams - list of teams to create.
     */
-	public void setScoreBoardTeams(String[] teams) {
-		for (int i = 0; i < teams.length; i++) {			
-			Team team = board.registerNewTeam(teams[i]);
-			team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.FOR_OWN_TEAM);
+	public void setScoreBoardTeams(String[] teams,Team.OptionStatus status) {
+		if (teams != null) {			
+			for (int i = 0; i < teams.length; i++) {			
+				Team team = board.registerNewTeam(teams[i]);
+				team.setOption(Team.Option.COLLISION_RULE, status);
+			}
 		}
-		//Admin user group
-		Team team = board.registerNewTeam("admin");
-		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-		team.setColor(ChatColor.DARK_RED);
-		//Moderator user group
-		team = board.registerNewTeam("moderator");
-		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-		team.setColor(ChatColor.GRAY);
-		//Tester user group
-		team = board.registerNewTeam("tester");
-		team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-		team.setColor(ChatColor.YELLOW);
-	}
-	/**
-    * Clear the players scoreboard teams, scores and health tags
-    */
-	public void clearScoreboard() {
-		for (Team team : board.getTeams()) {
-			team.unregister();
-		}
-		for (String score : board.getEntries()) {
-			board.resetScores(score);
-		}
-		for (Objective objective : board.getObjectives()) {
-			if (objective.getName().equals("healthtag")) {
-				objective.unregister();
+		for (UserGroup userGroup : UserGroup.values()) {
+			if (board.getTeam(userGroup.toString()) == null) {
+				Team team = board.registerNewTeam(userGroup.toString());
+				team.setOption(Team.Option.COLLISION_RULE, status);
+				team.setColor(userGroup.getColor());
 			}
 		}
 	}
 	/**
-    * Add the given player to a specific team within the players scoreboard
-    * @param teamName - name of the team to add the player to.
-    * @param ply - player to add to the specified team.
+    * Set the teams color on the scoreboard
+    * @param team - Name of the team to set
+    * @param color - Color to set
     */
-	public void addPlayerToTeam(String teamName, Player ply) {
-		board.getTeam(teamName).addPlayer(ply);
-	}
-	/**
-    * Remove a player from a specific team within the players scoreboard
-    * @param teamName - name of the team to remove the player from.
-    * @param ply - player to remove from the specified team.
-    */
-	public void removePlayerFromTeam(String teamName, Player ply) {
+	public void setTeamColor(String name, ChatColor color) {
 		for (Team team : board.getTeams()) {
-			if (team.getName().equals(teamName)) {
-				if (team.hasPlayer(ply)) {					
-					team.removePlayer(ply);
-				}
+			if (team.getName().equalsIgnoreCase(name)) {
+				team.setColor(color);
 			}
 		}
-	}
-	/**
-    * Create health tags to be displayed with the players scoreboard
-    */
-	public void createHealthTags() {
-		Objective healthTag = board.registerNewObjective("healthtag", "health");
-		healthTag.setDisplaySlot(DisplaySlot.BELOW_NAME);
-		healthTag.setDisplayName(ChatColor.DARK_RED + "\u2764");
-		player.setHealth(player.getHealth() - 0.0001);
 	}
 }

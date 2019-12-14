@@ -24,6 +24,7 @@ import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
+import org.bukkit.scoreboard.Team;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -46,7 +47,6 @@ public class KitPvP extends GameBase {
 	//Etc
 	private boolean endStarted = false;
 	private ArrayList<String> top5 = new ArrayList<>();
-	private int playTimeCount = 0;
 	
 	//
 	// CONSTRUCTOR
@@ -68,17 +68,6 @@ public class KitPvP extends GameBase {
 		
 		//Delete timer
 		mainInstance.getTimerInstance().createTimer("delete_" + worldName, 1, 0, "checkForDeletion", false, null, this);
-		
-//		PacketPlayOutWorldBorder border = new PacketPlayOutWorldBorder(null, PacketPlayOutWorldBorder.EnumWorldBorderAction.INITIALIZE);
-//        border.
-//		border.setX(Bukkit.getWorld("SkyRealms").getSpawnLocation().getX());
-//        border.setX(Bukkit.getWorld("SkyRealms").getSpawnLocation().getX());
-//        border.setZ(Bukkit.getWorld("SkyRealms").getSpawnLocation().getZ());
-//        border.setRadius(20 / 2);
-//        border.setSpeed(1L);
-//        border.setPortalBoundary(10);
-//        border.setWarningTime(20);
-//        border.setWarningBlocks(2);
 	}
 	
 	//
@@ -93,7 +82,7 @@ public class KitPvP extends GameBase {
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {
-			playerLeave(ply,false,true);
+			leave(ply,false,Realm.HUB);
 		}
 	}
 	/**
@@ -213,16 +202,6 @@ public class KitPvP extends GameBase {
 						//Check if player is in the grace bounds
 						if (Toolkit.playerInArea(loc.toVector(), safeZonePoint1, safeZonePoint2)) {
 							if (playerInGraceBounds.get(ply.getName()) == null || !playerInGraceBounds.get(ply.getName())) {
-								//Add players to team
-								for (Map.Entry<String,Boolean> entry : playerInGraceBounds.entrySet()) {
-									if (entry.getValue()) {
-										Player player = Bukkit.getServer().getPlayer(entry.getKey());
-										PlayerData pd2 = playerHandling.getPlayerData(player);
-										
-										pdata.addPlayerToTeam("default",player);
-										pd2.addPlayerToTeam("default", ply);
-									}
-								}
 								playerInGraceBounds.put(ply.getName(), true);
 							}
 							if (pdata != null) {     
@@ -262,6 +241,7 @@ public class KitPvP extends GameBase {
 		if ((duration-((System.currentTimeMillis() / 1000L)-startTime)) < 0) {
 			if (!endStarted && players.size() > 0) {
 				endStarted = true;
+				canUsersJoin = false;
 				int top = Collections.max(playerKills.values());
 				
 				//TODO REDO
@@ -293,11 +273,11 @@ public class KitPvP extends GameBase {
 							int place = 0;
 							for (int i = 0; i < top5.size(); i++) {
 								if (top5.get(i).equalsIgnoreCase(ply.getName())) {									
-									place = 5-i;
+									place = i+1;
 								}
 							}
 							
-							if (place <= 5) {
+							if (place > 1) {
 								giveXP(ply,"Placing #" + place,200-(place*35));
 							}
 						}
@@ -471,7 +451,7 @@ public class KitPvP extends GameBase {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Setup team
-		pd.setScoreBoardTeams(new String[] {"default"});
+		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		pd.createHealthTags();
 		
 		//Add player to arrays
@@ -479,15 +459,7 @@ public class KitPvP extends GameBase {
 		playerKits.put(ply.getName(),"knight");
 		
 		//Add player to proper team
-		if (pd.getUserGroup() == UserGroup.ADMIN) {
-			pd.addPlayerToTeam("admin", ply);
-		} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
-			pd.addPlayerToTeam("moderator", ply);
-		} else if (pd.getUserGroup() == UserGroup.TESTER) {
-			pd.addPlayerToTeam("tester", ply);
-		} else {
-			pd.addPlayerToTeam("default", ply);
-		}
+		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
 		
 		//Add players to teams
 		for (Player player : players) {
@@ -495,26 +467,10 @@ public class KitPvP extends GameBase {
 			
 			if (player != ply) {
 				//Update joining player team
-				if (pd2.getUserGroup() == UserGroup.ADMIN) {
-					pd.addPlayerToTeam("admin", player);
-				} else if (pd2.getUserGroup() == UserGroup.MODERATOR) {
-					pd.addPlayerToTeam("moderator", player);
-				} else if (pd2.getUserGroup() == UserGroup.TESTER) {
-					pd.addPlayerToTeam("tester", ply);
-				} else {					
-					pd.addPlayerToTeam("default", player);
-				}
+				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
 				
 				//Update current players teams
-				if (pd.getUserGroup() == UserGroup.ADMIN) {
-					pd2.addPlayerToTeam("admin", ply);
-				} else if (pd.getUserGroup() == UserGroup.MODERATOR) {
-					pd2.addPlayerToTeam("moderator", ply);
-				} else if (pd.getUserGroup() == UserGroup.TESTER) {
-					pd2.addPlayerToTeam("tester", ply);
-				} else {
-					pd2.addPlayerToTeam("default", ply);
-				}
+				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
 			}
 		}
 		
@@ -530,9 +486,6 @@ public class KitPvP extends GameBase {
 				player.setHealth(player.getHealth() - 0.0001);
 			}
 		}
-		
-		//Set gamemode
-		//ply.setGameMode(GameMode.SURVIVAL);
 	}
 	/**
     * Handles when a player leaves the game
@@ -540,11 +493,8 @@ public class KitPvP extends GameBase {
     * @param bool - should a leave message be shown?
     * @param bool - should the player be moved to the hub?
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
+	public void playerLeave(Player ply, boolean showLeaveMessage) {
 		PlayerData playerData = playerHandling.getPlayerData(ply);
-		
-		//Remove player from players list
-		players.remove(ply);
 		
 		//Remove player from hashmaps
 		playerKills.remove(ply.getName());
@@ -568,17 +518,11 @@ public class KitPvP extends GameBase {
 		for (Player player : players) {
 			PlayerData pd2 = playerHandling.getPlayerData(player);
 			
-			pd2.removePlayerFromTeam("default", ply);
+			pd2.removePlayerFromTeam(playerData.getUserGroup().toString(), ply);
 		}
 		
 		if (showLeaveMessage) {			
 			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
-		}
-		if (moveToHub) {
-			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
-			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
 		}
 	}
 }

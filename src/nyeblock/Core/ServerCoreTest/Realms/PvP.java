@@ -7,8 +7,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
@@ -18,9 +20,10 @@ import org.bukkit.FireworkEffect.Type;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
@@ -47,6 +50,8 @@ public class PvP extends GameBase {
 	private int messageCount = 0;
 	private boolean endStarted = false;
 	private long lastNumber = 0;
+	private PvPMode pvpMode;
+	private PvPType pvpType;
 	
 	//
 	// CONSTRUCTOR
@@ -82,11 +87,13 @@ public class PvP extends GameBase {
 		
 		for (Player ply : tempPlayers) {			
 			//Unhide all players who might be hidden for certain players
-			for (Player player : tempPlayers) {					
-				player.showPlayer(ply);
+			for (Player player : tempPlayers) {
+				if (!ply.canSee(player)) {					
+					player.showPlayer(mainInstance,ply);
+				}
 			}
 			
-			playerLeave(ply,false,true);
+			leave(ply,false,Realm.HUB);
 		}
 	}
 	/**
@@ -97,6 +104,7 @@ public class PvP extends GameBase {
 		
 		if (timeLeft <= 0) {
 			gameBegun = true;
+			canUsersJoin = false;
 			startTime = System.currentTimeMillis() / 1000L;
 			for(Player ply : players) {
 				playersInGame.add(ply);
@@ -160,8 +168,14 @@ public class PvP extends GameBase {
 								pd.setPermission("nyeblock.canMove",false);								
 								ply.getInventory().clear(8);
 								
-								//Reset
-								ply.setFireTicks(0);
+								if (ply.getFireTicks() > 0) {									
+									mainInstance.getTimerInstance().createTimer2("extinguish_" + ply.getName(), 1, 1, new Runnable() {
+										@Override
+										public void run() {
+											ply.setFireTicks(0);
+										}
+									});
+								}
 								ply.setHealth(20);
 								ply.setVelocity(new Vector(0,0,0));
 							}
@@ -169,6 +183,9 @@ public class PvP extends GameBase {
 					}
 					readyCount++;
 				} else {
+					if (readyCount > 0) {
+						readyCount = 0;
+					}
 					if (messageCount >= 20) {
 						messageCount = 0;
 						
@@ -198,6 +215,16 @@ public class PvP extends GameBase {
     * Set the players scoreboard
     */
 	public void setScoreboard() {
+		//Give players xp for play time
+		playTimeCount++;
+		if (playTimeCount >= 180 && !endStarted) {
+			playTimeCount = 0;
+			for (Player ply : players) {
+				giveXP(ply,"Play time",5);
+				ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
+			}
+		}
+		
 		//Check if team has won
 		if (gameBegun && !endStarted) {
 			for (int team = 0; team < 2; team++) {
@@ -205,16 +232,17 @@ public class PvP extends GameBase {
 				
 				for (Map.Entry<Location,Player> entry : teamsSetup.get(team).entrySet()) {
 					if (entry.getValue() != null) {
-						if (!entry.getValue().getAllowFlight()) {
+						if (!playerHandling.getPlayerData(entry.getValue()).getSpectatingStatus()) {
 							playersLeft++;
 						}
 					}
 				}
+				System.out.println((team+1) + " Left: " + playersLeft);
 				if (playersLeft <= 0 && !endStarted) {
 					endStarted = true;
 					canUsersJoin = false;
 					String namesString = "";
-					ArrayList<Player> players = new ArrayList<>();
+					ArrayList<Player> teamPlayers = new ArrayList<>();
 					
 					for (Map.Entry<Location,Player> entry : teamsSetup.get(team == 0 ? 1 : 0).entrySet()) {
 						if (entry.getValue() != null) {
@@ -223,7 +251,8 @@ public class PvP extends GameBase {
 							} else {
 								namesString += " and " + entry.getValue().getName();
 							}
-							players.add(entry.getValue());
+							teamPlayers.add(entry.getValue());
+							giveXP(entry.getValue(),"Winning",150);
 						}
 					}
 					
@@ -238,8 +267,8 @@ public class PvP extends GameBase {
 			                c.add(Color.YELLOW);
 			                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();
 							
-			                for (Player ply : players) {
-			                	if (!ply.getAllowFlight()) {			                		
+			                for (Player ply : teamPlayers) {
+			                	if (!playerHandling.getPlayerData(ply).getSpectatingStatus()) {			                		
 			                		Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
 			                		FireworkMeta fireworkMeta = firework.getFireworkMeta();
 			                		fireworkMeta.addEffect(effect);
@@ -251,6 +280,10 @@ public class PvP extends GameBase {
 					});
 					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + namesString + " won!");
+					for (Player ply : players) {
+						//Print the players xp summary
+						printSummary(ply,true);
+					}
 					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 					break;
 				}
@@ -271,7 +304,11 @@ public class PvP extends GameBase {
 			scores.put(pos++, ChatColor.YELLOW + "Mode: " + ChatColor.GREEN + pvpType.toString());
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + pvpMode.toString());
+			if (!endStarted) {				
+				pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + pvpMode.toString());
+			} else {
+				pd.setScoreboardTitle(colorList.get(new Random().nextInt(colorList.size())) + ChatColor.BOLD.toString() + pvpMode.toString());
+			}
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
@@ -295,6 +332,12 @@ public class PvP extends GameBase {
 			}
 		}
 	}
+	public PvPType getPvPType() {
+		return pvpType;
+	}
+	public PvPMode getPvPMode() {
+		return pvpMode;
+	}
 	/**
     * Get the close status of the game
     */
@@ -317,12 +360,13 @@ public class PvP extends GameBase {
 		//Handle spectating
 		if (gameBegun && !isSpectating) {			
 			PlayerData pd = playerHandling.getPlayerData(killed);
+			isSpectating = true;
 			
 			pd.setSpectatingStatus(true);
 			killed.setAllowFlight(true);
 			playersSpectating.add(killed);
 			
-			killed.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around."));
+			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
 			
 			//Unhide spectators
 			for (Player ply : playersSpectating) {
@@ -345,6 +389,7 @@ public class PvP extends GameBase {
 		
 		if (killer != null) {
 			killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName()));
+			giveXP(killer,"Kills",10);
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
 		} else {
 			if (!isSpectating) {
@@ -364,7 +409,7 @@ public class PvP extends GameBase {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Setup team
-		pd.setScoreBoardTeams(new String[] {"team1","team2"});
+		pd.setScoreBoardTeams(new String[] {"team1","team2"},Team.OptionStatus.FOR_OWN_TEAM);
 		pd.createHealthTags();
 		
 		//Find spawn for player
@@ -377,6 +422,14 @@ public class PvP extends GameBase {
 					ply.teleport(entry.getKey());
 					teamSpots.put(entry.getKey(), ply);
 					pd.addPlayerToTeam("team" + (team+1), ply);
+					System.out.println("Adding " + ply.getName() + " to team " + (team+1));
+					if (team == 0) {
+						pd.setTeamColor("team1",ChatColor.GREEN);
+						pd.setTeamColor("team2",ChatColor.RED);
+					} else {
+						pd.setTeamColor("team1",ChatColor.RED);
+						pd.setTeamColor("team2",ChatColor.GREEN);
+					}
 					break teamloop;
 				}
 			}
@@ -415,13 +468,19 @@ public class PvP extends GameBase {
 	/**
     * Handle when a player leaves the game
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
+	public void playerLeave(Player ply, boolean showLeaveMessage) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
-		//Remove player from players list
-		players.removeAll(new ArrayList<Player>() {{
-			add(ply);
-		}});
+		//Remove player from team
+		for (int team = 0; team < 2; team++) {
+			for (Map.Entry<Location,Player> entry : teamsSetup.get(team).entrySet()) {
+				if (entry.getValue() != null) {					
+					if (entry.getValue().getUniqueId().equals(ply.getUniqueId())) {
+						teamsSetup.get(team).put(entry.getKey(), null);
+					}
+				}
+			}
+		}
 		
 		//Remove player from the current game
 		playersInGame.removeAll(new ArrayList<Player>() {{
@@ -446,19 +505,6 @@ public class PvP extends GameBase {
 			if (!active) {				
 				messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
 			}
-		}
-		if (moveToHub) {
-			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-			
-			//Set player realms/items/permissions
-			playerData.setRealm(Realm.HUB,true,true);
-			//Move player to hub
-			mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
-		}
-		
-		//Unhide player from all players in the game
-		for (Player player : players) {
-			player.showPlayer(ply);
 		}
 	}
 }

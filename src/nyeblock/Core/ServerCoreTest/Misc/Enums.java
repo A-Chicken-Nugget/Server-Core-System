@@ -4,18 +4,21 @@ import java.util.Arrays;
 
 import org.bukkit.ChatColor;
 
+import nyeblock.Core.ServerCoreTest.Realms.Hub;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
+import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 
 public class Enums {
 	//Realm enums
 	public enum Realm {
-		HUB(1,"Hub",KitPvP.class),
+		HUB(1,"Hub",Hub.class),
 		KITPVP(2,"Kit Pvp",KitPvP.class),
 		STEPSPLEEF(3,"Step Spleef",StepSpleef.class),
 		SKYWARS(4,"Sky Wars",SkyWars.class),
-		PVP(5,"PvP",nyeblock.Core.ServerCoreTest.Realms.PvP.class);
+		PVP(5,"PvP",nyeblock.Core.ServerCoreTest.Realms.PvP.class),
+		PARKOUR(6,"Parkour",HubParkour.class);
 
 		private int value;  
 		private String name;
@@ -36,19 +39,24 @@ public class Enums {
 	} 
 	//User group enums
 	public enum UserGroup {
-		USER(1,"User","[" + ChatColor.WHITE + "User" + ChatColor.RESET + "]"),
-		ADMIN(2,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]"),
-		MODERATOR(3,"Moderator","[" + ChatColor.GRAY + "Mod" + ChatColor.RESET + "]"),
-		TESTER(4,"Tester","[" + ChatColor.YELLOW + "Tester" + ChatColor.RESET + "]");
+		USER(1,"User","[" + ChatColor.WHITE + "User" + ChatColor.RESET + "]",ChatColor.WHITE),
+		ADMIN(2,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]",ChatColor.DARK_RED),
+		MODERATOR(3,"Moderator","[" + ChatColor.GRAY + "Mod" + ChatColor.RESET + "]",ChatColor.GRAY),
+		TESTER(4,"Tester","[" + ChatColor.YELLOW + "Tester" + ChatColor.RESET + "]",ChatColor.YELLOW),
+		VIP(5,"VIP","[" + ChatColor.GREEN + "VIP" + ChatColor.RESET + "]",ChatColor.GREEN),
+		VIP_MODERATOR(6,"VIP Moderator","[" + ChatColor.GRAY + "VIP Mod" + ChatColor.RESET + "]",ChatColor.GRAY),
+		VIP_TESTER(7,"VIP Tester","[" + ChatColor.YELLOW + "VIP Tester" + ChatColor.RESET + "]",ChatColor.YELLOW);
 
 		private int value;  
 		private String name;
 		private String tag;
+		private ChatColor color;
 
-		private UserGroup(int value, String name, String tag) {
+		private UserGroup(int value, String name, String tag, ChatColor color) {
 			this.value = value;
 			this.name = name;
 			this.tag = tag;
+			this.color = color;
 		}
 
 		public static UserGroup fromInt(int userGroup) {
@@ -78,6 +86,9 @@ public class Enums {
 		}
 		public String getTag() {
 			return tag;
+		}
+		public ChatColor getColor() {
+			return color;
 		}
 	}
 	//PvP realm mode
