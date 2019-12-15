@@ -16,7 +16,7 @@ public class HubMenu extends MenuBase {
 	public HubMenu() {
 	}
 	public HubMenu(Main mainInstance, Player player) {
-		super(mainInstance,player);
+		super(mainInstance,player,36);
 		
 		//
 		// Game menu
@@ -114,7 +114,7 @@ public class HubMenu extends MenuBase {
 		super.addOption("Game Menu", 21, pvp, new Runnable() {
             @Override
             public void run() {       
-            	mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu(player, "PvP Games");
+            	mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("PvP Games");
             }
 		});
 		
@@ -139,7 +139,7 @@ public class HubMenu extends MenuBase {
 			@Override
 			public void run() {
 				mainInstance.getPlayerHandlingInstance().getPlayerData(player).setCustomDataKey("pvp_mode", "1");
-				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu(player, "Duels Modes");
+				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("Duels Modes");
 			}
 		});
 		//2v2
@@ -159,7 +159,7 @@ public class HubMenu extends MenuBase {
 			@Override
 			public void run() {
 				mainInstance.getPlayerHandlingInstance().getPlayerData(player).setCustomDataKey("pvp_mode", "2");
-				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu(player, "2v2 Modes");
+				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("2v2 Modes");
 			}
 		});
 		//Back
@@ -171,7 +171,7 @@ public class HubMenu extends MenuBase {
 		super.addOption("PvP Games", 27, goBack1, new Runnable() {
 			@Override
 			public void run() {
-				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu(player, "Game Menu");
+				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("Game Menu");
 			}
 		});
 		
@@ -229,7 +229,7 @@ public class HubMenu extends MenuBase {
 		super.addOption("Duels Modes", 27, goBack2, new Runnable() {
 			@Override
 			public void run() {
-				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu(player, "PvP Games");
+				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("PvP Games");
 			}
 		});
 		
@@ -287,7 +287,7 @@ public class HubMenu extends MenuBase {
 		super.addOption("2v2 Modes", 27, goBack3, new Runnable() {
 			@Override
 			public void run() {
-				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu(player, "PvP Games");
+				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("PvP Games");
 			}
 		});
 	}

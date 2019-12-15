@@ -612,12 +612,12 @@ public class PlayerHandling implements Listener {
 								HubMenu hubMenu = new HubMenu(mainInstance,ply);
 								
 								playersData.get(ply.getUniqueId()).setMenu(hubMenu);
-								hubMenu.openMenu(ply, "Game Menu");
+								hubMenu.openMenu("Game Menu");
 							} else if (itemName.equals("shop_menu")) {
 								ShopMenu shopMenu = new ShopMenu(mainInstance,ply);
 								
 								playersData.get(ply.getUniqueId()).setMenu(shopMenu);
-								shopMenu.openMenu(ply, "Game Menu");
+								shopMenu.openMenu("Game Menu");
 							} else if (itemName.equals("return_to_hub")) {
 								RealmBase game = getPlayerData(ply).getCurrentRealm();
 								
@@ -723,7 +723,7 @@ public class PlayerHandling implements Listener {
 					HubMenu hubMenu = new HubMenu(mainInstance,ply);
 					
 					playersData.get(ply.getUniqueId()).setMenu(hubMenu);
-					hubMenu.openMenu(ply, "Game Menu");
+					hubMenu.openMenu("Game Menu");
 				} else if (itemName.equals("parkour_menu")) {
 					ParkourMenu parkourMenu = new ParkourMenu();
 

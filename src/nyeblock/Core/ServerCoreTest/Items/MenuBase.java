@@ -17,6 +17,7 @@ public abstract class MenuBase {
 	private HashMap<String,HashMap<Integer,ItemStack>> menus = new HashMap<String,HashMap<Integer,ItemStack>>();
 	private HashMap<String,Integer> menuSize = new HashMap<>();
 	private HashMap<String,Runnable> optionActions = new HashMap<String,Runnable>();
+	private int size;
 	
 	/**
 	 * Default constructor without any parameters
@@ -28,11 +29,11 @@ public abstract class MenuBase {
 	 * @param mainInstance - the plugin instance
 	 * @param player - the player
 	 */
-	public MenuBase(Main mainInstance, Player player) {
+	public MenuBase(Main mainInstance, Player player, int size) {
 		this.mainInstance = mainInstance;
 		this.player = player;
+		this.size = size;
 	}
-	
 	/**
 	 * Method defined in sub class that gives the player the menu item
 	 */
@@ -66,16 +67,16 @@ public abstract class MenuBase {
 	 * @param ply - the player
 	 * @param name - name of the sub menu
 	 */
-	public void openMenu(Player ply, String name) {
+	public void openMenu(String name) {
 		HashMap<Integer,ItemStack> menu = menus.get(name);
 		
 		if (menu != null) {		
-			Inventory inv = Bukkit.createInventory(null, 36, name);
+			Inventory inv = Bukkit.createInventory(null, size, name);
 			
 			for(Map.Entry<Integer,ItemStack> option : menu.entrySet()) {
 				inv.setItem(option.getKey(), option.getValue());
 			}
-			ply.openInventory(inv);
+			player.openInventory(inv);
 		}
 	}
 	/**
