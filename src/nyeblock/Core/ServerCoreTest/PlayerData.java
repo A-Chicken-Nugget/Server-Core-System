@@ -527,6 +527,8 @@ public class PlayerData {
 			player.sendTitle("", "", 0, 0, 0);
 			//Reset spectating status
 			setSpectatingStatus(false);
+			player.setLevel(0);
+			openedMenu = null;
 		}
 	}
 	/**

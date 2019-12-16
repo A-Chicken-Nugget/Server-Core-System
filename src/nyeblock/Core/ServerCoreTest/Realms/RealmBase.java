@@ -1,7 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -13,6 +12,7 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
+@SuppressWarnings("serial")
 public abstract class RealmBase {
 	private Main mainInstance;
 	protected ArrayList<Player> players = new ArrayList<>();
@@ -130,6 +130,8 @@ public abstract class RealmBase {
 		//Show/hide players accordingly
 		for (Player ply2 : Bukkit.getOnlinePlayers()) {
 			if (players.contains(ply2)) {
+				PlayerData pd2 = mainInstance.getPlayerHandlingInstance().getPlayerData(ply2);
+				
 				if (!ply.canSee(ply2)) {
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
 						if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
@@ -138,16 +140,26 @@ public abstract class RealmBase {
 					} else {
 						ply.showPlayer(mainInstance,ply2);						
 					}
+				} else {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+							ply.hidePlayer(mainInstance,ply2);
+						}
+					}
 				}
 				if (!ply2.canSee(ply)) {
-					PlayerData pd2 = mainInstance.getPlayerHandlingInstance().getPlayerData(ply2);
-					
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
 						if (!Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
 							ply2.showPlayer(mainInstance,ply);
 						}
 					} else {
 						ply2.showPlayer(mainInstance,ply);						
+					}
+				} else {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
+							ply2.hidePlayer(mainInstance,ply);
+						}
 					}
 				}
 			} else {
@@ -213,10 +225,10 @@ public abstract class RealmBase {
 		return minPlayers;
 	}
 	/**
-    * Get the time when this game was created
-    * @return time when the game was created
+    * Get all the players in the realm
+    * @return list of players
     */
-	public ArrayList<Player> getPlayersInGame() {
+	public ArrayList<Player> getPlayersInRealm() {
 		return players;
 	}
 	public Location getRandomSpawnPoint() { return null; }

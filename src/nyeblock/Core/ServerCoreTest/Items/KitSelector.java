@@ -14,7 +14,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 
 public class KitSelector {
@@ -34,7 +33,7 @@ public class KitSelector {
 		return item;
 	}
 	public void openMenu(Player ply, Main mainInstance) {
-		Inventory menu = Bukkit.createInventory(null, 9, ChatColor.DARK_GRAY + "Select a Kit");
+		Inventory menu = Bukkit.createInventory(null, 9, "Select a Kit");
 		String kitSelected = null;
 		RealmBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentRealm();
 		

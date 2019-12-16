@@ -15,9 +15,7 @@ public class Toolkit
 {
 	public static int GetRandomNumber(int min, int max) 
 	{
-		Random randomizer = new Random();
-		
-		return randomizer.nextInt(((max - min) + 1) + min);
+	    return new Random().nextInt((max - min) + 1) + min;
 	}
 	//Check if a player is within 2 location vectors
 	public static boolean playerInArea(Vector loc, Vector l1, Vector l2){

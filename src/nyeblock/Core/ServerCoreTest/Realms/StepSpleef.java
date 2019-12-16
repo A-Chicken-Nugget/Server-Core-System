@@ -12,7 +12,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.FireworkEffect.Type;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -388,7 +387,7 @@ public class StepSpleef extends GameBase {
 	/**
     * Get players in the current game
     */
-	public ArrayList<Player> getPlayersInGame() {
+	public ArrayList<Player> getPlayersInRealm() {
 		return playersInGame;
 	}
 	/**

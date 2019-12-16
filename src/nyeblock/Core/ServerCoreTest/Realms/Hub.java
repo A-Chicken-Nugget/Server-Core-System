@@ -22,12 +22,10 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 
-@SuppressWarnings({"deprecation","serial"})
+@SuppressWarnings("serial")
 public class Hub extends RealmBase {
-	private Main mainInstance;
 	private PlayerHandling playerHandlingInstance;
 	private World world = Bukkit.getWorld("world");
 	private TextAnimation boardAnim = new TextAnimation("Hub board animation", new ArrayList<String>() {
@@ -53,7 +51,6 @@ public class Hub extends RealmBase {
 	
 	public Hub(Main mainInstance) {
 		super(mainInstance,false);
-		this.mainInstance = mainInstance;
 		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
 		realm = Realm.HUB;
 		

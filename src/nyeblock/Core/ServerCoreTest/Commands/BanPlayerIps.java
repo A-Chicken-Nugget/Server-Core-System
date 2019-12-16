@@ -1,17 +1,7 @@
 package nyeblock.Core.ServerCoreTest.Commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
-
-import nyeblock.Core.ServerCoreTest.DatabaseHandling;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.PlayerData;
 
-@SuppressWarnings({ "rawtypes", "unchecked" })
 public class BanPlayerIps extends CommandBase {
 //	private Main mainInstance;
 //	private DatabaseHandling databaseHandling;

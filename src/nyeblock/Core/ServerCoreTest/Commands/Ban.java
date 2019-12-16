@@ -9,7 +9,6 @@ import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.DatabaseHandling;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.PlayerData;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class Ban extends CommandBase {

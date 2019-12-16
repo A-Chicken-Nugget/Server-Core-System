@@ -6,15 +6,12 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
@@ -26,13 +23,10 @@ import nyeblock.Core.ServerCoreTest.DatabaseHandling;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
-import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
-import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-@SuppressWarnings({"deprecation","serial"})
+@SuppressWarnings("serial")
 public class HubParkour extends RealmBase {
 	private Main mainInstance;
 	private PlayerHandling playerHandling;
@@ -43,7 +37,6 @@ public class HubParkour extends RealmBase {
 	private HashMap<String,Long> playerTimes = new HashMap<>();
 	private HashMap<String,Long> playerBestCompetitiveTimes = new HashMap<>();
 	private HashMap<String,Long> playerBestNormalTimes = new HashMap<>();
-//	private HashMap<String,Long> playerBestTimes = new HashMap<>();
 	private ArrayList<Player> validPlayers = new ArrayList<>();
 	// Zone points
 	private Vector parkourZonePoint1 = new Vector(-21, 130, 28);

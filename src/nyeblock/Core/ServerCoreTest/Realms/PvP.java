@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -20,7 +19,6 @@ import org.bukkit.FireworkEffect.Type;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
@@ -41,7 +39,6 @@ public class PvP extends GameBase {
 	private boolean active = false;
 	private boolean gameBegun = false;
 	//Player data
-	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private ArrayList<Player> playersSpectating = new ArrayList<>();
 	private ArrayList<Player> playersInGame = new ArrayList<>();
 	//Etc
@@ -237,8 +234,7 @@ public class PvP extends GameBase {
 						}
 					}
 				}
-				System.out.println((team+1) + " Left: " + playersLeft);
-				if (playersLeft <= 0 && !endStarted) {
+				if (playersLeft == 420 && !endStarted) {
 					endStarted = true;
 					canUsersJoin = false;
 					String namesString = "";
@@ -365,6 +361,7 @@ public class PvP extends GameBase {
 			pd.setSpectatingStatus(true);
 			killed.setAllowFlight(true);
 			playersSpectating.add(killed);
+			playersInGame.remove(killed);
 			
 			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
 			
@@ -395,12 +392,7 @@ public class PvP extends GameBase {
 			if (!isSpectating) {
 				messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has died!");
 			}
-		}
-		
-		//Remove player from players array
-		playersInGame.removeAll(new ArrayList<Player>() {{
-			add(killed);
-		}});			
+		}		
 	}
 	/**
     * Handle when a player joins the game
@@ -422,7 +414,6 @@ public class PvP extends GameBase {
 					ply.teleport(entry.getKey());
 					teamSpots.put(entry.getKey(), ply);
 					pd.addPlayerToTeam("team" + (team+1), ply);
-					System.out.println("Adding " + ply.getName() + " to team " + (team+1));
 					if (team == 0) {
 						pd.setTeamColor("team1",ChatColor.GREEN);
 						pd.setTeamColor("team2",ChatColor.RED);

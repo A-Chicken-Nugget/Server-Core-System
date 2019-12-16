@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
+import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
@@ -108,17 +109,6 @@ public class GameMapInfo {
 						put("spawn_7", new Location(world,-47.506,75,48.541));
 						put("spawn_8", new Location(world,-38.550,75,6.414));
 					}});
-					//Chests
-					/*add(new HashMap<String,Vector>() {{
-						put("spawn_1", new Vector(3.522,75,-2.43));
-						put("spawn_2", new Vector(45.456,75,6.565));
-						put("spawn_3", new Vector(54.464,74,48.502));
-						put("spawn_4", new Vector(45.452,75,90.433));
-						put("spawn_5", new Vector(3.434,75,100.480));
-						put("spawn_6", new Vector(-38.528,75,90.442));
-						put("spawn_7", new Vector(-47.506,75,48.541));
-						put("spawn_8", new Vector(-38.550,75,6.414));
-					}});*/
 				}};
 			//nether
 			} else if (map.equalsIgnoreCase("nether")) {
@@ -161,5 +151,42 @@ public class GameMapInfo {
 			}
 		}
 		return mapInfo;
+	}
+	//
+	public HashMap<Vector,ChestValue> getChestInfo(GameBase game) {
+		HashMap<Vector,ChestValue> chestInfo = new HashMap<>();
+		Realm realm = game.getRealm();
+		String map = game.getMap();
+		
+		if (realm == Realm.SKYWARS) {
+			if (map.equalsIgnoreCase("nether")) {
+				chestInfo.put(new Vector(-150.5,61,32.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-152.5,58,30.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-133.5,61,77.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-137.5,58,76.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-89.5,61,92.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-92.5,58,91.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-43.5,61,77.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-47.5,58,76.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-28.5,62,32.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-32.5,59,31.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-44.5,61,-12.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-47.5,58,-13.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-89.5,61,-27.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-92.5,58,-28.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-134.5,62,-12.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-137.5,59,-13.5),ChestValue.COMMON);
+				chestInfo.put(new Vector(-115.5,61,11.5),ChestValue.MEDIUM);
+				chestInfo.put(new Vector(-68.5,61,8.5),ChestValue.MEDIUM);
+				chestInfo.put(new Vector(-68.5,61,53.5),ChestValue.MEDIUM);
+				chestInfo.put(new Vector(-113.5,61,51.5),ChestValue.MEDIUM);
+				chestInfo.put(new Vector(-90.5,47,17.5),ChestValue.HIGH);
+				chestInfo.put(new Vector(-77.5,47,30.5),ChestValue.HIGH);
+				chestInfo.put(new Vector(-90.5,47,43.5),ChestValue.HIGH);
+				chestInfo.put(new Vector(-103.5,47,30.5),ChestValue.HIGH);
+				chestInfo.put(new Vector(-90.5,43,30.5),ChestValue.LEGENDARY);
+			}
+		}
+		return chestInfo;
 	}
 }

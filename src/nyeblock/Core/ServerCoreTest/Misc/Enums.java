@@ -153,29 +153,39 @@ public class Enums {
 	} 
 	//Chest Value Enums
 	public enum ChestValue {
-		SHIT(2, "Shit"),
-		BAD(4, "Bad"),
-		AVERAGE(6, "Average"),
-		GOOD(8, "Good"),
-		LEGENDARY(10, "Legendary");
+		COMMON(1, "Common", true, 4, 8),
+		MEDIUM(2, "Medium", true, 3, 6),
+		HIGH(3, "High", false, 2, 4),
+		LEGENDARY(4, "Legendary", false, 2, 4);
 		
 		private int value;
 		private String name;
+		private boolean includeDefault;
+		private int min;
+		private int max;
 		
-		private ChestValue(int value, String name) 
-		{
+		private ChestValue(int value, String name, boolean includeDefault, int min, int max) {
 			this.value = value;
 			this.name = name;
+			this.includeDefault = includeDefault;
+			this.min = min;
+			this.max = max;
 		}
 		
-		public int getValue() 
-		{
+		public int getValue() {
 			return value;
 		}
-		
-		public String toString() 
-		{
+		public String toString() {
 			return name;
+		}
+		public boolean getShouldIncludeDefault() {
+			return includeDefault;
+		}
+		public int getMin() {
+			return min;
+		}
+		public int getMax() {
+			return max;
 		}
 	}
 	

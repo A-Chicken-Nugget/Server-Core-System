@@ -32,7 +32,6 @@ import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings("deprecation")

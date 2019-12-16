@@ -11,35 +11,49 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Realms.GameBase;
-import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 
 public class PlayerSelector {
 	private Main mainInstance;
+	private ArrayList<Player> playersInGame;
 	private Player player;
-	private ArrayList<Player> players = new ArrayList<>();
 	
 	public PlayerSelector(Main mainInstance, Realm realm, Player player) {
 		this.mainInstance = mainInstance;
 		this.player = player;
-		
-		RealmBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm();
-		
-		if (game.isInServer(player)) {			
-			players = game.getPlayersInGame();
-		}
+		playersInGame = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm().getPlayersInRealm();
 	}
 	
 	public ItemStack give() {
 		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(player);
-		pd.setCustomDataKey("player_selector_index", "0");
+		boolean foundPlayer = false;
+		int currentIndex = 0;
+		
 		pd.setCustomDataKey("player_world", player.getWorld().getName());
 		
 		ItemStack item = new ItemStack(Material.COMPASS);
 		ItemMeta itemMeta = item.getItemMeta();
-		if (players.size() > 0) {			
-			itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: " + ChatColor.GREEN.toString() + ChatColor.BOLD + players.get(0).getName() + ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-		} else {
+		
+		for (int i = 0; i < playersInGame.size(); i++) {
+			currentIndex++;
+			if (currentIndex >= playersInGame.size()) {
+				currentIndex = 0;
+			}
+			
+			Player curPlayer = playersInGame.get(currentIndex);
+			
+			if (!curPlayer.equals(player) && !mainInstance.getPlayerHandlingInstance().getPlayerData(playersInGame.get(currentIndex)).getSpectatingStatus()) {
+				foundPlayer = true;
+				
+				player.teleport(curPlayer);
+				itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+						+ ChatColor.GREEN.toString() + ChatColor.BOLD + curPlayer.getName()
+						+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+				pd.setCustomDataKey("player_selector_index",
+						String.valueOf(currentIndex));
+				break;
+			}
+		}
+		if (!foundPlayer) {
 			itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
 		}
 		itemMeta.setLocalizedName("player_selector");

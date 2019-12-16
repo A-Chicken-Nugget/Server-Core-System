@@ -5,18 +5,22 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.FireworkEffect.Type;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.scoreboard.Team;
-import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -24,7 +28,6 @@ import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({"deprecation","serial"})
@@ -76,6 +79,7 @@ public class SkyWars extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
+		mainInstance.getTimerInstance().deleteTimer(worldName + "_fireworks");
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
@@ -214,7 +218,29 @@ public class SkyWars extends GameBase {
 				if (!endStarted) {
 					endStarted = true;
 					canUsersJoin = false;
+					mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
+						@Override
+						public void run() {
+							List<Color> c = new ArrayList<Color>();
+			                c.add(Color.GREEN);
+			                c.add(Color.RED);
+			                c.add(Color.BLUE);
+			                c.add(Color.ORANGE);
+			                c.add(Color.YELLOW);
+			                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();		                		
+	                		Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
+	                		FireworkMeta fireworkMeta = firework.getFireworkMeta();
+	                		fireworkMeta.addEffect(effect);
+	                		fireworkMeta.setPower(2);
+	                		firework.setFireworkMeta(fireworkMeta);
+						}
+					});
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
+					giveXP(ply,"Placing #1",200);
+					for (Player player : players) {
+						//Print the players xp summary
+						printSummary(player,true);
+					}
 					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
 			}
@@ -294,7 +320,7 @@ public class SkyWars extends GameBase {
 	/**
     * Get players in the current game
     */
-	public ArrayList<Player> getPlayersInGame() {
+	public ArrayList<Player> getPlayersInRealm() {
 		return playersInGame;
 	}
 	/**
@@ -410,6 +436,9 @@ public class SkyWars extends GameBase {
 			pd.setSpectatingStatus(true);
 			killed.setAllowFlight(true);
 			playersSpectating.add(killed);
+			playersInGame.removeAll(new ArrayList<Player>() {{
+				add(killed);
+			}});
 			
 			killed.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around."));
 			
@@ -436,6 +465,7 @@ public class SkyWars extends GameBase {
 			//Update the killers kill count
 			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
 			killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName()));
+			giveXP(killer,"Kills",10);
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
 		} else {
 			if (!isSpectating) {
@@ -443,10 +473,6 @@ public class SkyWars extends GameBase {
 			}
 		}
 		
-		//Remove player from players array
-		playersInGame.removeAll(new ArrayList<Player>() {{
-			add(killed);
-		}});
 		
 		//Set random spawn
 		Location randSpawn = getRandomSpawnPoint();

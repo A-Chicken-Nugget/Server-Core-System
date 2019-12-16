@@ -8,7 +8,6 @@ import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -16,11 +15,9 @@ import com.sk89q.worldedit.EditSession;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.SchematicHandling;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
+import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.XY;
 
@@ -108,6 +105,10 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 			}
 			//Set spawn points
 			spawns = spawnPoints;
+			
+			//Spawn/fill chests
+			CustomChestGenerator ccg = new CustomChestGenerator();
+			ccg.setChests(gmi.getChestInfo(this),Bukkit.getWorld(worldName));
 			
 			canUsersJoin = true;
 			mainInstance.getTimerInstance().deleteTimer("worldCheck_" + worldName);

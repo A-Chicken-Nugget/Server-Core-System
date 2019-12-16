@@ -33,6 +33,7 @@ import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
@@ -45,6 +46,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
+import org.bukkit.inventory.EnchantingInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.projectiles.ProjectileSource;
@@ -569,23 +571,50 @@ public class PlayerHandling implements Listener {
 			event.setCancelled(true);
 		}
 	}
+	//Handle when the player opens an inventory menu
+	@EventHandler
+    public void onInventoryOpen(InventoryOpenEvent event) {
+		Player ply = (Player) event.getPlayer();
+		
+        if (event.getInventory() instanceof EnchantingInventory) {
+            EnchantingInventory inv = (EnchantingInventory) event.getInventory();
+            inv.setItem(1,new ItemStack(Material.LAPIS_LAZULI,20));
+            
+            mainInstance.getTimerInstance().createTimer2("lapisReplacement_" + ply.getUniqueId(), .5, 0, new Runnable() {
+            	@Override
+            	public void run() {
+            		inv.setItem(1,new ItemStack(Material.LAPIS_LAZULI,20));
+            	}
+            });
+        }
+    }
 	//Handle when the player closes an inventory menu
 	@EventHandler
 	public void onInventoryClose(InventoryCloseEvent event) {
 		Player ply = (Player)event.getPlayer();
 		
-		if (ply.getOpenInventory() == null) {			
-			playersData.get(ply.getUniqueId()).setMenu(null);
+		if (event.getInventory() instanceof EnchantingInventory) {
+			mainInstance.getTimerInstance().deleteTimer("lapisReplacement_" + ply.getUniqueId());
+			event.getInventory().clear();
+		} else {			
+			if (ply.getOpenInventory() == null) {			
+				playersData.get(ply.getUniqueId()).setMenu(null);
+			}
 		}
 	}
 	// Handle when an item is moved in an inventory menu
 	@EventHandler
 	public void onPlayerInventoryMove(InventoryClickEvent event) {
 		Player ply = (Player) event.getWhoClicked();
+		ItemStack item = event.getCurrentItem();
 		
-		if (event != null) {
-			ItemStack item = event.getCurrentItem();
-
+		if (event.getInventory() instanceof EnchantingInventory) {
+			if (item != null) {
+				if (item.getType().equals(Material.LAPIS_LAZULI)) {
+					event.setCancelled(true);
+				}
+			}
+		} else {
 			if (item != null) {				
 				ItemMeta itemMeta = item.getItemMeta();
 				
@@ -593,7 +622,7 @@ public class PlayerHandling implements Listener {
 					PlayerData playerData = playersData.get(ply.getUniqueId());
 					
 					if (event.getView().getTitle()
-							.equalsIgnoreCase(ChatColor.DARK_GRAY + "Select a Kit")) {
+							.equalsIgnoreCase("Select a Kit")) {
 						event.getView().close();
 						KitSelector selectKit = new KitSelector(getPlayerData(ply).getRealm());
 						selectKit.clickItem(ply, itemMeta.getLocalizedName(), mainInstance);
@@ -655,7 +684,7 @@ public class PlayerHandling implements Listener {
 							} else if (itemName.equals("player_selector")) {
 								int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
 								RealmBase game = getPlayerData(ply).getCurrentRealm();
-								ArrayList<Player> playersInGame = game.getPlayersInGame();
+								ArrayList<Player> playersInGame = game.getPlayersInRealm();
 								
 								if (playersInGame.size() > currentIndex + 1) {
 									Player playerToSpec = playersInGame.get(currentIndex + 1);
@@ -780,29 +809,32 @@ public class PlayerHandling implements Listener {
 					PlayerData playerData = playersData.get(ply.getUniqueId());
 					int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index"));
 					RealmBase game = getPlayerData(ply).getCurrentRealm();
-					ArrayList<Player> playersInGame = game.getPlayersInGame();
+					ArrayList<Player> playersInGame = game.getPlayersInRealm();
+					boolean foundPlayer = false;
+					
+					for (int i = 0; i < playersInGame.size(); i++) {
+						currentIndex++;
 
-					if (playersInGame.size() > currentIndex + 1) {
-						Player playerToSpec = playersInGame.get(currentIndex + 1);
-
-						ply.teleport(playerToSpec);
-						itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-								+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-								+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-						playerData.setCustomDataKey("player_selector_index",
-								String.valueOf(currentIndex + 1));
-					} else {
-						if (playersInGame.size() > 0) {
-							Player playerToSpec = playersInGame.get(0);
-
-							ply.teleport(playerToSpec);
-							itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-									+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-									+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-							playerData.setCustomDataKey("player_selector_index", "0");
-						} else {
-							itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
+						if (currentIndex >= playersInGame.size()) {
+							currentIndex = 0;
 						}
+						
+						Player curPlayer = playersInGame.get(currentIndex);
+						
+						if (!curPlayer.equals(ply) && !getPlayerData(playersInGame.get(currentIndex)).getSpectatingStatus()) {
+							foundPlayer = true;
+							
+							ply.teleport(curPlayer);
+							itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+									+ ChatColor.GREEN.toString() + ChatColor.BOLD + curPlayer.getName()
+									+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+							playerData.setCustomDataKey("player_selector_index",
+									String.valueOf(currentIndex));
+							break;
+						}
+					}
+					if (!foundPlayer) {
+						itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
 					}
 					item.setItemMeta(itemMeta);
 				} else if (itemName.equals("hide_players")) {
@@ -813,7 +845,7 @@ public class PlayerHandling implements Listener {
 						RealmBase game = playerData.getCurrentRealm();
 						
 						if (game != null) {							
-							for (Player ply2 : game.getPlayersInGame()) {
+							for (Player ply2 : game.getPlayersInRealm()) {
 								if (!ply.canSee(ply2)) {
 									if (!playerData.getSpectatingStatus()) {									
 										ply.showPlayer(mainInstance,ply2);
@@ -835,7 +867,7 @@ public class PlayerHandling implements Listener {
 						RealmBase game = playerData.getCurrentRealm();
 						
 						if (game != null) {							
-							for (Player ply2 : playerData.getCurrentRealm().getPlayersInGame()) {
+							for (Player ply2 : playerData.getCurrentRealm().getPlayersInRealm()) {
 								if (ply.canSee(ply2)) {								
 									ply.hidePlayer(mainInstance,ply2);
 								}

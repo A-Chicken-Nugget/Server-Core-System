@@ -61,15 +61,15 @@ public class HubMenu extends MenuBase {
 		skyWarsMetaLore.add(ChatColor.YELLOW + "the map for better loot. The");
 		skyWarsMetaLore.add(ChatColor.YELLOW + "last player left wins!");
 		skyWarsMetaLore.add(ChatColor.RESET.toString());
-//		skyWarsMetaLore.add(ChatColor.GREEN + "\u279D \u279D Click to find a game");
-		skyWarsMetaLore.add(ChatColor.RED.toString() + ChatColor.BOLD + "\u2716 Game currently closed \u2716");
+		skyWarsMetaLore.add(ChatColor.GREEN + "\u279D \u279D Click to find a game");
+//		skyWarsMetaLore.add(ChatColor.RED.toString() + ChatColor.BOLD + "\u2716 Game currently closed \u2716");
 		skyWarsMeta.setLore(skyWarsMetaLore);
 		skyWars.setItemMeta(skyWarsMeta);
 		super.addOption("Game Menu", 13, skyWars, new Runnable() {
             @Override
             public void run() {       
-//            	mainInstance.getGameInstance().joinGame(player, Realm.SKYWARS);
-            	player.sendMessage(ChatColor.RED + "This game is currently closed and cannot be played.");
+            	mainInstance.getGameInstance().joinGame(player, Realm.SKYWARS);
+//            	player.sendMessage(ChatColor.RED + "This game is currently closed and cannot be played.");
             	player.closeInventory();
             }
 		});

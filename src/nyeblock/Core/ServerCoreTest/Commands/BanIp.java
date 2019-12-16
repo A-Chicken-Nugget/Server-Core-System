@@ -9,7 +9,6 @@ import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.DatabaseHandling;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
