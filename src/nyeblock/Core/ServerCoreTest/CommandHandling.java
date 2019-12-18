@@ -86,7 +86,7 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 		for (Map.Entry<CommandBase,String> entry : commands.entrySet()) {
 			if (command.getLabel().equalsIgnoreCase(entry.getValue())) {
 				if (commandPermissions.get(entry.getValue()).contains(playerData.getUserGroup())) {
-					autoCompletes = entry.getKey().autoCompletes(args);
+					autoCompletes = entry.getKey().autoCompletes((Player)sender,args);
 				}
 			}
 		}

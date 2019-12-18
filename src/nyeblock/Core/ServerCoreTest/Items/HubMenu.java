@@ -13,11 +13,19 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class HubMenu extends MenuBase {
-	public HubMenu() {
-	}
 	public HubMenu(Main mainInstance, Player player) {
-		super(mainInstance,player,36);
+		super(mainInstance,player,"hub_menu",36);
 		
+		mainInstance.getTimerInstance().createTimer2("invRefresh_" + player.getUniqueId(), 10, 0, new Runnable() {
+			@Override
+			public void run() {
+				setContents(true);
+			}
+		});
+		setContents(false);
+	}
+	
+	public void setContents(boolean shouldRefresh) {
 		//
 		// Game menu
 		//
@@ -62,14 +70,12 @@ public class HubMenu extends MenuBase {
 		skyWarsMetaLore.add(ChatColor.YELLOW + "last player left wins!");
 		skyWarsMetaLore.add(ChatColor.RESET.toString());
 		skyWarsMetaLore.add(ChatColor.GREEN + "\u279D \u279D Click to find a game");
-//		skyWarsMetaLore.add(ChatColor.RED.toString() + ChatColor.BOLD + "\u2716 Game currently closed \u2716");
 		skyWarsMeta.setLore(skyWarsMetaLore);
 		skyWars.setItemMeta(skyWarsMeta);
 		super.addOption("Game Menu", 13, skyWars, new Runnable() {
             @Override
             public void run() {       
             	mainInstance.getGameInstance().joinGame(player, Realm.SKYWARS);
-//            	player.sendMessage(ChatColor.RED + "This game is currently closed and cannot be played.");
             	player.closeInventory();
             }
 		});
@@ -290,8 +296,10 @@ public class HubMenu extends MenuBase {
 				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("PvP Games");
 			}
 		});
+		if (shouldRefresh) {
+			openMenu("Game Menu");
+		}
 	}
-	
 	//Give the player this item
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.NETHER_STAR);
@@ -301,5 +309,12 @@ public class HubMenu extends MenuBase {
 		item.setItemMeta(shopMeta);
 		
 		return item;
+	}
+	public void onDelete() {
+		mainInstance.getTimerInstance().deleteTimer("invRefresh_" + player.getUniqueId());
+	}
+	//Use the item
+	public void use(ItemStack item) {
+		setContents(true);
 	}
 }

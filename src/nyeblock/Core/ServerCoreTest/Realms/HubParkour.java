@@ -224,86 +224,85 @@ public class HubParkour extends RealmBase {
 								ply.sendMessage(ChatColor.YELLOW + "Your time will start once you leave this block.");
 								playerCheckPoints.put(ply.getName(), 0);
 							}
+						}
+					}
+					Location loc2 = loc.subtract(0, .5, 0).getBlock().getLocation();
+					
+					if (loc2.equals(checkPointLocations.get(0))) {
+						if (playerCheckPoints.get(ply.getName()) != 0) {
+							ply.sendMessage(ChatColor.YELLOW + "Your time will start once you leave this block.");
+							playerCheckPoints.put(ply.getName(), 0);
 						} else {
-							Location loc2 = loc.subtract(0, .5, 0).getBlock().getLocation();
-							
-							if (loc2.equals(checkPointLocations.get(0))) {
-								if (playerCheckPoints.get(ply.getName()) != 0) {
-									ply.sendMessage(ChatColor.YELLOW + "Your time will start once you leave this block.");
-									playerCheckPoints.put(ply.getName(), 0);
-								} else {
-									if (playerTimes.get(ply.getName()) != 0L) {
-										playerTimes.put(ply.getName(), 0L);
-									}
-								}
-							} else if (loc2.equals(checkPointLocations.get(1))) {
-								if (playerCheckPoints.get(ply.getName()) != 1 && !Boolean.valueOf(pd.getCustomDataKey("parkour_mode"))) {
-									ply.sendMessage(ChatColor.YELLOW + "You reached check point #1");	
-									playerCheckPoints.put(ply.getName(), 1);
-									ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1f);
-								}
-							} else if (loc2.equals(checkPointLocations.get(2))) {
-								if (playerCheckPoints.get(ply.getName()) != 2 && !Boolean.valueOf(pd.getCustomDataKey("parkour_mode"))) {
-									ply.sendMessage(ChatColor.YELLOW + "You reached check point #2");	
-									playerCheckPoints.put(ply.getName(), 2);
-									ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1f);
-								}
-							} else if (loc2.equals(finishPoint)) {
-								long time = System.currentTimeMillis() - playerTimes.get(ply.getName());
-								
-								ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1f);
-								Location tempPos = checkPointLocations.get(0);
-								Float[] tempDirection = checkPointDirections.get(0);
-								ply.teleport(new Location(world,tempPos.getX()+.5,tempPos.getY()+1,tempPos.getZ()+.5,tempDirection[0],tempDirection[1]));
-								playerCheckPoints.put(ply.getName(), 0);
-								
-								if (Boolean.valueOf(pd.getCustomDataKey("parkour_mode"))) {
-									 if (playerBestCompetitiveTimes.get(ply.getName()) != 0L && time < playerBestCompetitiveTimes.get(ply.getName())) {
-										 ply.sendMessage(ChatColor.YELLOW 
-												 + "You finished the Competitive parkour! You beat your previous time  " 
-												 + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(playerBestCompetitiveTimes.get(ply.getName())) 
-												 + ChatColor.YELLOW + " with " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
-										 playerBestCompetitiveTimes.put(ply.getName(),time);
-									 } else {
-										 ply.sendMessage(ChatColor.YELLOW + "You finished the Competitive parkour! Your time was " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
-										 playerBestCompetitiveTimes.put(ply.getName(),time);
-									 }
-									 ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
-									 
-									 if (query.size() > 0) {
-										 HashMap<String, String> queryData = query.get(0);
-										 
-										 if (time < Long.parseLong(queryData.get("time"))) {
-											 databaseInstance.query("UPDATE parkourTimes SET time = " + time + " WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 0, true);
-										 }
-									 } else {
-										 databaseInstance.query("INSERT INTO parkourTimes (type,uniqueId,name,time) VALUES (0,'" + ply.getUniqueId() + "','" + ply.getName() + "'," + time + ")", 0, true);
-									 }
-								 } else {
-									 if (playerBestNormalTimes.get(ply.getName()) != 0L && time < playerBestNormalTimes.get(ply.getName())) {
-										 ply.sendMessage(ChatColor.YELLOW 
-												 + "You finished the Normal parkour! You beat your previous time  " 
-												 + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(playerBestNormalTimes.get(ply.getName())) 
-												 + ChatColor.YELLOW + " with " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
-										 playerBestNormalTimes.put(ply.getName(),time);
-									 } else {
-										 ply.sendMessage(ChatColor.YELLOW + "You finished the Normal parkour! Your time was " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
-										 playerBestNormalTimes.put(ply.getName(),time);
-									 }
-									 ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
-									 
-									 if (query.size() > 0) {
-										 HashMap<String, String> queryData = query.get(0);
-										 
-										 if (time < Long.parseLong(queryData.get("time"))) {
-											 databaseInstance.query("UPDATE parkourTimes SET time = " + time + " WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 0, true);
-										 }
-									 } else {
-										 databaseInstance.query("INSERT INTO parkourTimes (type,uniqueId,name,time) VALUES (1,'" + ply.getUniqueId() + "','" + ply.getName() + "'," + time + ")", 0, true);
-									 }
-								 }
+							if (playerTimes.get(ply.getName()) != 0L) {
+								playerTimes.put(ply.getName(), 0L);
 							}
 						}
+					} else if (loc2.equals(checkPointLocations.get(1))) {
+						if (playerCheckPoints.get(ply.getName()) != 1 && !Boolean.valueOf(pd.getCustomDataKey("parkour_mode"))) {
+							ply.sendMessage(ChatColor.YELLOW + "You reached check point #1");	
+							playerCheckPoints.put(ply.getName(), 1);
+							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1f);
+						}
+					} else if (loc2.equals(checkPointLocations.get(2))) {
+						if (playerCheckPoints.get(ply.getName()) != 2 && !Boolean.valueOf(pd.getCustomDataKey("parkour_mode"))) {
+							ply.sendMessage(ChatColor.YELLOW + "You reached check point #2");	
+							playerCheckPoints.put(ply.getName(), 2);
+							ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1f);
+						}
+					} else if (loc2.equals(finishPoint)) {
+						long time = System.currentTimeMillis() - playerTimes.get(ply.getName());
+						
+						ply.playSound(ply.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1f);
+						Location tempPos = checkPointLocations.get(0);
+						Float[] tempDirection = checkPointDirections.get(0);
+						ply.teleport(new Location(world,tempPos.getX()+.5,tempPos.getY()+1,tempPos.getZ()+.5,tempDirection[0],tempDirection[1]));
+						playerCheckPoints.put(ply.getName(), 0);
+						
+						if (Boolean.valueOf(pd.getCustomDataKey("parkour_mode"))) {
+							 if (playerBestCompetitiveTimes.get(ply.getName()) != 0L && time < playerBestCompetitiveTimes.get(ply.getName())) {
+								 ply.sendMessage(ChatColor.YELLOW 
+										 + "You finished the Competitive parkour! You beat your previous time  " 
+										 + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(playerBestCompetitiveTimes.get(ply.getName())) 
+										 + ChatColor.YELLOW + " with " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
+								 playerBestCompetitiveTimes.put(ply.getName(),time);
+							 } else {
+								 ply.sendMessage(ChatColor.YELLOW + "You finished the Competitive parkour! Your time was " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
+								 playerBestCompetitiveTimes.put(ply.getName(),time);
+							 }
+							 ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+							 
+							 if (query.size() > 0) {
+								 HashMap<String, String> queryData = query.get(0);
+								 
+								 if (time < Long.parseLong(queryData.get("time"))) {
+									 databaseInstance.query("UPDATE parkourTimes SET time = " + time + " WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+								 }
+							 } else {
+								 databaseInstance.query("INSERT INTO parkourTimes (type,uniqueId,name,time) VALUES (0,'" + ply.getUniqueId() + "','" + ply.getName() + "'," + time + ")", 0, true);
+							 }
+						 } else {
+							 if (playerBestNormalTimes.get(ply.getName()) != 0L && time < playerBestNormalTimes.get(ply.getName())) {
+								 ply.sendMessage(ChatColor.YELLOW 
+										 + "You finished the Normal parkour! You beat your previous time  " 
+										 + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(playerBestNormalTimes.get(ply.getName())) 
+										 + ChatColor.YELLOW + " with " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
+								 playerBestNormalTimes.put(ply.getName(),time);
+							 } else {
+								 ply.sendMessage(ChatColor.YELLOW + "You finished the Normal parkour! Your time was " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
+								 playerBestNormalTimes.put(ply.getName(),time);
+							 }
+							 ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+							 
+							 if (query.size() > 0) {
+								 HashMap<String, String> queryData = query.get(0);
+								 
+								 if (time < Long.parseLong(queryData.get("time"))) {
+									 databaseInstance.query("UPDATE parkourTimes SET time = " + time + " WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+								 }
+							 } else {
+								 databaseInstance.query("INSERT INTO parkourTimes (type,uniqueId,name,time) VALUES (1,'" + ply.getUniqueId() + "','" + ply.getName() + "'," + time + ")", 0, true);
+							 }
+						 }
 					}
 				} else {
 					if (players.contains(ply)) {
@@ -332,9 +331,6 @@ public class HubParkour extends RealmBase {
 		playerBestNormalTimes.put(ply.getName(), 0L);
 		pd.setCustomDataKey("parkour_mode", "false");
 		
-		//Clear scoreboard
-		pd.clearScoreboard();
-		
 		//Setup team
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		
@@ -354,19 +350,25 @@ public class HubParkour extends RealmBase {
 			}
 		}
 		
+
 		//Get their previous best times
-		ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
-		if (query.size() > 0) {
-			HashMap<String, String> queryData = query.get(0);
-			
-			playerBestCompetitiveTimes.put(ply.getName(), Long.parseLong(queryData.get("time")));
-		}
-		query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
-		if (query.size() > 0) {
-			HashMap<String, String> queryData = query.get(0);
-			
-			playerBestNormalTimes.put(ply.getName(), Long.parseLong(queryData.get("time")));
-		}
+		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+            @Override
+            public void run() {             	
+            	ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+            	if (query.size() > 0) {
+            		HashMap<String, String> queryData = query.get(0);
+            		
+            		playerBestCompetitiveTimes.put(ply.getName(), Long.parseLong(queryData.get("time")));
+            	}
+            	query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+            	if (query.size() > 0) {
+            		HashMap<String, String> queryData = query.get(0);
+            		
+            		playerBestNormalTimes.put(ply.getName(), Long.parseLong(queryData.get("time")));
+            	}
+            }
+		});
 	}
 	/**
     * Handle when a player leaves parkour

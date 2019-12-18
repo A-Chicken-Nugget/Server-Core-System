@@ -11,6 +11,7 @@ import java.util.Random;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
+import org.bukkit.Effect;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -213,12 +214,14 @@ public class PvP extends GameBase {
     */
 	public void setScoreboard() {
 		//Give players xp for play time
-		playTimeCount++;
-		if (playTimeCount >= 180 && !endStarted) {
-			playTimeCount = 0;
-			for (Player ply : players) {
-				giveXP(ply,"Play time",5);
-				ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
+		if (gameBegun) {			
+			playTimeCount++;
+			if (playTimeCount >= 90 && !endStarted) {
+				playTimeCount = 0;
+				for (Player ply : players) {
+					giveXP(ply,"Play time",5);
+					ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
+				}
 			}
 		}
 		
@@ -234,7 +237,7 @@ public class PvP extends GameBase {
 						}
 					}
 				}
-				if (playersLeft == 420 && !endStarted) {
+				if (playersLeft == 0 && !endStarted) {
 					endStarted = true;
 					canUsersJoin = false;
 					String namesString = "";
@@ -276,6 +279,7 @@ public class PvP extends GameBase {
 					});
 					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + namesString + " won!");
+					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 					for (Player ply : players) {
 						//Print the players xp summary
 						printSummary(ply,true);
@@ -315,7 +319,7 @@ public class PvP extends GameBase {
 				world.setStorm(false);
     		}
 		}
-		//Check when the game has ended and determine winner
+		//Check when the game has ended
 		if (gameBegun && (duration-((System.currentTimeMillis() / 1000L)-startTime)) < 0) {
 			if (!endStarted) {
 				endStarted = true;
@@ -323,6 +327,7 @@ public class PvP extends GameBase {
 				canUsersJoin = false;
 				
 				messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
+				soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 				//Wait 8 seconds, then kick everyone
 				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
@@ -345,6 +350,18 @@ public class PvP extends GameBase {
     */
 	public boolean isGameActive() {
 		return gameBegun;
+	}
+	/**
+	* When a player respawns
+	* @param ply - Player that is being respawned
+	* @return location to respawn the player
+	*/
+	public Location playerRespawn(Player ply) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
+		pd.setItems();
+		ply.setFireTicks(0);
+		return getPlayerSpawn(ply);
 	}
 	/**
     * Handle when a player died
@@ -385,6 +402,11 @@ public class PvP extends GameBase {
 		}
 		
 		if (killer != null) {
+			for (int i = 0; i < 10; i++) {
+				killer.playEffect(killed.getLocation(), Effect.SMOKE, 1);
+			}
+			killer.playSound(killer.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
+			
 			killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName()));
 			giveXP(killer,"Kills",10);
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");

@@ -106,9 +106,11 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 			//Set spawn points
 			spawns = spawnPoints;
 			
-			//Spawn/fill chests
-			CustomChestGenerator ccg = new CustomChestGenerator();
-			ccg.setChests(gmi.getChestInfo(this),Bukkit.getWorld(worldName));
+			if (realm == Realm.SKYWARS) {				
+				//Spawn/fill chests
+				CustomChestGenerator ccg = new CustomChestGenerator(mainInstance);
+				ccg.setChests(gmi.getChestInfo(this),Bukkit.getWorld(worldName));
+			}
 			
 			canUsersJoin = true;
 			mainInstance.getTimerInstance().deleteTimer("worldCheck_" + worldName);
@@ -174,6 +176,7 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 		//Show player has joined	
 		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
 	}
+	public Location playerRespawn(Player ply) { return null; }
 	
 	//
 	// GETTERS

@@ -28,11 +28,13 @@ import org.bukkit.GameMode;
 
 import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.HubMenu;
+import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.MenuBase;
 import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Items.ShopMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
@@ -58,6 +60,7 @@ public class PlayerData {
 	private Realm realm = Realm.HUB;
 	private HashMap<String,String> customData = new HashMap<>();
 	private HashMap<Realm,Integer> realmXp = new HashMap<>();
+	private HashMap<String,ItemBase> customItems = new HashMap<>();
 	private MenuBase openedMenu;
 	private RealmBase currentGame;
 	private boolean isSpectating = false;
@@ -157,6 +160,14 @@ public class PlayerData {
 	//
 	
 	/**
+	* Get a custom item by name
+	* @param name - Name of the custom item
+	* @return instance of the custom item
+	*/
+	public ItemBase getCustomItem(String name) {
+		return customItems.get(name);
+	}
+	/**
     * Get if the player is spectating
     */
 	public String getTeam() {
@@ -244,6 +255,14 @@ public class PlayerData {
 	//
 	
 	/**
+	* Associate a custom item with the player
+	* @param name - Name of the custom item
+	* @param item - Reference of the item
+	*/
+	public void addCustomItem(String name, ItemBase item) {
+		customItems.put(name, item);
+	}
+	/**
 	* Update the player and set the scoreboard to the new player
 	*/
 	public void setPlayer(Player ply) {
@@ -326,6 +345,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canPlaceBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
+			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
 			permissions.setPermission("nyeblock.canDamage", false);
 			permissions.setPermission("nyeblock.canBeDamaged", false);
 			permissions.setPermission("nyeblock.canTakeFallDamage", false);
@@ -338,6 +358,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
+			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
 			permissions.setPermission("nyeblock.canDamage", true);
 			permissions.setPermission("nyeblock.canBeDamaged", false);
 			permissions.setPermission("nyeblock.canTakeFallDamage", true);
@@ -350,6 +371,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
+			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
 			permissions.setPermission("nyeblock.canDamage", true);
 			permissions.setPermission("nyeblock.canBeDamaged", true);
 			permissions.setPermission("nyeblock.canTakeFallDamage", false);
@@ -362,6 +384,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
+			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", true);
 			permissions.setPermission("nyeblock.canDamage", true);
 			permissions.setPermission("nyeblock.canBeDamaged", true);
 			permissions.setPermission("nyeblock.canTakeFallDamage", true);
@@ -374,6 +397,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
+			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
 			permissions.setPermission("nyeblock.canDamage", false);
 			permissions.setPermission("nyeblock.canBeDamaged", true);
 			permissions.setPermission("nyeblock.canTakeFallDamage", true);
@@ -397,10 +421,11 @@ public class PlayerData {
     */
 	public void setItems() {
 		player.getInventory().clear();
+		customItems.clear();
 		
 		if (realm == Realm.HUB) {
 			//Game Menu
-			HubMenu hubMenu = new HubMenu();
+			HubMenu hubMenu = new HubMenu(mainInstance,player);
 			ItemStack hm = hubMenu.give();
 			player.getInventory().setItem(4, hm);
 			player.getInventory().setHeldItemSlot(4);
@@ -410,14 +435,19 @@ public class PlayerData {
 			ItemStack hp = hidePlayers.give();
 			player.getInventory().setItem(6, hp);
 			
+			//Shop menu
+			ShopMenu shopMenu = new ShopMenu(mainInstance,player);
+			ItemStack sm = shopMenu.give();
+			player.getInventory().setItem(2, sm);
+			
 		} else if (realm == Realm.PARKOUR) {
 			//Parkour menu
-			ParkourMenu parkourMenu = new ParkourMenu();
+			ParkourMenu parkourMenu = new ParkourMenu(mainInstance,player);
 			ItemStack pm = parkourMenu.give();
 			player.getInventory().setItem(4, pm);
 			
 			//Hide players
-			HidePlayers hidePlayers = new HidePlayers(mainInstance, player);
+			HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
 			ItemStack hp = hidePlayers.give();
 			player.getInventory().setItem(6, hp);
 			
@@ -430,10 +460,10 @@ public class PlayerData {
 			player.getInventory().setItem(2, startItem);
 		} if (realm == Realm.KITPVP) {
 			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub();
+			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 			player.getInventory().setItem(8, returnToHub.give());
 			//Select kit
-			KitSelector selectKit = new KitSelector(Realm.KITPVP);
+			KitSelector selectKit = new KitSelector(mainInstance,player);
 			player.getInventory().setItem(7, selectKit.give());
 			//Sword
 			ItemStack sword = new ItemStack(Material.IRON_SWORD);
@@ -465,7 +495,7 @@ public class PlayerData {
 			}
 			
 			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub();
+			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 			player.getInventory().setItem(8, returnToHub.give());
 		} else if (realm == Realm.SKYWARS) {
 			if (currentGame != null) {
@@ -476,13 +506,13 @@ public class PlayerData {
 						player.getInventory().setItem(4, selectPlayer.give());
 					} else {						
 						//Select kit
-						KitSelector selectKit = new KitSelector(Realm.SKYWARS);
+						KitSelector selectKit = new KitSelector(mainInstance,player);
 						player.getInventory().setItem(4, selectKit.give());
 					}
 				}
 			}
 			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub();
+			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 			player.getInventory().setItem(8, returnToHub.give());
 		} else if (realm == Realm.PVP) {
 			if (currentGame != null && ((GameBase)currentGame).isGameActive()) {						
@@ -491,7 +521,7 @@ public class PlayerData {
 				player.getInventory().setItem(4, selectPlayer.give());
 			}
 			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub();
+			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 			player.getInventory().setItem(8, returnToHub.give());
 		}
 	}

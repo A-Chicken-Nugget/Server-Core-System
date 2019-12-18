@@ -391,6 +391,17 @@ public class StepSpleef extends GameBase {
 		return playersInGame;
 	}
 	/**
+	* When a player respawns
+	* @param ply - Player that is being respawned
+	* @return location to respawn the player
+	*/
+	public Location playerRespawn(Player ply) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
+		pd.setItems();
+		return getRandomSpawnPoint();
+	}
+	/**
     * Handle when a player died
     */
 	public void playerDeath(Player killed, Player killer) {

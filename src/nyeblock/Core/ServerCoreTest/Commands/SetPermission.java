@@ -9,15 +9,18 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.Main;
+import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 
 @SuppressWarnings({"rawtypes","unchecked"})
 public class SetPermission extends CommandBase {
 	private Main mainInstance;
+	private PlayerHandling playerHandling;
 	
 	public SetPermission(Main mainInstance) {
 		super(mainInstance);
 		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
 	}
 	
 	public void execute(Player ply, String[] args) {
@@ -31,21 +34,20 @@ public class SetPermission extends CommandBase {
 					ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 				}
 			} else {
-				PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
-				
-				for (Player ply2 : ph.getPlayerData(ply).getCurrentRealm().getPlayersInRealm()) {
-					ph.getPlayerData(ply2).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
+				for (Player ply2 : playerHandling.getPlayerData(ply).getCurrentRealm().getPlayersInRealm()) {
+					playerHandling.getPlayerData(ply2).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
 				}
 			}
 		} else {
 			ply.sendMessage(ChatColor.RED + "Please enter the proper arguements for this command!");
 		}
 	}
-	public List<String> autoCompletes(String[] args) {
+	public List<String> autoCompletes(Player player, String[] args) {
 		List<String> autoCompletes = new ArrayList();
+		PlayerData pd = playerHandling.getPlayerData(player);
 		
 		if (args.length == 1) {
-			for (Player ply : Bukkit.getOnlinePlayers()) {
+			for (Player ply : pd.getCurrentRealm().getPlayersInRealm()) {
 				if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {						
 					autoCompletes.add(ply.getName());
 				}

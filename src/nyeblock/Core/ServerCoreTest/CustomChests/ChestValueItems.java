@@ -9,13 +9,16 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.potion.Potion;
+import org.bukkit.potion.PotionType;
 
 import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
-@SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "deprecation" })
 public class ChestValueItems {
 	private HashMap<ChestValue,HashMap<Material,Integer>> chestValueItems = new HashMap<ChestValue,HashMap<Material,Integer>> () {{
+		//Common items
 		put(ChestValue.COMMON,new HashMap<Material,Integer>() {{
 			put(Material.WOODEN_SWORD,1);
 			put(Material.WOODEN_AXE,1);
@@ -30,7 +33,10 @@ public class ChestValueItems {
 			put(Material.IRON_BOOTS,1);
 			put(Material.IRON_HELMET,1);
 			put(Material.CHAINMAIL_LEGGINGS,1);
+			put(Material.CHAINMAIL_CHESTPLATE,1);
+			put(Material.POTION,1);
 		}});
+		//Medium items
 		put(ChestValue.MEDIUM,new HashMap<Material,Integer>() {{
 			put(Material.IRON_SWORD,1);
 			put(Material.STONE_PICKAXE,1);
@@ -42,7 +48,9 @@ public class ChestValueItems {
 			put(Material.CHAINMAIL_CHESTPLATE,1);
 			put(Material.CHAINMAIL_LEGGINGS,1);
 			put(Material.CHAINMAIL_HELMET,1);
+			put(Material.POTION,1);
 		}});
+		//High items
 		put(ChestValue.HIGH,new HashMap<Material,Integer>() {{
 			put(Material.DIAMOND_SWORD,1);
 			put(Material.DIAMOND_AXE,1);
@@ -55,11 +63,14 @@ public class ChestValueItems {
 			put(Material.DIAMOND_HELMET,1);
 			put(Material.DIAMOND_BOOTS,1);
 			put(Material.EXPERIENCE_BOTTLE,Toolkit.GetRandomNumber(25,64));
-			put(Material.ENCHANTING_TABLE,1);
 			put(Material.BOOKSHELF,Toolkit.GetRandomNumber(5,13));
 			put(Material.ENCHANTED_BOOK,1);
+			put(Material.ENCHANTING_TABLE,1);
+			put(Material.ANVIL,1);
+			put(Material.ENCHANTING_TABLE,1);
 			put(Material.ANVIL,1);
 		}});
+		//Legendary items
 		put(ChestValue.LEGENDARY,new HashMap<Material,Integer>() {{
 			put(Material.DIAMOND_SWORD,1);
 			put(Material.DIAMOND_AXE,1);
@@ -86,6 +97,11 @@ public class ChestValueItems {
 		put(Enchantment.PROTECTION_ENVIRONMENTAL,Toolkit.GetRandomNumber(1,4));
 		put(Enchantment.ARROW_DAMAGE,Toolkit.GetRandomNumber(1,4));
 	}};
+	private ArrayList<Potion> potions = new ArrayList<Potion>() {{
+		add(new Potion(PotionType.INSTANT_DAMAGE, 1));
+		add(new Potion(PotionType.REGEN, Toolkit.GetRandomNumber(1,2)));
+		add(new Potion(PotionType.POISON, Toolkit.GetRandomNumber(1,2)));
+	}};
 	
 	public ArrayList<ItemStack> getChestItems(ChestValue value) {
 		HashMap<Material,Integer> itemPool = chestValueItems.get(value);
@@ -108,6 +124,10 @@ public class ChestValueItems {
 					EnchantmentStorageMeta meta = (EnchantmentStorageMeta)newItem.getItemMeta();
 					meta.addStoredEnchant(randEnchantment, enchantments.get(randEnchantment), false);
 					newItem.setItemMeta(meta);
+				} else if (item.equals(Material.POTION)) {
+					Potion pot = potions.get(new Random().nextInt(potions.size()));
+					pot.setSplash(true);
+					newItem = pot.toItemStack(1);
 				}
 				
 				items.add(newItem);

@@ -212,7 +212,7 @@ public class GameHandling {
 				//If no games are found, create one
 				if (gameToJoin == null) {
 					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-					String worldName = "skyWars_" + UUID.randomUUID();
+					String worldName = "game_" + UUID.randomUUID();
 					gameToJoin = new SkyWars(mainInstance,worldName,900,4,8);
 					gameToJoin.setGamePos(addGameToList(gameToJoin));
 					

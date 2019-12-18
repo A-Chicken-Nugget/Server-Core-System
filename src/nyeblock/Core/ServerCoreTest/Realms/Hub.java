@@ -112,6 +112,17 @@ public class Hub extends RealmBase {
 		}
 	}
 	/**
+	* When a player respawns
+	* @param ply - Player that is being respawned
+	* @return location to respawn the player
+	*/
+	public Location playerRespawn(Player ply) {
+		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
+		
+		pd.setItems();
+		return Bukkit.getWorld("world").getSpawnLocation();
+	}
+	/**
 	* When a player joins the hub
 	*/
 	public void playerJoin(Player ply) {

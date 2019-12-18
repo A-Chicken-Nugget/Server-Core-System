@@ -47,7 +47,7 @@ public class BanPlayerIps extends CommandBase {
 //			ply.sendMessage(ChatColor.RED + "Please enter the proper arguements for this command!");
 //		}
 //	}
-//	public List<String> autoCompletes(String[] args) {
+//	public List<String> autoCompletes(Player player, String[] args) {
 //		List<String> autoCompletes = new ArrayList();
 //		
 //		return autoCompletes;

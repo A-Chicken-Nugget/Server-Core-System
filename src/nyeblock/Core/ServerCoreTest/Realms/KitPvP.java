@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
+import org.bukkit.Effect;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -425,12 +426,28 @@ public class KitPvP extends GameBase {
 		playerKits.put(ply.getName(), kit);
 	}
 	/**
+	* When a player respawns
+	* @param ply - Player that is being respawned
+	* @return location to respawn the player
+	*/
+	public Location playerRespawn(Player ply) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
+		pd.setItems();
+		return getRandomSpawnPoint();
+	}
+	/**
     * Handles when a player dies in the game
     * @param killed - the player killed.
     * @param killer - the player who killed.
     */
 	public void playerDeath(Player killed,Player killer) {
 		if (killer != null) {
+			for (int i = 0; i < 10; i++) {
+				killer.playEffect(killed.getLocation(), Effect.SMOKE, 1);
+			}
+			killer.playSound(killer.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
+			
 			//Update the killers kill count
 			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
 			

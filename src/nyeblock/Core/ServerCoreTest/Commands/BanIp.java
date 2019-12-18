@@ -59,7 +59,7 @@ public class BanIp extends CommandBase {
             }
 		});
 	}
-	public List<String> autoCompletes(String[] args) {
+	public List<String> autoCompletes(Player player, String[] args) {
 		List<String> autoCompletes = new ArrayList();
 		
 		return autoCompletes;

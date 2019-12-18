@@ -206,7 +206,7 @@ public abstract class RealmBase {
 		}
 	}
 	public void playerDeath(Player killed, Player attacker) {}
-	public boolean isInGraceBounds(Player ply) { return false; }
+	public Location playerRespawn(Player ply) { return null; }
 	
 	//
 	// GETTERS
