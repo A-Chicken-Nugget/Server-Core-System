@@ -50,7 +50,7 @@ public class Hub extends RealmBase {
 	}, 250);
 	
 	public Hub(Main mainInstance) {
-		super(mainInstance,false);
+		super(mainInstance);
 		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
 		realm = Realm.HUB;
 		

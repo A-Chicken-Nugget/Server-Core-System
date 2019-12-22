@@ -17,12 +17,12 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.FireworkEffect.Type;
+import org.bukkit.GameMode;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.Team;
@@ -32,6 +32,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Items.Fireball;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
@@ -212,6 +213,7 @@ public class KitPvP extends GameBase {
 									pdata.setPermission("nyeblock.canBeDamaged", false);
 								}
 							}
+							ply.setGameMode(GameMode.ADVENTURE);
 						} else {
 							if (playerInGraceBounds.get(ply.getName())) {     
 								//Remove players to team
@@ -225,7 +227,12 @@ public class KitPvP extends GameBase {
 										pd2.removePlayerFromTeam("default", ply);
 									}
 								}
+								ply.getInventory().clear(7);
 								playerInGraceBounds.put(ply.getName(), false);
+								if (ply.getOpenInventory() != null) {
+									ply.getOpenInventory().close();
+								}
+								ply.setGameMode(GameMode.SURVIVAL);
 							}
 							if (pdata != null) {
 								if (!ply.hasPermission("nyeblock.canBeDamaged")) {
@@ -408,12 +415,9 @@ public class KitPvP extends GameBase {
 			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			ply.getInventory().setArmorContents(armor);
 			//5 Fire ball
-			ItemStack fireBall = new ItemStack(Material.FIRE_CHARGE,5);
-			ItemMeta fireBallMeta = fireBall.getItemMeta();
-			fireBallMeta.setLocalizedName("kitpvp_wizard_fireball");
-			fireBallMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fire Ball");
-			fireBall.setItemMeta(fireBallMeta);
-			ply.getInventory().setItem(1,fireBall);
+			Fireball fireball = new Fireball(mainInstance,ply,5);
+			ItemStack fb = fireball.give();
+			ply.getInventory().setItem(1,fb);
 			//2 Potion of harm
 			Potion damage = new Potion(PotionType.INSTANT_DAMAGE, 1);
 			damage.setSplash(true);

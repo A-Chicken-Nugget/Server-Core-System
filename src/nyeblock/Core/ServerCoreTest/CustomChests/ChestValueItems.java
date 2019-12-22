@@ -49,6 +49,9 @@ public class ChestValueItems {
 			put(Material.CHAINMAIL_LEGGINGS,1);
 			put(Material.CHAINMAIL_HELMET,1);
 			put(Material.POTION,1);
+			put(Material.EXPERIENCE_BOTTLE,Toolkit.GetRandomNumber(25,64));
+			put(Material.BOOKSHELF,Toolkit.GetRandomNumber(5,13));
+			put(Material.ENCHANTED_BOOK,1);
 		}});
 		//High items
 		put(ChestValue.HIGH,new HashMap<Material,Integer>() {{
@@ -65,6 +68,8 @@ public class ChestValueItems {
 			put(Material.EXPERIENCE_BOTTLE,Toolkit.GetRandomNumber(25,64));
 			put(Material.BOOKSHELF,Toolkit.GetRandomNumber(5,13));
 			put(Material.ENCHANTED_BOOK,1);
+			put(Material.ENCHANTING_TABLE,1);
+			put(Material.ANVIL,1);
 			put(Material.ENCHANTING_TABLE,1);
 			put(Material.ANVIL,1);
 			put(Material.ENCHANTING_TABLE,1);

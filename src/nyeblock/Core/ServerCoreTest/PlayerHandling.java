@@ -257,7 +257,7 @@ public class PlayerHandling implements Listener {
 			if (pd.getRealm() != Realm.HUB) {
 				RealmBase realm = pd.getCurrentRealm();
 				
-				if (realm.isAGame()) {
+				if (realm instanceof GameBase) {
 					GameBase game = (GameBase)realm;
 					
 					if (game.getPlayerCount() < game.getMaxPlayers() 
@@ -483,6 +483,13 @@ public class PlayerHandling implements Listener {
 			event.setCancelled(true);
 		}
 	}
+	//TODO WORK ON LATER
+//	@EventHandler
+//	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+//		Player ply = event.getPlayer();
+//		
+//		System.out.println("Test: " + ply.getOpenInventory().getTitle());
+//	}
 	// Handle potion splashes
 	@EventHandler
 	public void onPotionSpash(PotionSplashEvent event) {
@@ -552,8 +559,8 @@ public class PlayerHandling implements Listener {
 					MenuBase menu = playerData.getMenu();
 					
 					if (menu != null) {
-						if (menu.hasOption(itemMeta.getLocalizedName())) {							
-							menu.optionClick(itemMeta.getLocalizedName());
+						if (menu.getCurrentMenu().hasOption(itemMeta.getLocalizedName())) {							
+							menu.getCurrentMenu().runOption(itemMeta.getLocalizedName());
 						} else {
 							playerData.getCustomItem(itemMeta.getLocalizedName()).use(item);
 						}
@@ -585,35 +592,11 @@ public class PlayerHandling implements Listener {
 				PlayerData pd = getPlayerData(ply);
 				String itemName = itemMeta.getLocalizedName();
 				
-				if (itemName.equals("kitpvp_wizard_fireball")) {
-					GameBase game = (GameBase)getPlayerData(ply).getCurrentRealm();
-					
-					if (!game.isInGraceBounds(ply)) {
-						Location spawnAt = ply.getEyeLocation().toVector()
-								.add(ply.getEyeLocation().getDirection().multiply(3))
-								.toLocation(ply.getWorld());
-						Fireball fireball = ply.getWorld().spawn(spawnAt, Fireball.class);
-						fireball.setDirection(ply.getEyeLocation().getDirection());
-						fireball.setBounce(false);
-						fireball.setIsIncendiary(false);
-						fireball.setYield(1.75F);
-						fireball.setShooter(ply);
-						for (ItemStack itemm : ply.getInventory().getContents()) {
-							if (itemm != null) {
-								if (itemm.getType().equals(Material.FIRE_CHARGE)) {
-									itemm.setAmount(itemm.getAmount() - 1);
-								}
-							}
-						}
-					}
+				ItemBase itemm = pd.getCustomItem(itemName);
+		          
+				if (itemm != null) {
+					pd.getCustomItem(itemName).use(item);
 					event.setCancelled(true);
-				} else {
-					ItemBase itemm = pd.getCustomItem(itemName);
-			          
-					if (itemm != null) {
-						pd.getCustomItem(itemName).use(item);
-						event.setCancelled(true);
-					}
 				}
 			}
 		}

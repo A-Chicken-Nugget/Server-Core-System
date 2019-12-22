@@ -12,43 +12,35 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
 
+@SuppressWarnings("serial")
 public class ParkourMenu extends MenuBase {
-	private boolean isParkourMode;
-	
 	public ParkourMenu(Main mainInstance, Player player) { 
-		super(mainInstance,player,"parkour_menu",9);
-		
-		setContents();
+		super(mainInstance,player,"parkour_menu");
 	}
 	
 	public void setContents() {
-		super.clear();
+		SubMenu subMenu = new SubMenu("Parkour Menu",9);
+		
 		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(player);
 		if (pd.getCustomDataKey("parkour_mode") == null) {
 			pd.setCustomDataKey("parkour_mode", "false");
 		}
-		isParkourMode = Boolean.parseBoolean(pd.getCustomDataKey("parkour_mode"));
+		boolean isParkourMode = Boolean.parseBoolean(pd.getCustomDataKey("parkour_mode"));
 		
 		//Parkour mode
-		ItemStack parkourMode = new ItemStack(isParkourMode ? Material.GREEN_WOOL : Material.RED_WOOL);
-		ItemMeta parkourModeMeta = parkourMode.getItemMeta();
-		parkourModeMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Parkour Mode " + (isParkourMode ? ("(" + ChatColor.GREEN + "Competitive" + ChatColor.YELLOW + ")") : ("(" + ChatColor.RED + "Normal" + ChatColor.YELLOW + ")")));
-		parkourModeMeta.setLocalizedName("parkourMode");
-		parkourModeMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-		ArrayList<String> parkourModeMetaLore = new ArrayList<String>();
-		parkourModeMetaLore.add(ChatColor.YELLOW + "Set your parkour mode.");
-		parkourModeMetaLore.add(ChatColor.RESET.toString());
-		parkourModeMetaLore.add(ChatColor.YELLOW + "If competitive then you will be timed and");
-		parkourModeMetaLore.add(ChatColor.YELLOW + "teleported to the start if you fail.");
-		parkourModeMetaLore.add(ChatColor.YELLOW + "Try to beat the top 5 times.");
-		parkourModeMetaLore.add(ChatColor.RESET.toString());
-		parkourModeMetaLore.add(ChatColor.YELLOW + "If normal then you will not be timed");
-		parkourModeMetaLore.add(ChatColor.YELLOW + "and if you fail will be teleported");
-		parkourModeMetaLore.add(ChatColor.YELLOW + "to your last checkpoint.");
-		parkourModeMeta.setLore(parkourModeMetaLore);
-		parkourMode.setItemMeta(parkourModeMeta);
-		super.addOption("Game Menu", 4, parkourMode, new Runnable() {
+		subMenu.addOption(4, isParkourMode ? Material.GREEN_WOOL : Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Parkour Mode " + (isParkourMode ? ("(" + ChatColor.GREEN + "Competitive" + ChatColor.YELLOW + ")") : ("(" + ChatColor.RED + "Normal" + ChatColor.YELLOW + ")")), new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "Set your parkour mode.");
+			add(ChatColor.RESET.toString());
+			add(ChatColor.YELLOW + "If competitive then you will be timed and");
+			add(ChatColor.YELLOW + "teleported to the start if you fail.");
+			add(ChatColor.YELLOW + "Try to beat the top 5 times.");
+			add(ChatColor.RESET.toString());
+			add(ChatColor.YELLOW + "If normal then you will not be timed");
+			add(ChatColor.YELLOW + "and if you fail will be teleported");
+			add(ChatColor.YELLOW + "to your last checkpoint.");
+		}}, new Runnable() {
             @Override
             public void run() {
     			if (isParkourMode) {
@@ -64,6 +56,7 @@ public class ParkourMenu extends MenuBase {
             	player.closeInventory();
             }
 		});
+		super.addSubMenu(subMenu);
 	}
 	//Give the player this item
 	public ItemStack give() {
@@ -78,6 +71,6 @@ public class ParkourMenu extends MenuBase {
 	}
 	public void use(ItemStack item) {
 		setContents();
-		openMenu("Game Menu");
+		open();
 	}
 }

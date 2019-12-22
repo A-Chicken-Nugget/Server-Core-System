@@ -13,6 +13,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Effect;
 import org.bukkit.FireworkEffect;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -112,6 +113,8 @@ public class PvP extends GameBase {
 				pd.setPermission("nyeblock.canMove",true);
 				pd.setPermission("nyeblock.canDamage", true);
 				pd.setPermission("nyeblock.canBeDamaged", true);
+				
+				ply.setGameMode(GameMode.SURVIVAL);
 			}
 			titleToAll(ChatColor.YELLOW + "Go!"," ",0,10);
 			soundToAll(Sound.BLOCK_NOTE_BLOCK_BELL,1f);

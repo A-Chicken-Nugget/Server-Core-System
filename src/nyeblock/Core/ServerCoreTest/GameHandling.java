@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 
 import net.md_5.bungee.api.ChatColor;
+import nyeblock.Core.ServerCoreTest.Interfaces.XY;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -19,7 +20,6 @@ import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.PvP;
 import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
 import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
-import nyeblock.Core.ServerCoreTest.Misc.XY;
 
 public class GameHandling {
 	private Main mainInstance;
@@ -68,21 +68,24 @@ public class GameHandling {
 		for (int x = 0; x < 200; x++) {
 			for (int y = 0; y < 200; y++) {
 				GameBase currentGame = games[x][y];
-				PvP pvpGame = ((PvP)currentGame);
 				
-				if (currentGame != null && currentGame.getRealm().equals(realm) 
-						&& pvpGame.getPvPMode().equals(mode)
-						&& pvpGame.getPvPType().equals(type)) {
-					if (gameToJoin != null) {		
-						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
-								&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()
-								&& gameToJoin.getJoinStatus()) {			
-							gameToJoin = currentGame;
-						}
-					} else {						
-						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
-								&& currentGame.getJoinStatus()) {			
-							gameToJoin = currentGame;
+				if (currentGame instanceof PvP) {					
+					PvP pvpGame = ((PvP)currentGame);
+					
+					if (currentGame != null && currentGame.getRealm().equals(realm) 
+							&& pvpGame.getPvPMode().equals(mode)
+							&& pvpGame.getPvPType().equals(type)) {
+						if (gameToJoin != null) {		
+							if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
+									&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()
+									&& gameToJoin.getJoinStatus()) {			
+								gameToJoin = currentGame;
+							}
+						} else {						
+							if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
+									&& currentGame.getJoinStatus()) {			
+								gameToJoin = currentGame;
+							}
 						}
 					}
 				}

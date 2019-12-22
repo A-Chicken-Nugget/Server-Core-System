@@ -3,6 +3,7 @@ package nyeblock.Core.ServerCoreTest.Realms;
 import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -19,7 +20,6 @@ public abstract class RealmBase {
 	protected Realm realm;
 	protected int minPlayers = 0;
 	protected int maxPlayers = 0;
-	protected boolean isGame;
 	protected ArrayList<ChatColor> colorList = new ArrayList<ChatColor>() {{
 		add(ChatColor.BLUE);
 		add(ChatColor.GREEN);
@@ -33,9 +33,8 @@ public abstract class RealmBase {
 		add(ChatColor.AQUA);
 	}};
 	
-	public RealmBase(Main mainInstance,boolean isGame) {
+	public RealmBase(Main mainInstance) {
 		this.mainInstance = mainInstance;
-		this.isGame = isGame;
 	}
 	
 	//
@@ -178,13 +177,23 @@ public abstract class RealmBase {
 		} else {
 			playerJoin(ply);
 		}
-	}
-	/**
-    * Is the realm a game
-    * @return If the realm is a game
-    */
-	public boolean isAGame() {
-		return isGame;
+		
+		mainInstance.getTimerInstance().createTimer2("setGamemode_" + ply.getUniqueId(), 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (ply.getGameMode() != GameMode.ADVENTURE) {
+					ply.setGameMode(GameMode.ADVENTURE);
+				} else {
+					mainInstance.getTimerInstance().deleteTimer("setGamemode_" + ply.getUniqueId());
+				}
+			}
+		});
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
+			@Override
+			public void run() {
+				ply.setGameMode(GameMode.ADVENTURE);
+			}
+		});
 	}
 	/**
     * Sub class player leave method

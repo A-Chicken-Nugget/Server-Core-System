@@ -18,8 +18,8 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.SchematicHandling;
 import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
+import nyeblock.Core.ServerCoreTest.Interfaces.XY;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.XY;
 
 public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.RealmBase {
 	//Instances
@@ -49,7 +49,7 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	EditSession editSession;
 	
 	public GameBase(Main mainInstance, String worldName) {
-		super(mainInstance,true);
+		super(mainInstance);
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		

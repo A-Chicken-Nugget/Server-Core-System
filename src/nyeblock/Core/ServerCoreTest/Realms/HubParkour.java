@@ -63,7 +63,7 @@ public class HubParkour extends RealmBase {
 	private boolean displayCompTop5 = false;
 
 	public HubParkour(Main mainInstance) {
-		super(mainInstance,false);
+		super(mainInstance);
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		databaseInstance = mainInstance.getDatabaseInstance();

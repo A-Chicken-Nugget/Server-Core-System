@@ -19,7 +19,7 @@ public class ForceStart extends CommandBase {
 	public void execute(Player ply, String[] args) {
 		RealmBase realm = playerHandling.getPlayerData(ply).getCurrentRealm();
 		
-		if (realm.isAGame()) {
+		if (realm instanceof GameBase) {
 			if (((GameBase)realm).getPlayerCount() > 1) {				
 				((GameBase)realm).forceStart();
 			} else {

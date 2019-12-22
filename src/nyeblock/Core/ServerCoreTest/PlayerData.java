@@ -33,6 +33,7 @@ import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.MenuBase;
 import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
+import nyeblock.Core.ServerCoreTest.Items.ProfileStatsMenu;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Items.ShopMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
@@ -159,6 +160,22 @@ public class PlayerData {
 	// GETTERS
 	//
 	
+	/**
+	* Get the player level
+	* @param realm - The realm go get the players level from
+	* @return the players level in the provided realm
+	*/
+	public double getLevel(Realm realm) {
+		return Math.floor(0.1*Math.sqrt(realmXp.get(realm)));
+	}
+	/**
+	* Get the player xp
+	* @param realm - The realm go get the players xp from
+	* @return the players xp in the provided realm
+	*/
+	public int getXp(Realm realm) {
+		return realmXp.get(realm);
+	}
 	/**
 	* Get a custom item by name
 	* @param name - Name of the custom item
@@ -439,6 +456,11 @@ public class PlayerData {
 			ShopMenu shopMenu = new ShopMenu(mainInstance,player);
 			ItemStack sm = shopMenu.give();
 			player.getInventory().setItem(2, sm);
+			
+			//Profile/Stats menu
+			ProfileStatsMenu profileStatsMenu = new ProfileStatsMenu(mainInstance,player);
+			ItemStack ssm = profileStatsMenu.give();
+			player.getInventory().setItem(0, ssm);
 			
 		} else if (realm == Realm.PARKOUR) {
 			//Parkour menu

@@ -1,0 +1,63 @@
+package nyeblock.Core.ServerCoreTest.Interfaces;
+
+import java.util.ArrayList;
+import java.util.UUID;
+
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+public class MenuOption {
+	private String name;
+	private int position;
+	private ItemStack item;
+	private Runnable action;
+	
+	public MenuOption(int position) {
+		this.position = position;
+		name = UUID.randomUUID().toString();
+	}
+	
+	public void runAction() {
+		action.run();
+	}
+	
+	//
+	// GETTERS
+	//
+	
+	public String getName() {
+		return name;
+	}
+	public int getPosition() {
+		return position;
+	}
+	public ItemStack getItem() {
+		return item;
+	}
+	
+	//
+	// SETTERS
+	//
+	
+	public void setAction(Runnable action) {
+		this.action = action;
+	}
+	public void setItem(Material material, String itemName, ArrayList<String> desc) {
+		ItemStack item = new ItemStack(material);
+		ItemMeta itemMeta = item.getItemMeta();
+		itemMeta.setDisplayName(itemName);
+		itemMeta.setLocalizedName(name);
+		itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+		if (desc != null) {			
+			ArrayList<String> itemMetaLore = new ArrayList<String>();
+			for (String descItem : desc) {			
+				itemMetaLore.add(descItem);
+			}
+			itemMeta.setLore(itemMetaLore);
+		}
+		item.setItemMeta(itemMeta);
+		this.item = item;
+	}
+}

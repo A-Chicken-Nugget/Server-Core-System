@@ -1,7 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Items;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -10,14 +9,13 @@ import org.bukkit.inventory.ItemStack;
 
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Interfaces.MenuOption;
+import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
 
-@SuppressWarnings("serial")
 public abstract class MenuBase extends ItemBase {
 	private Inventory inventory;
-	private HashMap<String,HashMap<Integer,ItemStack>> menus = new HashMap<String,HashMap<Integer,ItemStack>>();
-	private HashMap<String,Integer> menuSize = new HashMap<>();
-	private HashMap<String,Runnable> optionActions = new HashMap<String,Runnable>();
-	private int size;
+	private ArrayList<SubMenu> menus = new ArrayList<>();
+	private SubMenu currentMenu;
 	
 	public void use(ItemStack item) {}
 	/**
@@ -25,89 +23,59 @@ public abstract class MenuBase extends ItemBase {
 	 * @param mainInstance - the plugin instance
 	 * @param player - the player
 	 */
-	public MenuBase(Main mainInstance, Player player, String name, int size) {
+	public MenuBase(Main mainInstance, Player player, String name) {
 		super(mainInstance,player,name);
-		this.size = size;
 	}
 	/**
 	 * Method defined in sub class that gives the player the menu item
 	 */
-	public ItemStack give() { return null; };
-	/**
-	 * Add an option to the menus list
-	 * @param menuName - name of the sub menu the item is in
-	 * @param pos - position of the item in the menu
-	 * @param item - item that is displayed in the menu
-	 * @param action - action ran when the option is clicked
-	 */
-	public void addOption(String menuName, int pos, ItemStack item, Runnable action) {
-		if (menus.get(menuName) == null) {
-			menus.put(menuName, new HashMap<Integer,ItemStack>() {{
-				put(pos,item);
-			}});
-		} else {
-			menus.get(menuName).put(pos, item);
-		}
-		optionActions.put(item.getItemMeta().getLocalizedName(), action);
+	public ItemStack give() { return null; }
+	public void setContents() {}
+	public void addSubMenu(SubMenu subMenu) {
+		menus.add(subMenu);
 	}
-	/**
-	 * Clears all menu contents
-	 */
-	public void clear() {
+	public void open() {
+		openMenu(null);
+	}
+	public void openMenu(String title) {
+		SubMenu menu = null;
 		menus.clear();
-		menuSize.clear();
-		optionActions.clear();
-	}
-	/**
-	 * TODO DO THIS SHIT BOI
-	 * Set the size of the menu
-	 * @param size - Number of slots in the menu
-	 */
-	public void setSize(String name, int size) {
-		menuSize.put(name,size);
-	}
-	public void onDelete() {}
-	/**
-	 * Open a specific sub menu within the menu
-	 * @param ply - the player
-	 * @param name - name of the sub menu
-	 */
-	public void openMenu(String name) {
-		HashMap<Integer,ItemStack> menu = menus.get(name);
+		setContents();
 		
-		if (menu != null) {		
-			inventory = Bukkit.createInventory(null, size, name);
-			PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(player);
-			
-			for(Map.Entry<Integer,ItemStack> option : menu.entrySet()) {
-				inventory.setItem(option.getKey(), option.getValue());
+		if (title != null) {			
+			for (SubMenu menuItem : menus) {
+				if (menuItem.getTitle().equalsIgnoreCase(title)) {
+					menu = menuItem;
+				}
 			}
-			pd.setMenu(this);
+		} else {			
+			menu = menus.get(0);
+		}
+		if (menu != null) {			
+			currentMenu = menu;
+			inventory = Bukkit.createInventory(null, menu.getSize(), menu.getTitle());
+			PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(player);
+			MenuBase instance = this;
+			
+			for(MenuOption option : menu.getOptions()) {				
+				inventory.setItem(option.getPosition(), option.getItem());
+			}
+			if (pd.getMenu() != this) {				
+				pd.setMenu(this);
+			}
 			player.openInventory(inventory);
 			mainInstance.getTimerInstance().createTimer2("invCheck_" + player.getUniqueId(), .5, 0, new Runnable() {
 				@Override
 				public void run() {
-					if (player.getOpenInventory().getTitle().equalsIgnoreCase("crafting")) {
+					if (!currentMenu.getTitle().equalsIgnoreCase(player.getOpenInventory().getTitle()) && pd.getMenu() == instance) {
 						pd.setMenu(null);
-						onDelete();
+						mainInstance.getTimerInstance().deleteTimer("invCheck_" + player.getUniqueId());
 					}
 				}
 			});
 		}
 	}
-	/**
-	 * Run the clicked options action
-	 * @param option - localized meta name of the item
-	 * @return whether or not the option exists for the menu
-	 */
-	public boolean hasOption(String option) {
-		return (optionActions.get(option) == null ? false : true);
-	}
-	/**
-	 * Run the clicked options action
-	 * @param option - localized meta name of the item
-	 */
-	public void optionClick(String option) {
-		optionActions.get(option).run();
+	public SubMenu getCurrentMenu() {
+		return currentMenu;
 	}
 }

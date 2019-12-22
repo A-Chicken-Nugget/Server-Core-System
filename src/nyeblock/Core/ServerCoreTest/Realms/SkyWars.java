@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Effect;
 import org.bukkit.FireworkEffect;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -122,6 +123,8 @@ public class SkyWars extends GameBase {
 				//Give kit
 				ply.getInventory().clear();
 				setPlayerKit(ply,playerKits.get(ply.getName()));
+				
+				ply.setGameMode(GameMode.SURVIVAL);
 			}
 			titleToAll(ChatColor.YELLOW + "Go!"," ",0,10);
 			soundToAll(Sound.BLOCK_NOTE_BLOCK_BELL,1f);

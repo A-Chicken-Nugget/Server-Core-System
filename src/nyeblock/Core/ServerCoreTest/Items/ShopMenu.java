@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -15,84 +14,151 @@ import nyeblock.Core.ServerCoreTest.PlayerHandling;
 public class ShopMenu extends MenuBase {
 	private PlayerHandling playerHandling;
 	
+	@SuppressWarnings("serial")
 	public ShopMenu(Main mainInstance, Player player) {
-		super(mainInstance,player,"shop_menu",54);
+		super(mainInstance,player,"shop_menu"); //54
 		playerHandling = mainInstance.getPlayerHandlingInstance();
+		ItemStack item;
 		
 		//
 		// Shop menu
 		//
 		
 		//Kitpvp Shop
-		ItemStack kitPvp = new ItemStack(Material.IRON_AXE);
-		ItemMeta kitPvpMeta = kitPvp.getItemMeta();
-		kitPvpMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "KitPvp Shop");
-		kitPvpMeta.setLocalizedName("kitpvp_shop");
-		kitPvpMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-		ArrayList<String> kitPvpMetaLore = new ArrayList<String>();
-		kitPvpMetaLore.add(ChatColor.GREEN + "\u279D \u279D Click to view the KitPvp shop");
-		kitPvpMeta.setLore(kitPvpMetaLore);
-		kitPvp.setItemMeta(kitPvpMeta);
-		super.addOption("Shop Menu", 11, kitPvp, new Runnable() {
-            @Override
-            public void run() {
-            	playerHandling.getPlayerData(player).getMenu().openMenu("KitPvp Shop");
-            }
-		});
-		//Sky Wars Shop
-		ItemStack skyWars = new ItemStack(Material.GRASS_BLOCK);
-		ItemMeta skyWarsMeta = skyWars.getItemMeta();
-		skyWarsMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Sky Wars Shop");
-		skyWarsMeta.setLocalizedName("skyWars_shop");
-		skyWarsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-		ArrayList<String> skyWarsMetaLore = new ArrayList<String>();
-		skyWarsMetaLore.add(ChatColor.GREEN + "\u279D \u279D Click to view the Sky Wars shop");
-		skyWarsMeta.setLore(skyWarsMetaLore);
-		skyWars.setItemMeta(skyWarsMeta);
-		super.addOption("Shop Menu", 13, skyWars, new Runnable() {
-            @Override
-            public void run() {       
-            	playerHandling.getPlayerData(player).getMenu().openMenu("Sky Wars Shop");
-            }
-		});
-		//Step Spleef Shop
-		ItemStack stepSpleef = new ItemStack(Material.IRON_BOOTS);
-		ItemMeta stepSpleefMeta = stepSpleef.getItemMeta();
-		stepSpleefMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef Shop");
-		stepSpleefMeta.setLocalizedName("stepSpleef_shop");
-		stepSpleefMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-		ArrayList<String> stepSpleefMetaLore = new ArrayList<String>();
-		stepSpleefMetaLore.add(ChatColor.GREEN + "\u279D \u279D Click to view the Step Spleef shop");
-		stepSpleefMeta.setLore(stepSpleefMetaLore);
-		stepSpleef.setItemMeta(stepSpleefMeta);
-		super.addOption("Shop Menu", 15, stepSpleef, new Runnable() {
-            @Override
-            public void run() {       
-            	playerHandling.getPlayerData(player).getMenu().openMenu("Step Spleef Shop");
-            }
-		});
-		//PvP Shop
-		ItemStack pvp = new ItemStack(Material.FISHING_ROD);
-		ItemMeta pvpMeta = pvp.getItemMeta();
-		pvpMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "PvP Shop");
-		pvpMeta.setLocalizedName("pvp_shop");
-		pvpMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-		ArrayList<String> pvpMetaLore = new ArrayList<String>();
-		pvpMetaLore.add(ChatColor.GREEN + "\u279D \u279D Click to view the PvP shop");
-		pvpMeta.setLore(pvpMetaLore);
-		pvp.setItemMeta(pvpMeta);
-		super.addOption("Shop Menu", 21, pvp, new Runnable() {
-            @Override
-            public void run() {       
-            	mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("PvP Shop");
-            }
-		});
-		
-		//
-		// KitPvp Shop
-		//
-		
-		
+//		item = super.createItem(Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "KitPvp Shop", new ArrayList<String>() {{
+//			add(ChatColor.GREEN + "\u279D \u279D Click to view the KitPvp shop");
+//		}});
+//		super.addOption("Shop Menu", 11, item, new Runnable() {
+//            @Override
+//            public void run() {
+//            	playerHandling.getPlayerData(player).getMenu().openMenu("KitPvp Shop");
+//            }
+//		});
+//		//Sky Wars Shop
+//		item = super.createItem(Material.GRASS_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Sky Wars Shop", new ArrayList<String>() {{
+//			add(ChatColor.GREEN + "\u279D \u279D Click to view the Sky Wars shop");
+//		}});
+//		super.addOption("Shop Menu", 13, item, new Runnable() {
+//            @Override
+//            public void run() {       
+//            	playerHandling.getPlayerData(player).getMenu().openMenu("Sky Wars Shop");
+//            }
+//		});
+//		//Step Spleef Shop
+//		item = super.createItem(Material.IRON_BOOTS, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef Shop", new ArrayList<String>() {{
+//			add(ChatColor.GREEN + "\u279D \u279D Click to view the Step Spleef shop");
+//		}});
+//		super.addOption("Shop Menu", 15, item, new Runnable() {
+//            @Override
+//            public void run() {       
+//            	playerHandling.getPlayerData(player).getMenu().openMenu("Step Spleef Shop");
+//            }
+//		});
+//		//PvP Shop
+//		item = super.createItem(Material.FISHING_ROD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "PvP Shop", new ArrayList<String>() {{
+//			add(ChatColor.GREEN + "\u279D \u279D Click to view the PvP shop");
+//		}});
+//		super.addOption("Shop Menu", 21, item, new Runnable() {
+//            @Override
+//            public void run() {       
+//            	mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("PvP Shop");
+//            }
+//		});
+//		
+//		//
+//		// KitPvp Shop
+//		//
+//		
+//		//Win actions
+//		item = super.createItem(Material.FIREWORK_STAR, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Win Actions", new ArrayList<String>() {{
+//			add(ChatColor.YELLOW + "These are actions played whenever");
+//			add(ChatColor.YELLOW + "you win in any gamemode.");
+//			add(ChatColor.RESET.toString());
+//			add(ChatColor.GRAY + "Only one can be equipped at a time");
+//			add(ChatColor.RESET.toString());
+//			add(ChatColor.GREEN + "\u279D \u279D Click to view the win actions");
+//		}});
+//		super.addOption("KitPvp Shop", 22, item, new Runnable() {
+//            @Override
+//            public void run() {       
+//            	mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("KitPvp Shop \u00BB Win Actions");
+//            }
+//		});
+//		//Back
+//		item = super.createItem(Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null);
+//		super.addOption("KitPvp Shop", 45, item, new Runnable() {
+//			@Override
+//			public void run() {
+//				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("Shop Menu");
+//			}
+//		});
+//		
+//		//
+//		// KitPvp Shop >> Win Actions
+//		//
+//		
+//		//Win actions
+//		item = super.createItem(Material.FIREWORK_ROCKET, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fireworks", new ArrayList<String>() {{
+//			add(ChatColor.YELLOW + "Choose between the different types");
+//			add(ChatColor.YELLOW + "of fireworks.");
+//			add(ChatColor.RESET.toString());
+//			add(ChatColor.GREEN + "\u279D \u279D Click to view the types of fireworks");
+//		}});
+//		super.addOption("KitPvp Shop \u00BB Win Actions", 22, item, new Runnable() {
+//            @Override
+//            public void run() {       
+//            	mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("KitPvp Shop \u00BB Win Actions \u00BB Fireworks");
+//            }
+//		});
+//		//Back
+//		item = super.createItem(Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null);
+//		super.addOption("KitPvp Shop \u00BB Win Actions", 45, item, new Runnable() {
+//			@Override
+//			public void run() {
+//				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("KitPvp Shop");
+//			}
+//		});
+//		
+//		//
+//		// KitPvp Shop >> Win Actions >> Fireworks
+//		//
+//		
+//		//Star
+//		item = super.createItem(Material.NETHER_STAR, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Star", new ArrayList<String>() {{
+//			add(ChatColor.YELLOW + "A type of firework that when");
+//			add(ChatColor.YELLOW + "it explodes. It forms the shape");
+//			add(ChatColor.YELLOW + "of a star.");
+//			add(ChatColor.RESET.toString());
+//			add(ChatColor.GREEN + "\u279D \u279D Click to purchase");
+//		}});
+//		super.addOption("KitPvp Shop \u00BB Win Actions \u00BB Fireworks", 21, item, new Runnable() {
+//            @Override
+//            public void run() {       
+//            	
+//            }
+//		});
+//		//Creeper
+//		item = super.createItem(Material.NETHER_STAR, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Creeper", new ArrayList<String>() {{
+//			add(ChatColor.YELLOW + "A type of firework that when");
+//			add(ChatColor.YELLOW + "it explodes. It forms the shape");
+//			add(ChatColor.YELLOW + "of a creeper.");
+//			add(ChatColor.RESET.toString());
+//			add(ChatColor.GREEN + "\u279D \u279D Click to purchase");
+//		}});
+//		super.addOption("KitPvp Shop \u00BB Win Actions \u00BB Fireworks", 23, item, new Runnable() {
+//            @Override
+//            public void run() {       
+//            	
+//            }
+//		});
+//		//Back
+//		item = super.createItem(Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null);
+//		super.addOption("KitPvp Shop \u00BB Win Actions \u00BB Fireworks", 45, item, new Runnable() {
+//			@Override
+//			public void run() {
+//				mainInstance.getPlayerHandlingInstance().getPlayerData(player).getMenu().openMenu("KitPvp Shop \u00BB Win Actions");
+//			}
+//		});
 	}
 
 	//Give the player this item
