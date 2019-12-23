@@ -2,6 +2,7 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -82,13 +83,22 @@ public class PlayerHandling implements Listener {
 					PlayerData pd = getPlayerData(ply);
 					
 					if (pd != null) {						
-						HashMap<Realm,Integer> realmXp = pd.getRealmXp();
+						HashMap<String,Integer> realmXp = pd.getRealmXp();
 						
 						Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 							@Override
-							public void run() {       				            	
-				            	dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
-				            	dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+							public void run() {     
+								String xpString = "";
+								
+								for (Map.Entry<String,Integer> entry : realmXp.entrySet()) {
+									if (xpString.equals("")) {
+										xpString = entry.getKey() + " = " + entry.getValue();
+									} else {
+										xpString += ", " + entry.getKey() + " = " + entry.getValue();
+									}
+								}
+								dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);			
+								dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
 							}
 						});
 		            }
@@ -274,6 +284,55 @@ public class PlayerHandling implements Listener {
 				pd.getCurrentRealm().join(ply, false);
 			}
 		}
+		
+		//Show/hide players accordingly
+		PlayerData pd = getPlayerData(ply);
+		ArrayList<Player> players = pd.getCurrentRealm().getPlayersInRealm();
+		Realm realm = pd.getRealm();
+		
+		for (Player ply2 : Bukkit.getOnlinePlayers()) {
+			if (players.contains(ply2)) {
+				PlayerData pd2 = mainInstance.getPlayerHandlingInstance().getPlayerData(ply2);
+				
+				if (!ply.canSee(ply2)) {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+							ply.showPlayer(mainInstance,ply2);
+						}
+					} else {
+						ply.showPlayer(mainInstance,ply2);						
+					}
+				} else {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+							ply.hidePlayer(mainInstance,ply2);
+						}
+					}
+				}
+				if (!ply2.canSee(ply)) {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (!Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
+							ply2.showPlayer(mainInstance,ply);
+						}
+					} else {
+						ply2.showPlayer(mainInstance,ply);						
+					}
+				} else {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
+							ply2.hidePlayer(mainInstance,ply);
+						}
+					}
+				}
+			} else {
+				if (ply.canSee(ply2)) {					
+					ply.hidePlayer(mainInstance,ply2);
+				}
+				if (ply2.canSee(ply)) {
+					ply2.hidePlayer(mainInstance,ply);
+				}
+			}
+		}
 
 		// Check if there are any undeleted worlds that weren't deleted on the previous server shutdown
 		if (!worldsChecked) {
@@ -306,12 +365,18 @@ public class PlayerHandling implements Listener {
 			@Override
 			public void run() {
 				if (!ply.isOnline()) {
-					//Update play time
-					dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
+					HashMap<String,Integer> realmXp = pd.getRealmXp();
+					String xpString = "";
 					
-					//Update realm xp
-					HashMap<Realm,Integer> realmXp = pd.getRealmXp();
-					dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+					for (Map.Entry<String,Integer> entry : realmXp.entrySet()) {
+						if (xpString.equals("")) {
+							xpString = entry.getKey() + " = " + entry.getValue();
+						} else {
+							xpString += ", " + entry.getKey() + " = " + entry.getValue();
+						}
+					}
+					dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);			
+					dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
 					
 					//Remove player data
 					playersData.remove(ply.getUniqueId());

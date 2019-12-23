@@ -4,34 +4,31 @@ import java.util.Arrays;
 
 import org.bukkit.ChatColor;
 
-import nyeblock.Core.ServerCoreTest.Realms.Hub;
-import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
-import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
-import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
-import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
-
 public class Enums {
 	//Realm enums
 	public enum Realm {
-		HUB(1,"Hub",Hub.class),
-		KITPVP(2,"Kit Pvp",KitPvP.class),
-		STEPSPLEEF(3,"Step Spleef",StepSpleef.class),
-		SKYWARS(4,"Sky Wars",SkyWars.class),
-		PVP(5,"PvP",nyeblock.Core.ServerCoreTest.Realms.PvP.class),
-		PARKOUR(6,"Parkour",HubParkour.class);
+		HUB(1,"hub","Hub"),
+		KITPVP(2,"kitpvp","Kit Pvp"),
+		STEPSPLEEF(3,"stepspleef","Step Spleef"),
+		SKYWARS(4,"skywars","Sky Wars"),
+		PVP(5,"pvp","PvP"),
+		PARKOUR(6,"parkour","Parkour");
 
-		private int value;  
+		private int value; 
+		private String dbname;
 		private String name;
-		public Class<?> cls;
 
-		private Realm(int value, String name, Class<?> cls) {
+		private Realm(int value, String dbname, String name) {
 			this.value = value;
+			this.dbname = dbname;
 			this.name = name;
-			this.cls = cls;
 		}
 
 		public int getValue() {
 			return value;
+		}
+		public String getDBName() {
+			return dbname;
 		}
 		public String toString() {
 			return name;
@@ -93,14 +90,16 @@ public class Enums {
 	}
 	//PvP realm mode
 	public enum PvPMode {
-		DUELS(1,"Duels"),
-		TWOVTWO(2,"2v2");
+		DUELS(1,"duels","Duels"),
+		TWOVTWO(2,"2v2","2v2");
 
-		private int value;  
+		private int value; 
+		private String dbname;
 		private String name;
 
-		private PvPMode(int value, String name) {
+		private PvPMode(int value, String dbname, String name) {
 			this.value = value;
+			this.dbname = dbname;
 			this.name = name;
 		}
 
@@ -117,20 +116,25 @@ public class Enums {
 		public int getValue() {
 			return value;
 		}
+		public String getDBName() {
+			return dbname;
+		}
 		public String toString() {
 			return name;
 		}
 	} 
 	//PvP realm enums
 	public enum PvPType {
-		FIST(1,"Fist"),
-		WEPSARMOR(2,"Weapons/Armor");
+		FIST(1,"fists","Fist"),
+		WEPSARMOR(2,"wepsarmor","Weapons/Armor");
 
 		private int value;  
+		private String dbname;
 		private String name;
 
-		private PvPType(int value, String name) {
+		private PvPType(int value, String dbname, String name) {
 			this.value = value;
+			this.dbname = dbname;
 			this.name = name;
 		}
 
@@ -146,6 +150,9 @@ public class Enums {
 		}
 		public int getValue() {
 			return value;
+		}
+		public String getDBName() {
+			return dbname;
 		}
 		public String toString() {
 			return name;

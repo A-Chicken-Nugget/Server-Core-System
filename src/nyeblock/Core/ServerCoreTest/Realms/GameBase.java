@@ -143,7 +143,13 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 			ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A"
 		);
 		if (saveXP) {
-			playerHandling.getPlayerData(ply).giveXP(realm, totalXP);
+			if (realm == Realm.PVP) {
+				PvP game = (PvP)this;
+				
+				playerHandling.getPlayerData(ply).giveXP(game.getPvPMode(), game.getPvPType(), totalXP);
+			} else {				
+				playerHandling.getPlayerData(ply).giveXP(realm, totalXP);
+			}
 		}
 	}
 	/**

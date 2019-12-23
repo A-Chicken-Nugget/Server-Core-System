@@ -37,6 +37,8 @@ import nyeblock.Core.ServerCoreTest.Items.ProfileStatsMenu;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Items.ShopMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
@@ -60,7 +62,7 @@ public class PlayerData {
 	private PermissionAttachment permissions;
 	private Realm realm = Realm.HUB;
 	private HashMap<String,String> customData = new HashMap<>();
-	private HashMap<Realm,Integer> realmXp = new HashMap<>();
+	private HashMap<String,Integer> realmXp = new HashMap<>();
 	private HashMap<String,ItemBase> customItems = new HashMap<>();
 	private MenuBase openedMenu;
 	private RealmBase currentGame;
@@ -72,6 +74,7 @@ public class PlayerData {
 	
 	public PlayerData(Main mainInstance, Player ply) {
 		this.mainInstance = mainInstance;
+		currentGame = mainInstance.getHubInstance();
 		databaseHandlingInstance = mainInstance.getDatabaseInstance();
 		player = ply;
 		
@@ -91,10 +94,36 @@ public class PlayerData {
     * @param amount - amount of xp added to the specified realm
     */
 	public void giveXP(Realm realm, int amount) {
-		if (realmXp.get(realm) != null) {			
-			realmXp.put(realm, realmXp.get(realm) + amount);
+		int currentLevel = getLevel(realm);
+		
+		if (realmXp.get(realm.getDBName()) != null) {			
+			realmXp.put(realm.getDBName(), realmXp.get(realm.getDBName()) + amount);
 		} else {
-			realmXp.put(realm, amount);
+			realmXp.put(realm.getDBName(), amount);
+		}
+		
+		int newLevel = getLevel(realm);
+		if (currentLevel < newLevel) {
+			player.sendMessage(ChatColor.YELLOW + "You have leveled up! You are new level " + ChatColor.GREEN + newLevel + ChatColor.YELLOW + "!");
+		}
+	}
+	/**
+    * Give the player xp
+    * @param realm - realm to give the xp should be added to
+    * @param amount - amount of xp added to the specified realm
+    */
+	public void giveXP(PvPMode mode, PvPType type, int amount) {
+		int currentLevel = getLevel(mode,type);
+		
+		if (realmXp.get(mode.getDBName() + "_" + type.getDBName()) != null) {			
+			realmXp.put(mode.getDBName() + "_" + type.getDBName(), realmXp.get(mode.getDBName() + "_" + type.getDBName()) + amount);
+		} else {
+			realmXp.put(mode.getDBName() + "_" + type.getDBName(), amount);
+		}
+		
+		int newLevel = getLevel(mode,type);
+		if (currentLevel < newLevel) {
+			player.sendMessage(ChatColor.YELLOW + "You have leveled up! Your " + realm.toString() + " level is now " + ChatColor.GREEN + newLevel + ChatColor.YELLOW + "!");
 		}
 	}
 	/**
@@ -128,7 +157,20 @@ public class PlayerData {
     * @param ply - player to add to the specified team.
     */
 	public void addPlayerToTeam(String teamName, Player ply) {
-		board.getTeam(teamName).addPlayer(ply);
+		Team team = board.getTeam(teamName);
+		
+		if (team != null) {
+			team.addPlayer(ply);
+		} else {
+			mainInstance.getTimerInstance().createTimer2("teamRecheck_" + ply.getUniqueId(), .5, 2, new Runnable() {
+				@Override
+				public void run() {
+					if (board.getTeam(teamName) != null) {						
+						addPlayerToTeam(teamName,ply);
+					}
+				}
+			});
+		}
 	}
 	/**
     * Remove a player from a specific team within the players scoreboard
@@ -165,8 +207,19 @@ public class PlayerData {
 	* @param realm - The realm go get the players level from
 	* @return the players level in the provided realm
 	*/
-	public double getLevel(Realm realm) {
-		return Math.floor(0.1*Math.sqrt(realmXp.get(realm)));
+	public int getLevel(Realm realm) {
+		return (int)Math.floor(0.1*Math.sqrt(realmXp.get(realm.getDBName())));
+	}
+	/**
+	* Get the player level
+	* @param realm - The realm go get the players level from
+	* @return the players level in the provided realm
+	*/
+	public int getLevel(PvPMode mode, PvPType type) {
+		return (int)Math.floor(0.1*Math.sqrt(realmXp.get(mode.getDBName() + "_" + type.getDBName())));
+	}
+	public int getXPFromLevel(int level) {
+		return (int)Math.pow(10*level,2);
 	}
 	/**
 	* Get the player xp
@@ -174,7 +227,15 @@ public class PlayerData {
 	* @return the players xp in the provided realm
 	*/
 	public int getXp(Realm realm) {
-		return realmXp.get(realm);
+		return realmXp.get(realm.getDBName());
+	}
+	/**
+	* Get the player xp
+	* @param realm - The realm go get the players xp from
+	* @return the players xp in the provided realm
+	*/
+	public int getXp(PvPMode mode, PvPType type) {
+		return realmXp.get(mode.getDBName() + "_" + type.getDBName());
 	}
 	/**
 	* Get a custom item by name
@@ -213,7 +274,7 @@ public class PlayerData {
 	* Get the players realm xp hashmap
 	* @return hashmap of realms and their associated xp 
 	*/
-	public HashMap<Realm,Integer> getRealmXp() {
+	public HashMap<String,Integer> getRealmXp() {
 		return realmXp;
 	}
 	/**
@@ -328,16 +389,18 @@ public class PlayerData {
             @Override
             public void run() {                   	
             	//Get the players realm xp
-            	ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 5, false);
+            	ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
             	
             	//If the player exists in the userXP table
             	if (realmXPQuery.size() > 0) {
             		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
             		
             		//Set the players realm xp
-            		realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
-            		realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
-            		realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
+            		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
+            		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
+            		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
+            		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
+            		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
             	} else {
             		//Insert the user in the userXP table
             		mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
@@ -346,9 +409,11 @@ public class PlayerData {
             		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
             		
             		//Set the players realm xp
-            		realmXp.put(Realm.KITPVP, Integer.parseInt(realmXPQueryData.get("kitpvp")));
-            		realmXp.put(Realm.SKYWARS, Integer.parseInt(realmXPQueryData.get("skywars")));
-            		realmXp.put(Realm.STEPSPLEEF, Integer.parseInt(realmXPQueryData.get("stepspleef")));
+            		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
+            		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
+            		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
+            		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
+            		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
             	}
             }
 		});

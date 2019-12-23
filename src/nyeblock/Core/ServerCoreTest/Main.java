@@ -2,6 +2,7 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -19,7 +20,6 @@ import com.sk89q.worldedit.WorldEdit;
 
 import com.sk89q.worldedit.LocalConfiguration;
 
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.Hub;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 
@@ -85,7 +85,6 @@ public class Main extends JavaPlugin {
 		
 		//Set classes with event handlers
 		getServer().getPluginManager().registerEvents(playerHandling, this);
-		
 	}
 	public void onDisable() {
 		//Delete created game worlds
@@ -99,10 +98,18 @@ public class Main extends JavaPlugin {
 		//Save every players play time and xp
 		DatabaseHandling dh = this.getDatabaseInstance();
 		for (Player ply : Bukkit.getWorld("world").getPlayers()) {
-			HashMap<Realm,Integer> realmXp = playerHandling.getPlayerData(ply).getRealmXp();
+			HashMap<String,Integer> realmXp = playerHandling.getPlayerData(ply).getRealmXp();
+			String xpString = "";
 			
-			dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-playerHandling.getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);
-			dh.query("UPDATE userXP SET kitpvp = " + realmXp.get(Realm.KITPVP) + ", skywars = " + realmXp.get(Realm.SKYWARS) + ", stepspleef = " + realmXp.get(Realm.STEPSPLEEF) + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
+			for (Map.Entry<String,Integer> entry : realmXp.entrySet()) {
+				if (xpString.equals("")) {
+					xpString = entry.getKey() + " = " + entry.getValue();
+				} else {
+					xpString += ", " + entry.getKey() + " = " + entry.getValue();
+				}
+			}
+			dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-playerHandling.getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);			
+			dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
 		}
 	}
 	

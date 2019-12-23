@@ -173,6 +173,7 @@ public class ShopMenu extends MenuBase {
 	}
 	//Use the item
 	public void use(ItemStack item) {
-		openMenu("Shop Menu");
+		player.sendMessage(ChatColor.YELLOW + "This feature has been disabled since it is not finished.");
+//		openMenu("Shop Menu");
 	}
 }

@@ -20,7 +20,9 @@ public class MenuOption {
 	}
 	
 	public void runAction() {
-		action.run();
+		if (action != null) {		
+			action.run();
+		}
 	}
 	
 	//
