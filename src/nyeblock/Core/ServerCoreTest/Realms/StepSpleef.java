@@ -322,6 +322,9 @@ public class StepSpleef extends GameBase {
 			
 			//Print players xp summary
 			for (Player ply2 : players) {
+				PlayerData pd = playerHandling.getPlayerData(ply2);
+				
+				pd.addGamePlayed(Realm.STEPSPLEEF, ply2.getUniqueId().equals(ply.getUniqueId()) ? true : false);
 				printSummary(ply2,true);
 			}
 			mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);

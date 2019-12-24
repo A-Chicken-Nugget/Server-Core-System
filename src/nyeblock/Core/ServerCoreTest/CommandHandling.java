@@ -18,10 +18,10 @@ import nyeblock.Core.ServerCoreTest.Commands.BanIp;
 import nyeblock.Core.ServerCoreTest.Commands.CommandBase;
 import nyeblock.Core.ServerCoreTest.Commands.ForceStart;
 import nyeblock.Core.ServerCoreTest.Commands.Leave;
+import nyeblock.Core.ServerCoreTest.Commands.Send;
 import nyeblock.Core.ServerCoreTest.Commands.SetPermission;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-@SuppressWarnings({"rawtypes","unchecked"})
 public class CommandHandling implements CommandExecutor, TabCompleter {
 	private Main mainInstance;
 	private HashMap<CommandBase,String> commands = new HashMap<>();
@@ -44,6 +44,8 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 		commandPermissions.put("force-start", Arrays.asList(UserGroup.ADMIN));
 		commands.put(new Leave(mainInstance).getInstance(),"leave");
 		commandPermissions.put("leave", null);
+		commands.put(new Send(mainInstance).getInstance(),"send");
+		commandPermissions.put("send", null);
 		
 		//
 		// END COMMANDS
@@ -80,12 +82,16 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 	
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-		List<String> autoCompletes = new ArrayList();
+		List<String> autoCompletes = new ArrayList<>();
 		PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData((Player)sender);
 		
 		for (Map.Entry<CommandBase,String> entry : commands.entrySet()) {
 			if (command.getLabel().equalsIgnoreCase(entry.getValue())) {
-				if (commandPermissions.get(entry.getValue()).contains(playerData.getUserGroup())) {
+				if (commandPermissions.get(entry.getValue()) != null) {					
+					if (commandPermissions.get(entry.getValue()).contains(playerData.getUserGroup())) {
+						autoCompletes = entry.getKey().autoCompletes((Player)sender,args);
+					}
+				} else {
 					autoCompletes = entry.getKey().autoCompletes((Player)sender,args);
 				}
 			}

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -224,6 +225,8 @@ public class SkyWars extends GameBase {
 				if (!endStarted) {
 					endStarted = true;
 					canUsersJoin = false;
+					UUID won = null;
+					
 					mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
 						@Override
 						public void run() {
@@ -241,10 +244,14 @@ public class SkyWars extends GameBase {
 	                		firework.setFireworkMeta(fireworkMeta);
 						}
 					});
+					won = ply.getUniqueId();
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 					giveXP(ply,"Placing #1",200);
 					for (Player player : players) {
+						PlayerData pd = playerHandling.getPlayerData(player);
+						
+						pd.addGamePlayed(realm, player.getUniqueId().equals(won) ? true : false);
 						//Print the players xp summary
 						printSummary(player,true);
 					}

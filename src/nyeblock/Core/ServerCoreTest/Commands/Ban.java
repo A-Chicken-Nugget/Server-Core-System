@@ -12,12 +12,10 @@ import nyeblock.Core.ServerCoreTest.Main;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class Ban extends CommandBase {
-	private Main mainInstance;
 	private DatabaseHandling databaseHandling;
 	
 	public Ban(Main mainInstance) {
 		super(mainInstance);
-		this.mainInstance = mainInstance;
 		databaseHandling = mainInstance.getDatabaseInstance();
 	}
 	

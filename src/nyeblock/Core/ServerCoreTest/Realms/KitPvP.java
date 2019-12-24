@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -192,52 +193,50 @@ public class KitPvP extends GameBase {
     		}
 		}
 		//Manage invincible area
-		if (players.size() > 0) {        	
-			if (safeZonePoint1 != null && safeZonePoint2 != null) {
-				for(Player ply : players) {
-					Location loc = ply.getLocation();
+		if (players.size() > 0) {
+			for(Player ply : players) {
+				Location loc = ply.getLocation();
+				
+				if(ply.getLocation() != null) {
+					PlayerData pdata = playerHandling.getPlayerData(ply);
 					
-					if(ply.getLocation() != null) {
-						PlayerData pdata = playerHandling.getPlayerData(ply);
-						
-						//Check if player is in the grace bounds
-						if (Toolkit.playerInArea(loc.toVector(), safeZonePoint1, safeZonePoint2)) {
-							if (playerInGraceBounds.get(ply.getName()) == null || !playerInGraceBounds.get(ply.getName())) {
-								playerInGraceBounds.put(ply.getName(), true);
+					//Check if player is in the grace bounds
+					if (Toolkit.playerInArea(loc.toVector(), safeZonePoint1, safeZonePoint2)) {
+						if (playerInGraceBounds.get(ply.getName()) == null || !playerInGraceBounds.get(ply.getName())) {
+							playerInGraceBounds.put(ply.getName(), true);
+						}
+						if (pdata != null) {     
+							if (!ply.hasPermission("nyeblock.tempNoDamageOnFall")) {
+								pdata.setPermission("nyeblock.tempNoDamageOnFall", true);
 							}
-							if (pdata != null) {     
-								if (!ply.hasPermission("nyeblock.tempNoDamageOnFall")) {
-									pdata.setPermission("nyeblock.tempNoDamageOnFall", true);
-								}
-								if (ply.hasPermission("nyeblock.canBeDamaged")) {        									
-									pdata.setPermission("nyeblock.canBeDamaged", false);
-								}
+							if (ply.hasPermission("nyeblock.canBeDamaged")) {        									
+								pdata.setPermission("nyeblock.canBeDamaged", false);
 							}
-							ply.setGameMode(GameMode.ADVENTURE);
-						} else {
-							if (playerInGraceBounds.get(ply.getName())) {     
-								//Remove players to team
-								for (Map.Entry<String,Boolean> entry : playerInGraceBounds.entrySet()) {
-									Player player = Bukkit.getServer().getPlayer(entry.getKey());
+						}
+						ply.setGameMode(GameMode.ADVENTURE);
+					} else {
+						if (playerInGraceBounds.get(ply.getName())) {     
+							//Remove players to team
+							for (Map.Entry<String,Boolean> entry : playerInGraceBounds.entrySet()) {
+								Player player = Bukkit.getServer().getPlayer(entry.getKey());
+								
+								if (entry.getValue()) {
+									PlayerData pd2 = playerHandling.getPlayerData(player);
 									
-									if (entry.getValue()) {
-										PlayerData pd2 = playerHandling.getPlayerData(player);
-										
-										pdata.removePlayerFromTeam("default",player);
-										pd2.removePlayerFromTeam("default", ply);
-									}
+									pdata.removePlayerFromTeam("default",player);
+									pd2.removePlayerFromTeam("default", ply);
 								}
-								ply.getInventory().clear(7);
-								playerInGraceBounds.put(ply.getName(), false);
-								if (ply.getOpenInventory() != null) {
-									ply.getOpenInventory().close();
-								}
-								ply.setGameMode(GameMode.SURVIVAL);
 							}
-							if (pdata != null) {
-								if (!ply.hasPermission("nyeblock.canBeDamaged")) {
-									pdata.setPermission("nyeblock.canBeDamaged", true);
-								}
+							ply.getInventory().clear(7);
+							playerInGraceBounds.put(ply.getName(), false);
+							if (ply.getOpenInventory() != null) {
+								ply.getOpenInventory().close();
+							}
+							ply.setGameMode(GameMode.SURVIVAL);
+						}
+						if (pdata != null) {
+							if (!ply.hasPermission("nyeblock.canBeDamaged")) {
+								pdata.setPermission("nyeblock.canBeDamaged", true);
 							}
 						}
 					}
@@ -253,8 +252,11 @@ public class KitPvP extends GameBase {
 				
 				//TODO REDO
 				if (top > 0) {        					
+					UUID won = null;
+					
 					for (Map.Entry<String,Integer> entry : playerKills.entrySet()) {
 						Player ply = Bukkit.getServer().getPlayer(entry.getKey());
+						won = ply.getUniqueId();
 						
 						if (entry.getValue() == top) {
 							mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
@@ -288,9 +290,13 @@ public class KitPvP extends GameBase {
 								giveXP(ply,"Placing #" + place,200-(place*35));
 							}
 						}
-
+					}
+					for (Player player : players) {
+						PlayerData pd = playerHandling.getPlayerData(player);
+						
+						pd.addGamePlayed(realm, player.getUniqueId().equals(won) ? true : false);
 						//Print the players xp summary
-						printSummary(ply,true);
+						printSummary(player,false);
 					}
 				} else {
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
@@ -438,6 +444,7 @@ public class KitPvP extends GameBase {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		pd.setItems();
+		setPlayerKit(ply,getPlayerKit(ply));
 		return getRandomSpawnPoint();
 	}
 	/**

@@ -9,6 +9,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 
 public class Fireball extends ItemBase {
 	private int amount;
@@ -30,7 +31,26 @@ public class Fireball extends ItemBase {
 	public void use(ItemStack item) {
 		GameBase game = (GameBase)mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm();
 		
-		if (!game.isInGraceBounds(player)) {
+		if (game instanceof KitPvP) {			
+			if (!((KitPvP)game).isInGraceBounds(player)) {
+				Location spawnAt = player.getEyeLocation().toVector()
+						.add(player.getEyeLocation().getDirection().multiply(3))
+						.toLocation(player.getWorld());
+				org.bukkit.entity.Fireball fireball = player.getWorld().spawn(spawnAt, org.bukkit.entity.Fireball.class);
+				fireball.setDirection(player.getEyeLocation().getDirection());
+				fireball.setBounce(false);
+				fireball.setIsIncendiary(false);
+				fireball.setYield(1.75F);
+				fireball.setShooter(player);
+				for (ItemStack itemm : player.getInventory().getContents()) {
+					if (itemm != null) {
+						if (itemm.getType().equals(Material.FIRE_CHARGE)) {
+							itemm.setAmount(itemm.getAmount() - 1);
+						}
+					}
+				}
+			}
+		} else {
 			Location spawnAt = player.getEyeLocation().toVector()
 					.add(player.getEyeLocation().getDirection().multiply(3))
 					.toLocation(player.getWorld());

@@ -11,29 +11,25 @@ import org.bukkit.entity.Player;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
-public class SetPermission extends CommandBase {
+public class Send extends CommandBase {
 	private PlayerHandling playerHandling;
 	
-	public SetPermission(Main mainInstance) {
+	public Send(Main mainInstance) {
 		super(mainInstance);
+		
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 	}
 	
 	public void execute(Player ply, String[] args) {
-		if (args.length >= 3) {
-			if (!args[0].equalsIgnoreCase("AllPlayersInGame")) {
-				Player player = Bukkit.getPlayer(args[0]);
-				
-				if (player != null) {					
-					mainInstance.getPlayerHandlingInstance().getPlayerData(player).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
-				} else {
-					ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
-				}
+		if (args.length >= 2) {			
+			Player player = Bukkit.getPlayer(args[0]);
+			
+			if (player != null) {					
+				mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentRealm().leave(ply, true, Realm.HUB);
 			} else {
-				for (Player ply2 : playerHandling.getPlayerData(ply).getCurrentRealm().getPlayersInRealm()) {
-					playerHandling.getPlayerData(ply2).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
-				}
+				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}
 		} else {
 			ply.sendMessage(ChatColor.RED + "Please enter the proper arguements for this command!");
@@ -53,14 +49,8 @@ public class SetPermission extends CommandBase {
 				autoCompletes.add("AllPlayersInGame");
 			}
 		} else if (args.length == 2) {
-			for (String permission : Arrays.asList("canBreakBlocks","canUseInventory","canPlaceBlocks","canBeDamaged","canDropItems")) {
+			for (String permission : Arrays.asList("Hub")) {
 				if (permission.toLowerCase().contains(args[1].toLowerCase())) {
-					autoCompletes.add(permission);
-				}
-			}
-		} else if (args.length == 3) {
-			for (String permission : Arrays.asList("true","false")) {
-				if (permission.toLowerCase().contains(args[2].toLowerCase())) {
 					autoCompletes.add(permission);
 				}
 			}

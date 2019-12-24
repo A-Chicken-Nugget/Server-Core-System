@@ -10,12 +10,10 @@ import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 
 public class Leave extends CommandBase {
-	private Main mainInstance;
 	private PlayerHandling playerHandling;
 	
 	public Leave(Main mainInstance) {
 		super(mainInstance);
-		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 	}
 	

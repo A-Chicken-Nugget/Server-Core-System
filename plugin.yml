@@ -19,3 +19,6 @@ commands:
   leave:
     description: Leave the current game you are in
     usage: /leave
+  send:
+    description: Sends the specificed player to the specified realm
+    usage: /send <player> <realm>

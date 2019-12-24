@@ -168,7 +168,6 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	public String getPlayerKit(Player ply) { return null; };
 	public void setPlayerKit(Player ply, String kit) {};
 	public void playerDeath(Player killed,Player killer) {};
-	public boolean isInGraceBounds(Player ply) { return false; };
 	/**
     * Game player join method
     * @param ply - Player joining the game

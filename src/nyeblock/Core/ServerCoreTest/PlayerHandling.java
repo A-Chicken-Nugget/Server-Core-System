@@ -62,12 +62,14 @@ import nyeblock.Core.ServerCoreTest.Items.MenuBase;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
 	private HashMap<UUID, PlayerData> playersData = new HashMap<UUID, PlayerData>();
+	private HashMap<UUID, ArrayList<Long>> playerChatMessages = new HashMap<>();
 	private World world = Bukkit.getWorld("world");
 	private boolean worldsChecked = false;
 
@@ -84,6 +86,8 @@ public class PlayerHandling implements Listener {
 					
 					if (pd != null) {						
 						HashMap<String,Integer> realmXp = pd.getRealmXp();
+						HashMap<String,Integer> totalGamesWon = pd.getTotalGamesPlayed();
+						HashMap<String,Integer> totalGamesPlayed = pd.getTotalGamesPlayed();
 						
 						Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 							@Override
@@ -99,6 +103,30 @@ public class PlayerHandling implements Listener {
 								}
 								dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);			
 								dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+
+								//Save every players total games won
+								String wonString = "";
+								
+								for (Map.Entry<String,Integer> entry : totalGamesWon.entrySet()) {
+									if (wonString.equals("")) {
+										wonString = entry.getKey() + " = " + entry.getValue();
+									} else {
+										wonString += ", " + entry.getKey() + " = " + entry.getValue();
+									}
+								}
+								dh.query("UPDATE userGamesWon SET " + wonString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
+								
+								//Save every players total games
+								String totalString = "";
+								
+								for (Map.Entry<String,Integer> entry : totalGamesPlayed.entrySet()) {
+									if (totalString.equals("")) {
+										totalString = entry.getKey() + " = " + entry.getValue();
+									} else {
+										totalString += ", " + entry.getKey() + " = " + entry.getValue();
+									}
+								}
+								dh.query("UPDATE userTotalGames SET " + totalString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
 							}
 						});
 		            }
@@ -132,18 +160,40 @@ public class PlayerHandling implements Listener {
 	@EventHandler
 	public void onPlayerChat(AsyncPlayerChatEvent event) {
 		Player ply = event.getPlayer();
-		String playerWorld = ply.getWorld().getName();
-		ArrayList<Player> playersToRemove = new ArrayList<Player>();
-		PlayerData playerData = playersData.get(ply.getUniqueId());
-
-		event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET + event.getMessage());
-
-		for (Player player : event.getRecipients()) {
-			if (!playerWorld.equalsIgnoreCase(player.getWorld().getName())) {
-				playersToRemove.add(player);
+		boolean canSend = true;
+		ArrayList<Long> remove = new ArrayList<>();
+		int i = 0;
+		
+		for (Long message : playerChatMessages.get(ply.getUniqueId())) {
+			if (System.currentTimeMillis()-message < 5000) {
+				i++;
+				
+				if (i >= 3) {
+					canSend = false;
+				}
+			} else {
+				remove.add(message);
 			}
 		}
-		event.getRecipients().removeAll(playersToRemove);
+		if (canSend) {			
+			playerChatMessages.get(ply.getUniqueId()).removeAll(remove);
+			String playerWorld = ply.getWorld().getName();
+			ArrayList<Player> playersToRemove = new ArrayList<Player>();
+			PlayerData playerData = playersData.get(ply.getUniqueId());
+			
+			event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET + event.getMessage());
+			
+			for (Player player : event.getRecipients()) {
+				if (!playerWorld.equalsIgnoreCase(player.getWorld().getName())) {
+					playersToRemove.add(player);
+				}
+			}
+			event.getRecipients().removeAll(playersToRemove);
+		} else {
+			ply.sendMessage(ChatColor.YELLOW + "Please wait a few seconds before sending another message!");
+			event.setCancelled(true);
+		}
+		playerChatMessages.get(ply.getUniqueId()).add(System.currentTimeMillis());
 	}
 	//Hide recipes from being broadcasted
 	@EventHandler
@@ -258,6 +308,7 @@ public class PlayerHandling implements Listener {
 				}
 			});
 			playersData.put(ply.getUniqueId(), playerData);
+			playerChatMessages.put(ply.getUniqueId(), new ArrayList<Long>());
 			
 			playerData.setRealm(Realm.HUB,false,false,true);
 		} else {
@@ -380,6 +431,7 @@ public class PlayerHandling implements Listener {
 					
 					//Remove player data
 					playersData.remove(ply.getUniqueId());
+					playerChatMessages.remove(ply.getUniqueId());
 				}
 			}
 		});
@@ -529,7 +581,7 @@ public class PlayerHandling implements Listener {
 		GameBase game = (GameBase)getPlayerData(ply).getCurrentRealm();
 
 		if (ply instanceof Player) {
-			if (game.isInGraceBounds(ply)) {
+			if (game instanceof KitPvP && ((KitPvP)game).isInGraceBounds(ply)) {
 				event.setCancelled(true);
 			}
 		}
@@ -562,7 +614,7 @@ public class PlayerHandling implements Listener {
 			Player ply = (Player) event.getEntity();
 			GameBase game = (GameBase)getPlayerData(ply).getCurrentRealm();
 
-			if (game.isInGraceBounds(ply)) {
+			if (game instanceof KitPvP && ((KitPvP)game).isInGraceBounds(ply)) {
 				event.setCancelled(true);
 			}
 		}

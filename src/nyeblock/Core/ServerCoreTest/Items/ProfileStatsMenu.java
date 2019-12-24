@@ -69,8 +69,8 @@ public class ProfileStatsMenu extends MenuBase {
 			add(ChatColor.GREEN.toString() + (playerData.getXPFromLevel((kitpvpLevel+1))-playerData.getXp(Realm.KITPVP)) + ChatColor.YELLOW + " XP till next level");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Game Info");
-			add(ChatColor.YELLOW + "Total games played: ");
-			add(ChatColor.YELLOW + "Games won: ");
+			add(ChatColor.YELLOW + "Total games played: " + ChatColor.GREEN + playerData.getTotalGamesPlayed(Realm.KITPVP));
+			add(ChatColor.YELLOW + "Games won: " + ChatColor.GREEN + playerData.getTotalGamesWon(Realm.KITPVP));
 		}}, null);
 		
 		//Sky Wars
@@ -82,8 +82,8 @@ public class ProfileStatsMenu extends MenuBase {
 			add(ChatColor.GREEN.toString() + (playerData.getXPFromLevel((skywarsLevel+1))-playerData.getXp(Realm.SKYWARS)) + ChatColor.YELLOW + " XP till next level");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Game Info");
-			add(ChatColor.YELLOW + "Total games played: ");
-			add(ChatColor.YELLOW + "Games won: ");
+			add(ChatColor.YELLOW + "Total games played: " + ChatColor.GREEN + playerData.getTotalGamesPlayed(Realm.SKYWARS));
+			add(ChatColor.YELLOW + "Games won: " + ChatColor.GREEN + playerData.getTotalGamesWon(Realm.SKYWARS));
 		}}, null);
 		
 		//Step Spleef
@@ -95,8 +95,8 @@ public class ProfileStatsMenu extends MenuBase {
 			add(ChatColor.GREEN.toString() + (playerData.getXPFromLevel((stepspleefLevel+1))-playerData.getXp(Realm.STEPSPLEEF)) + ChatColor.YELLOW + " XP till next level");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Game Info");
-			add(ChatColor.YELLOW + "Total games played: ");
-			add(ChatColor.YELLOW + "Games won: ");
+			add(ChatColor.YELLOW + "Total games played: " + ChatColor.GREEN + playerData.getTotalGamesPlayed(Realm.STEPSPLEEF));
+			add(ChatColor.YELLOW + "Games won: " + ChatColor.GREEN + playerData.getTotalGamesWon(Realm.STEPSPLEEF));
 		}}, null);
 		
 		//PvP
@@ -132,8 +132,8 @@ public class ProfileStatsMenu extends MenuBase {
 			add(ChatColor.GREEN.toString() + (playerData.getXPFromLevel((duelsfistsLevel+1))-playerData.getXp(PvPMode.DUELS,PvPType.FIST)) + ChatColor.YELLOW + " XP till next level");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Game Info");
-			add(ChatColor.YELLOW + "Total games played: ");
-			add(ChatColor.YELLOW + "Games won: ");
+			add(ChatColor.YELLOW + "Total games played: " + ChatColor.GREEN + playerData.getTotalGamesPlayed(PvPMode.DUELS,PvPType.FIST));
+			add(ChatColor.YELLOW + "Games won: " + ChatColor.GREEN + playerData.getTotalGamesWon(PvPMode.DUELS,PvPType.FIST));
 		}}, null);
 		
 		//2v2 >> Fists
@@ -145,8 +145,8 @@ public class ProfileStatsMenu extends MenuBase {
 			add(ChatColor.GREEN.toString() + (playerData.getXPFromLevel((twovtwofistsLevel+1))-playerData.getXp(PvPMode.TWOVTWO,PvPType.FIST)) + ChatColor.YELLOW + " XP till next level");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Game Info");
-			add(ChatColor.YELLOW + "Total games played: ");
-			add(ChatColor.YELLOW + "Games won: ");
+			add(ChatColor.YELLOW + "Total games played: " + ChatColor.GREEN + playerData.getTotalGamesPlayed(PvPMode.TWOVTWO,PvPType.FIST));
+			add(ChatColor.YELLOW + "Games won: " + ChatColor.GREEN + playerData.getTotalGamesWon(PvPMode.TWOVTWO,PvPType.FIST));
 		}}, null);
 		
 		//Back

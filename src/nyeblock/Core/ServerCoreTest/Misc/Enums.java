@@ -160,10 +160,10 @@ public class Enums {
 	} 
 	//Chest Value Enums
 	public enum ChestValue {
-		COMMON(1, "Common", true, 4, 8),
-		MEDIUM(2, "Medium", true, 3, 6),
-		HIGH(3, "High", false, 2, 4),
-		LEGENDARY(4, "Legendary", false, 2, 4);
+		COMMON(1, "Common", true, 5, 8),
+		MEDIUM(2, "Medium", true, 4, 6),
+		HIGH(3, "High", false, 3, 4),
+		LEGENDARY(4, "Legendary", false, 3, 4);
 		
 		private int value;
 		private String name;

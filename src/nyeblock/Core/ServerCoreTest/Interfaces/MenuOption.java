@@ -52,6 +52,7 @@ public class MenuOption {
 		itemMeta.setDisplayName(itemName);
 		itemMeta.setLocalizedName(name);
 		itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+		itemMeta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
 		if (desc != null) {			
 			ArrayList<String> itemMetaLore = new ArrayList<String>();
 			for (String descItem : desc) {			

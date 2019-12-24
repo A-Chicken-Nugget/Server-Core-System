@@ -13,12 +13,10 @@ import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BanIp extends CommandBase {
-	private Main mainInstance;
 	private DatabaseHandling databaseHandling;
 	
 	public BanIp(Main mainInstance) {
 		super(mainInstance);
-		this.mainInstance = mainInstance;
 		databaseHandling = mainInstance.getDatabaseInstance();
 	}
 	

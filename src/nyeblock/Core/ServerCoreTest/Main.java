@@ -110,6 +110,32 @@ public class Main extends JavaPlugin {
 			}
 			dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-playerHandling.getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);			
 			dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
+			
+			//Save every players total games won
+			HashMap<String,Integer> totalGamesWon = playerHandling.getPlayerData(ply).getTotalGamesWon();
+			String wonString = "";
+			
+			for (Map.Entry<String,Integer> entry : totalGamesWon.entrySet()) {
+				if (wonString.equals("")) {
+					wonString = entry.getKey() + " = " + entry.getValue();
+				} else {
+					wonString += ", " + entry.getKey() + " = " + entry.getValue();
+				}
+			}
+			dh.query("UPDATE userGamesWon SET " + wonString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
+			
+			//Save every players total games
+			HashMap<String,Integer> totalGames = playerHandling.getPlayerData(ply).getTotalGamesPlayed();
+			String totalString = "";
+			
+			for (Map.Entry<String,Integer> entry : totalGames.entrySet()) {
+				if (totalString.equals("")) {
+					totalString = entry.getKey() + " = " + entry.getValue();
+				} else {
+					totalString += ", " + entry.getKey() + " = " + entry.getValue();
+				}
+			}
+			dh.query("UPDATE userTotalGames SET " + totalString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
 		}
 	}
 	

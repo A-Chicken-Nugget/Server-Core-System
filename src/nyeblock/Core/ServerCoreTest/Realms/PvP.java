@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -245,6 +246,7 @@ public class PvP extends GameBase {
 					canUsersJoin = false;
 					String namesString = "";
 					ArrayList<Player> teamPlayers = new ArrayList<>();
+					ArrayList<UUID> playersWon = new ArrayList<>();
 					
 					for (Map.Entry<Location,Player> entry : teamsSetup.get(team == 0 ? 1 : 0).entrySet()) {
 						if (entry.getValue() != null) {
@@ -254,6 +256,7 @@ public class PvP extends GameBase {
 								namesString += " and " + entry.getValue().getName();
 							}
 							teamPlayers.add(entry.getValue());
+							playersWon.add(entry.getValue().getUniqueId());
 							giveXP(entry.getValue(),"Winning",150);
 						}
 					}
@@ -284,6 +287,9 @@ public class PvP extends GameBase {
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + namesString + " won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 					for (Player ply : players) {
+						PlayerData pd = playerHandling.getPlayerData(ply);
+						
+						pd.addGamePlayed(pvpMode, pvpType, playersWon.contains(ply.getUniqueId()) ? true : false);
 						//Print the players xp summary
 						printSummary(ply,true);
 					}
