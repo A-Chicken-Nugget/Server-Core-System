@@ -37,7 +37,7 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	protected Vector safeZonePoint1;
 	protected Vector safeZonePoint2;
 	//Etc
-	protected boolean active = true;
+	protected boolean active = false;
 	protected int emptyCount = 0;
 	protected boolean canUsersJoin = false;
 	protected boolean forceStart = false;

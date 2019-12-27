@@ -20,6 +20,7 @@ import nyeblock.Core.ServerCoreTest.Commands.ForceStart;
 import nyeblock.Core.ServerCoreTest.Commands.Leave;
 import nyeblock.Core.ServerCoreTest.Commands.Send;
 import nyeblock.Core.ServerCoreTest.Commands.SetPermission;
+import nyeblock.Core.ServerCoreTest.Commands.SetUserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 public class CommandHandling implements CommandExecutor, TabCompleter {
@@ -46,6 +47,8 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 		commandPermissions.put("leave", null);
 		commands.put(new Send(mainInstance).getInstance(),"send");
 		commandPermissions.put("send", null);
+		commands.put(new SetUserGroup(mainInstance).getInstance(),"setUserGroup");
+		commandPermissions.put("setUserGroup", Arrays.asList(UserGroup.ADMIN));
 		
 		//
 		// END COMMANDS

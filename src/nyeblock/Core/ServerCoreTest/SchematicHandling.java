@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -116,6 +118,7 @@ public class SchematicHandling {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	    new Location(Bukkit.getWorld(game.getWorldName()),.5,63.5,.5).getBlock().setType(Material.AIR);
 	    
 	    return schemToUse;
 	}

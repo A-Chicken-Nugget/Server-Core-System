@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Chest;
+import org.bukkit.entity.Egg;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Firework;
@@ -47,6 +48,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
+import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.EnchantingInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -63,7 +65,9 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
+import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
+import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
 
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
@@ -312,6 +316,7 @@ public class PlayerHandling implements Listener {
 			
 			playerData.setRealm(Realm.HUB,false,false,true);
 		} else {
+			mainInstance.getTimerInstance().deleteTimer("leave_" + ply.getUniqueId());
 			PlayerData pd = getPlayerData(ply);
 			
 			pd.setPlayer(ply);
@@ -329,7 +334,11 @@ public class PlayerHandling implements Listener {
 						mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
 					}
 				} else {
-					realm.join(ply, true);
+					realm.join(ply, false);
+					
+					if (realm instanceof HubParkour) {
+						((HubParkour)realm).goToStart(ply);
+					}
 				}
 			} else {
 				pd.getCurrentRealm().join(ply, false);
@@ -409,9 +418,6 @@ public class PlayerHandling implements Listener {
 		// Remove default quit message
 		event.setQuitMessage("");
 		
-		//Leave realm
-		pd.getCurrentRealm().leave(ply, true, null);
-
 		mainInstance.getTimerInstance().createTimer2("leave_" + ply.getUniqueId(), 60, 1, new Runnable() {
 			@Override
 			public void run() {
@@ -435,6 +441,9 @@ public class PlayerHandling implements Listener {
 				}
 			}
 		});
+		
+		//Leave realm
+		pd.getCurrentRealm().leave(ply, true, null);
 	}
 
 	// Handle when a player respawns
@@ -479,8 +488,12 @@ public class PlayerHandling implements Listener {
 		if (!ply.hasPermission("nyeblock.canBreakBlocks")) {
 			event.setCancelled(true);
 		} else {
-			if (getPlayerData(ply).getRealm() == Realm.SKYWARS && event.getBlock().getState() instanceof Chest) {
-				event.setCancelled(true);
+			RealmBase realm = getPlayerData(ply).getCurrentRealm();
+			
+			if (realm.getRealm() == Realm.SKYWARS) {
+				if (((GameBase)realm).getActiveStatus() && event.getBlock().getState() instanceof Chest) {						
+					event.setCancelled(true);
+				}
 			}
 		}
 	}
@@ -544,6 +557,9 @@ public class PlayerHandling implements Listener {
 			Player attacker = (Player)event.getEntity().getShooter();
 			
 			if (projectile instanceof Snowball) {
+				attacked.damage(0.0001);
+				attacked.setVelocity(attacked.getVelocity().add(attacked.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(1)));
+			} else if (projectile instanceof Egg) {
 				attacked.damage(0.0001);
 				attacked.setVelocity(attacked.getVelocity().add(attacked.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(1)));
 			}
@@ -632,18 +648,25 @@ public class PlayerHandling implements Listener {
 	@EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
 		Player ply = (Player) event.getPlayer();
+		PlayerData pd = getPlayerData(ply);
 		
-        if (event.getInventory() instanceof EnchantingInventory) {
-            EnchantingInventory inv = (EnchantingInventory) event.getInventory();
-            inv.setItem(1,new ItemStack(Material.LAPIS_LAZULI,20));
-            
-            mainInstance.getTimerInstance().createTimer2("lapisReplacement_" + ply.getUniqueId(), .5, 0, new Runnable() {
-            	@Override
-            	public void run() {
-            		inv.setItem(1,new ItemStack(Material.LAPIS_LAZULI,20));
-            	}
-            });
-        }
+		if (!pd.getSpectatingStatus()) {			
+			if (event.getInventory() instanceof EnchantingInventory) {
+				EnchantingInventory inv = (EnchantingInventory) event.getInventory();
+				inv.setItem(1,new ItemStack(Material.LAPIS_LAZULI,20));
+				
+				mainInstance.getTimerInstance().createTimer2("lapisReplacement_" + ply.getUniqueId(), .5, 0, new Runnable() {
+					@Override
+					public void run() {
+						inv.setItem(1,new ItemStack(Material.LAPIS_LAZULI,20));
+					}
+				});
+			}
+		} else {
+			if (!(event.getView() instanceof CraftingInventory)) {
+				event.setCancelled(true);
+			}
+		}
     }
 	//Handle when the player closes an inventory menu
 	@EventHandler
@@ -679,7 +702,7 @@ public class PlayerHandling implements Listener {
 						if (menu.getCurrentMenu().hasOption(itemMeta.getLocalizedName())) {							
 							menu.getCurrentMenu().runOption(itemMeta.getLocalizedName());
 						} else {
-							playerData.getCustomItem(itemMeta.getLocalizedName()).use(item);
+							//TODO REMOVE MENU
 						}
 					} else {
 						ItemBase itemm = playerData.getCustomItem(itemMeta.getLocalizedName());

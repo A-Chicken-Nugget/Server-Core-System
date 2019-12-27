@@ -65,7 +65,7 @@ public class PlayerData {
 	private HashMap<String,String> customData = new HashMap<>();
 	private HashMap<String,ItemBase> customItems = new HashMap<>();
 	private MenuBase openedMenu;
-	private RealmBase currentGame;
+	private RealmBase currentRealm;
 	private boolean isSpectating = false;
 	private boolean queuingGame = false;
 	//Stats
@@ -78,7 +78,7 @@ public class PlayerData {
 	
 	public PlayerData(Main mainInstance, Player ply) {
 		this.mainInstance = mainInstance;
-		currentGame = mainInstance.getHubInstance();
+		currentRealm = mainInstance.getHubInstance();
 		databaseHandlingInstance = mainInstance.getDatabaseInstance();
 		player = ply;
 		
@@ -93,14 +93,22 @@ public class PlayerData {
 	}
 	
 	/**
+	* Associate a custom item with the player
+	* @param name - Name of the custom item
+	* @param item - Reference of the item
+	*/
+	public void addCustomItem(String name, ItemBase item) {
+		customItems.put(name, item);
+	}
+	/**
     * Add game played
     * @param realm - realm to add to the games played
     * @param won - did the player win
     */
 	public void addGamePlayed(Realm realm, boolean won) {
-		totalGamesPlayed.put(realm.getDBName(), totalGamesPlayed.get(realm.getDBName())+1);
+		totalGamesPlayed.put(realm.getDBName(), totalGamesPlayed.get(realm.getDBName()) + 1);
 		if (won) {
-			totalGamesWon.put(realm.getDBName(), totalGamesWon.get(realm.getDBName()));
+			totalGamesWon.put(realm.getDBName(), totalGamesWon.get(realm.getDBName()) + 1);
 		}
 	}
 	/**
@@ -110,9 +118,9 @@ public class PlayerData {
 	* @param won - did the player win
     */
 	public void addGamePlayed(PvPMode mode, PvPType type, boolean won) {
-		totalGamesPlayed.put(mode.getDBName() + "_" + type.getDBName(), totalGamesPlayed.get(mode.getDBName() + "_" + type.getDBName())+1);
+		totalGamesPlayed.put(mode.getDBName() + "_" + type.getDBName(), totalGamesPlayed.get(mode.getDBName() + "_" + type.getDBName()) + 1);
 		if (won) {
-			totalGamesWon.put(mode.getDBName() + "_" + type.getDBName(), totalGamesWon.get(mode.getDBName() + "_" + type.getDBName()));
+			totalGamesWon.put(mode.getDBName() + "_" + type.getDBName(), totalGamesWon.get(mode.getDBName() + "_" + type.getDBName()) + 1);
 		}
 	}
 	/**
@@ -342,7 +350,7 @@ public class PlayerData {
     * Get the players current game
     */
 	public RealmBase getCurrentRealm() {
-		return currentGame;
+		return currentRealm;
 	}
 	/**
 	* Get the players open menu
@@ -414,12 +422,13 @@ public class PlayerData {
 	//
 	
 	/**
-	* Associate a custom item with the player
-	* @param name - Name of the custom item
-	* @param item - Reference of the item
-	*/
-	public void addCustomItem(String name, ItemBase item) {
-		customItems.put(name, item);
+    * Set the players usergroup
+    * @param group - group to change to
+    */
+	public void setUserGroup(UserGroup group) {
+		userGroup = group;
+		currentRealm.updateUserGroups();
+		mainInstance.getDatabaseInstance().query("UPDATE users SET userGroup = " + group.getValue() + " WHERE id = " + id, 0, true);
 	}
 	/**
 	* Update the player and set the scoreboard to the new player
@@ -439,7 +448,7 @@ public class PlayerData {
     * Set the players current game
     */
 	public void setCurrentRealm(RealmBase game) {
-		currentGame = game;
+		currentRealm = game;
 	}
 	/**
     * Set the players open menu
@@ -707,10 +716,10 @@ public class PlayerData {
 			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 			player.getInventory().setArmorContents(armor);
 		} else if (realm == Realm.STEPSPLEEF) {
-			if (currentGame != null) {
-				if (currentGame.isInServer(player) && ((GameBase)currentGame).isGameActive()) {
+			if (currentRealm != null) {
+				if (currentRealm.isInServer(player) && ((GameBase)currentRealm).isGameActive()) {
 					//Select player
-					PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.STEPSPLEEF,player);
+					PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
 					player.getInventory().setItem(4, selectPlayer.give());
 				}
 			}
@@ -719,11 +728,11 @@ public class PlayerData {
 			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 			player.getInventory().setItem(8, returnToHub.give());
 		} else if (realm == Realm.SKYWARS) {
-			if (currentGame != null) {
-				if (currentGame.isInServer(player)) {
-					if (((GameBase)currentGame).isGameActive()) {						
+			if (currentRealm != null) {
+				if (currentRealm.isInServer(player)) {
+					if (((GameBase)currentRealm).isGameActive()) {						
 						//Select player
-						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.SKYWARS,player);
+						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
 						player.getInventory().setItem(4, selectPlayer.give());
 					} else {						
 						//Select kit
@@ -736,9 +745,9 @@ public class PlayerData {
 			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 			player.getInventory().setItem(8, returnToHub.give());
 		} else if (realm == Realm.PVP) {
-			if (currentGame != null && ((GameBase)currentGame).isGameActive()) {						
+			if (currentRealm != null && ((GameBase)currentRealm).isGameActive()) {						
 				//Select player
-				PlayerSelector selectPlayer = new PlayerSelector(mainInstance,Realm.PVP,player);
+				PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
 				player.getInventory().setItem(4, selectPlayer.give());
 			}
 			//Return to hub

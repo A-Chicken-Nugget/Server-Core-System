@@ -39,6 +39,7 @@ public class ChestValueItems {
 		//Medium items
 		put(ChestValue.MEDIUM,new HashMap<Material,Integer>() {{
 			put(Material.IRON_SWORD,1);
+			put(Material.IRON_PICKAXE,1);
 			put(Material.STONE_PICKAXE,1);
 			put(Material.IRON_AXE,1);
 			put(Material.IRON_LEGGINGS,1);
@@ -68,8 +69,6 @@ public class ChestValueItems {
 			put(Material.EXPERIENCE_BOTTLE,Toolkit.GetRandomNumber(25,64));
 			put(Material.BOOKSHELF,Toolkit.GetRandomNumber(5,13));
 			put(Material.ENCHANTED_BOOK,1);
-			put(Material.ENCHANTING_TABLE,1);
-			put(Material.ANVIL,1);
 			put(Material.ENCHANTING_TABLE,1);
 			put(Material.ANVIL,1);
 			put(Material.ENCHANTING_TABLE,1);

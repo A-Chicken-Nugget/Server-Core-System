@@ -11,29 +11,32 @@ import org.bukkit.entity.Player;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-public class SetPermission extends CommandBase {
+public class SetUserGroup extends CommandBase {
 	private PlayerHandling playerHandling;
 	
-	public SetPermission(Main mainInstance) {
+	public SetUserGroup(Main mainInstance) {
 		super(mainInstance);
+		
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 	}
 	
 	public void execute(Player ply, String[] args) {
-		if (args.length >= 3) {
-			if (!args[0].equalsIgnoreCase("AllPlayersInGame")) {
-				Player player = Bukkit.getPlayerExact(args[0]);
+		if (args.length >= 2) {			
+			Player player = Bukkit.getPlayerExact(args[0]);
+			
+			if (player != null) {
+				UserGroup group = UserGroup.fromName(args[1]);
 				
-				if (player != null) {					
-					mainInstance.getPlayerHandlingInstance().getPlayerData(player).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
+				if (group != null) {
+					playerHandling.getPlayerData(player).setUserGroup(group);
 				} else {
-					ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
+					ply.sendMessage(ChatColor.YELLOW + "Please enter a valid usergroup!");
 				}
 			} else {
-				for (Player ply2 : playerHandling.getPlayerData(ply).getCurrentRealm().getPlayersInRealm()) {
-					playerHandling.getPlayerData(ply2).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
-				}
+				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}
 		} else {
 			ply.sendMessage(ChatColor.RED + "Please enter the proper arguements for this command!");
@@ -53,15 +56,9 @@ public class SetPermission extends CommandBase {
 				autoCompletes.add("AllPlayersInGame");
 			}
 		} else if (args.length == 2) {
-			for (String permission : Arrays.asList("canBreakBlocks","canUseInventory","canPlaceBlocks","canBeDamaged","canDropItems")) {
-				if (permission.toLowerCase().contains(args[1].toLowerCase())) {
-					autoCompletes.add(permission);
-				}
-			}
-		} else if (args.length == 3) {
-			for (String permission : Arrays.asList("true","false")) {
-				if (permission.toLowerCase().contains(args[2].toLowerCase())) {
-					autoCompletes.add(permission);
+			for (UserGroup group : UserGroup.values()) {
+				if (group.toString().toLowerCase().contains(args[1].toLowerCase())) {
+					autoCompletes.add(group.toString());
 				}
 			}
 		}

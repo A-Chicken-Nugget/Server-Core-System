@@ -2,6 +2,7 @@ package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -38,7 +39,6 @@ public class SkyWars extends GameBase {
 	//Game info
 	private int duration;
 	private long startTime;
-	private boolean active = false;
 	private boolean gameBegun = false;
 	//Player data
 	private HashMap<String,Integer> playerKills = new HashMap<>();
@@ -448,10 +448,32 @@ public class SkyWars extends GameBase {
 		Location loc = null;
 		
 		pd.setItems();
+		
+		//Determine spawn position
 		if (pd.getSpectatingStatus()) {
-			loc = players.get(Integer.parseInt(pd.getCustomDataKey("player_selector_index"))).getLocation();
-		} else {				
-			loc = getRandomSpawnPoint();
+			String index = pd.getCustomDataKey("player_selector_index");
+			
+			if (index != null) {
+				loc = players.get(Integer.parseInt(index)).getLocation();
+			} else {
+				Location location = ply.getLocation();
+				
+				if (!Arrays.asList(Material.AIR,Material.VOID_AIR).contains(location.subtract(0, .5, 0).getBlock().getType())) {
+					loc = location.subtract(0, .5, 0);
+				} else {
+					for (int i = 0; i < spawns.size(); i++) {
+						if (playerSpots.get(i) != null && playerSpots.get(i).equalsIgnoreCase(ply.getName())) {
+							loc = spawns.get(i);	
+						}
+					}
+				}
+			}
+		} else {
+			for (int i = 0; i < spawns.size(); i++) {
+				if (playerSpots.get(i) != null &&playerSpots.get(i).equalsIgnoreCase(ply.getName())) {
+					loc = spawns.get(i);				
+				}
+			}
 		}
 		return loc;
 	}
@@ -472,7 +494,7 @@ public class SkyWars extends GameBase {
 				add(killed);
 			}});
 			
-			killed.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around."));
+			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
 			
 			//Unhide spectators
 			for (Player ply : playersSpectating) {
@@ -520,21 +542,8 @@ public class SkyWars extends GameBase {
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		pd.createHealthTags();
 		
-		//Add player to proper team
-		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
-		
-		//Add players to teams
-		for (Player player : players) {
-			PlayerData pd2 = playerHandling.getPlayerData(player);
-			
-			if (player != ply) {
-				//Update joining player team
-				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
-				
-				//Update current players teams
-				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
-			}
-		}
+		//Add players to proper scoreboard teams
+		updateUserGroups();
 		
 		//Add player to arrays
 		playerKills.put(ply.getName(), 0);
@@ -542,7 +551,7 @@ public class SkyWars extends GameBase {
 		
 		//Find available spot for player
 		boolean foundSpot = false;
-		for (int i = 0; i < 8; i++) {
+		for (int i = 0; i < spawns.size(); i++) {
 			if (!foundSpot && !playerSpots.containsKey(i)) {
 				playerSpots.put(i,ply.getName());
 				foundSpot = true;
@@ -551,6 +560,7 @@ public class SkyWars extends GameBase {
 				ply.teleport(spawn);				
 			}
 		}
+//		ply.teleport(Bukkit.getWorld(worldName).getSpawnLocation());
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Sky Wars",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
 		
 		for (Player player : players) {

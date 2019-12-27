@@ -424,7 +424,7 @@ public class StepSpleef extends GameBase {
 				playersSpectating.add(killed);
 				killed.setAllowFlight(true);
 				
-				killed.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around."));
+				killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
 				
 				//Unhide spectators
 				for (Player ply : playersSpectating) {
@@ -459,21 +459,8 @@ public class StepSpleef extends GameBase {
 		//Setup team
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		
-		//Add player to proper team
-		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
-		
-		//Add players to teams
-		for (Player player : players) {
-			PlayerData pd2 = playerHandling.getPlayerData(player);
-			
-			if (player != ply) {
-				//Update joining player team
-				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
-				
-				//Update current players teams
-				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
-			}
-		}
+		//Add players to proper scoreboard teams
+		updateUserGroups();
 		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
 	}

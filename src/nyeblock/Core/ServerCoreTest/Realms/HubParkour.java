@@ -337,6 +337,8 @@ public class HubParkour extends RealmBase {
 		//Add player to proper team
 		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
 		
+		pd.setCurrentRealm(this);
+		
 		//Add players to teams
 		for (Player player : players) {
 			PlayerData pd2 = playerHandling.getPlayerData(player);
@@ -384,7 +386,9 @@ public class HubParkour extends RealmBase {
 		
 		pd.clearScoreboard();
 				
-		mainInstance.getHubInstance().join(ply, false);
+		if (!mainInstance.getTimerInstance().timerExists("leave_" + ply.getUniqueId())) {			
+			mainInstance.getHubInstance().join(ply, false);
+		}
 		
 		//Remove players from teams
 		for (Player player : players) {

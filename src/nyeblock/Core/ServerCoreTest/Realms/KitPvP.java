@@ -485,26 +485,12 @@ public class KitPvP extends GameBase {
 		playerKills.put(ply.getName(), 0);
 		playerKits.put(ply.getName(),"knight");
 		
-		//Add player to proper team
-		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
-		
-		//Add players to teams
-		for (Player player : players) {
-			PlayerData pd2 = playerHandling.getPlayerData(player);
-			
-			if (player != ply) {
-				//Update joining player team
-				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
-				
-				//Update current players teams
-				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
-			}
-		}
+		//Add players to proper scoreboard teams
+		updateUserGroups();
 		
 		//Teleport to random spawn
 		Location randSpawn = getRandomSpawnPoint();
 		ply.teleport(randSpawn);
-//		ply.teleport(new Location(Bukkit.getWorld("games_world"),(gamePos.x*500)-(500/2),0,(gamePos.y*500)-(500/2)));
 		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to KitPvP",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
 		

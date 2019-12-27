@@ -12,6 +12,8 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 
 @SuppressWarnings("serial")
@@ -21,7 +23,7 @@ public class KitSelector extends MenuBase {
 	}
 	
 	public void setContents() {
-		RealmBase game = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm();
+		GameBase game = (GameBase)mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm();
 		SubMenu subMenu = new SubMenu("Kit Selector",9);
 		
 		if (game.getRealm() == Realm.KITPVP) {

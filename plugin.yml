@@ -22,3 +22,6 @@ commands:
   send:
     description: Sends the specificed player to the specified realm
     usage: /send <player> <realm>
+  setUserGroup:
+    description: Sets the usergroup of the specified player
+    usage: /setUserGroup <player> <group>

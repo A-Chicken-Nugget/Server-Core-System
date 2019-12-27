@@ -66,6 +66,16 @@ public class Enums {
 			}
 			return userGrp;
 		}
+		public static UserGroup fromName(String userGroup) {
+			UserGroup userGrp = null;
+			
+			for (UserGroup group : UserGroup.values()) {
+				if (group.toString().equalsIgnoreCase(userGroup)) {
+					userGrp = group;
+				}
+			}
+			return userGrp;
+		}
 		public static boolean isStaff(UserGroup userGroup) {
 			boolean isStaff = false;
 			

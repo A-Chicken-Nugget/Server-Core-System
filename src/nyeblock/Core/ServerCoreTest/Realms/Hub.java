@@ -131,21 +131,10 @@ public class Hub extends RealmBase {
 		//Setup team
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		
-		//Add player to proper team
-		pd.addPlayerToTeam(pd.getUserGroup().toString(), ply);
+		//Add players to proper scoreboard teams
+		updateUserGroups();
 		
-		//Add players to teams
-		for (Player player : players) {
-			PlayerData pd2 = playerHandlingInstance.getPlayerData(player);
-			
-			if (player != ply) {
-				//Update joining player team
-				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
-				
-				//Update current players teams
-				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
-			}
-		}
+		pd.setCurrentRealm(this);
 	}
 	/**
 	* When a player leaves the hub

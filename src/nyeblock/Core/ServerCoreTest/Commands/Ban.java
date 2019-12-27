@@ -10,7 +10,6 @@ import org.bukkit.entity.Player;
 import nyeblock.Core.ServerCoreTest.DatabaseHandling;
 import nyeblock.Core.ServerCoreTest.Main;
 
-@SuppressWarnings({ "rawtypes", "unchecked" })
 public class Ban extends CommandBase {
 	private DatabaseHandling databaseHandling;
 	
@@ -21,7 +20,7 @@ public class Ban extends CommandBase {
 	
 	public void execute(Player ply, String[] args) {
 		if (args.length >= 3) {
-			Player player = Bukkit.getPlayer(args[0]);
+			Player player = Bukkit.getPlayerExact(args[0]);
 			
 			if (player != null) {
 				try {
@@ -52,7 +51,7 @@ public class Ban extends CommandBase {
 		}
 	}
 	public List<String> autoCompletes(Player player, String[] args) {
-		List<String> autoCompletes = new ArrayList();
+		List<String> autoCompletes = new ArrayList<>();
 		
 		if (args.length == 1) {
 			for (Player ply : Bukkit.getOnlinePlayers()) {

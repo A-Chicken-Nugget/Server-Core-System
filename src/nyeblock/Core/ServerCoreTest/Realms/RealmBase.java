@@ -11,11 +11,13 @@ import org.bukkit.entity.Player;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings("serial")
 public abstract class RealmBase {
 	private Main mainInstance;
+	protected PlayerHandling playerHandling;
 	protected ArrayList<Player> players = new ArrayList<>();
 	protected Realm realm;
 	protected int minPlayers = 0;
@@ -35,12 +37,28 @@ public abstract class RealmBase {
 	
 	public RealmBase(Main mainInstance) {
 		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
 	}
 	
 	//
 	// RANDOM METHODS
 	//
 	
+	public void updateUserGroups() {
+		for (Player ply : players) {	
+			PlayerData pd = playerHandling.getPlayerData(ply);
+			
+			for (Player player : players) {
+				PlayerData pd2 = playerHandling.getPlayerData(player);
+				
+				//Update joining player team
+				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
+				
+				//Update current players teams
+				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
+			}
+		}
+	}
 	/**
     * Checks to see if the provided player is in the game
     * @param player - the player to check for.
@@ -241,7 +259,6 @@ public abstract class RealmBase {
 		return players;
 	}
 	public Location getRandomSpawnPoint() { return null; }
-	public String getPlayerKit(Player ply) { return null; }
 	public Location getPlayerSpawn(Player ply) { return null; }
 	/**
 	 * Get the realm of this game
@@ -255,11 +272,4 @@ public abstract class RealmBase {
 	public int getPlayerCount() {
 		return players.size();
 	}
-	
-
-	//
-	// SETTERS
-	//
-	
-	public void setPlayerKit(Player ply, String kit) {}
 }

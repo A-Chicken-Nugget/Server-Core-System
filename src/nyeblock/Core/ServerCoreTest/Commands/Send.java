@@ -24,10 +24,10 @@ public class Send extends CommandBase {
 	
 	public void execute(Player ply, String[] args) {
 		if (args.length >= 2) {			
-			Player player = Bukkit.getPlayer(args[0]);
+			Player player = Bukkit.getPlayerExact(args[0]);
 			
 			if (player != null) {					
-				mainInstance.getPlayerHandlingInstance().getPlayerData(ply).getCurrentRealm().leave(ply, true, Realm.HUB);
+				playerHandling.getPlayerData(ply).getCurrentRealm().leave(ply, true, Realm.HUB);
 			} else {
 				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}

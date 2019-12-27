@@ -129,6 +129,9 @@ public class TimerHandling {
 			timers.put(name, task);
 		}
 	}
+	public boolean timerExists(String name) {
+		return timers.get(name) != null;
+	}
 	public void deleteTimer(String name) {
 		Iterator<Map.Entry<String, BukkitTask>> timersItr = timers.entrySet().iterator();
 		while(timersItr.hasNext())
