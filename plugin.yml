@@ -2,7 +2,7 @@ name: ServerCoreTest
 version: 1.0
 api-version: 1.13
 main: nyeblock.Core.ServerCoreTest.Main
-depend: [Multiverse-Core, WorldEdit]
+depend: [WorldEdit]
 commands:
   setpermission:
     description: Set the permission for a player
@@ -25,3 +25,6 @@ commands:
   setUserGroup:
     description: Sets the usergroup of the specified player
     usage: /setUserGroup <player> <group>
+  hide:
+    description: Sets the players hidden status
+    usage: /hide

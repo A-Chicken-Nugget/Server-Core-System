@@ -1,5 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
+import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 
 @SuppressWarnings({"deprecation","serial"})
 public class SkyWars extends GameBase {
@@ -138,6 +140,13 @@ public class SkyWars extends GameBase {
 		}
 	}
 	/**
+	* What needs to be ran when the world is deleted
+	*/
+	public void onDelete() {
+		mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
+		mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
+	}
+	/**
     * Run main checks for the game
     */
 	public void mainFunctions() {
@@ -156,10 +165,7 @@ public class SkyWars extends GameBase {
 			}
 		}
 		//Check if the server is empty
-		if (players.size() > 0) {        			
-			if (emptyCount != 0) {
-				emptyCount = 0;
-			}
+		if (players.size() > 0) {
 			if (!active) {
 				if (players.size() >= minPlayers || forceStart) {					
 					if (readyCount == 0) {
@@ -186,20 +192,10 @@ public class SkyWars extends GameBase {
 					messageCount++;
 				}
 			}
-		} else {
-			emptyCount++;
-			
-			//Check if the server has been empty for 6 seconds
-			if (emptyCount >= 10) {
-				canUsersJoin = false;
-				
-				mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
-				mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
-				
-				//Delete world from server
-				mainInstance.getMultiverseInstance().deleteWorld(worldName);
-				//Remove game from games array
-				mainInstance.getGameInstance().removeGameFromList(gamePos);
+			if (!gameBegun) {
+				for (Player ply : players) {
+					ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "Selected kit: " + ChatColor.GREEN + playerKits.get(ply.getName())));
+				}
 			}
 		}
 	}
@@ -225,7 +221,6 @@ public class SkyWars extends GameBase {
 				if (!endStarted) {
 					endStarted = true;
 					canUsersJoin = false;
-					UUID won = null;
 					
 					mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
 						@Override
@@ -244,14 +239,13 @@ public class SkyWars extends GameBase {
 	                		firework.setFireworkMeta(fireworkMeta);
 						}
 					});
-					won = ply.getUniqueId();
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 					giveXP(ply,"Placing #1",200);
 					for (Player player : players) {
 						PlayerData pd = playerHandling.getPlayerData(player);
 						
-						pd.addGamePlayed(realm, player.getUniqueId().equals(won) ? true : false);
+						pd.addGamePlayed(realm, player.getUniqueId().equals(ply.getUniqueId()) ? true : false);
 						//Print the players xp summary
 						printSummary(player,true);
 					}
@@ -487,6 +481,7 @@ public class SkyWars extends GameBase {
 		if (gameBegun && !isSpectating) {	
 			PlayerData pd = playerHandling.getPlayerData(killed);
 			
+			killed.setGameMode(GameMode.ADVENTURE);
 			pd.setSpectatingStatus(true);
 			killed.setAllowFlight(true);
 			playersSpectating.add(killed);
@@ -543,7 +538,7 @@ public class SkyWars extends GameBase {
 		pd.createHealthTags();
 		
 		//Add players to proper scoreboard teams
-		updateUserGroups();
+		updateTeamsFromUserGroups();
 		
 		//Add player to arrays
 		playerKills.put(ply.getName(), 0);

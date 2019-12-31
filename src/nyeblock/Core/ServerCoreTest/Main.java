@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
@@ -13,13 +14,11 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.onarandombox.MultiverseCore.MultiverseCore;
-import com.onarandombox.MultiverseCore.api.MVWorldManager;
-import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 import com.sk89q.worldedit.WorldEdit;
 
 import com.sk89q.worldedit.LocalConfiguration;
 
+import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 import nyeblock.Core.ServerCoreTest.Realms.Hub;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 
@@ -27,7 +26,6 @@ public class Main extends JavaPlugin {
 	private PlayerHandling playerHandling;
 	private CommandHandling commandHandling;
 	private GameHandling gameHandling;
-	private MultiverseCore multiverse;
 	private DatabaseHandling databaseHandling;
 	private TimerHandling timerHandling;
 	private Hub hub;
@@ -36,16 +34,8 @@ public class Main extends JavaPlugin {
 	
 	//When this plugin is enabled, initialize important classes
 	public void onEnable() {
-		WorldCreator creator = new WorldCreator("games_world");
-		creator.environment(Environment.NORMAL);
-		creator.type(WorldType.FLAT);
-		creator.generateStructures(false);
-		creator.generator("VoidGenerator");
-		creator.createWorld();
-		
 		playerHandling = new PlayerHandling(this);
 		gameHandling = new GameHandling(this);
-		multiverse = (MultiverseCore) getServer().getPluginManager().getPlugin("Multiverse-Core");
 		timerHandling = new TimerHandling();
 //		CoreProtect coreProtect = (CoreProtect) getServer().getPluginManager().getPlugin("CoreProtect");
 //		coreProtectAPI = coreProtect.getAPI();
@@ -72,9 +62,6 @@ public class Main extends JavaPlugin {
 		databaseHandling = new DatabaseHandling(this,config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
 		commandHandling = new CommandHandling(this);
 		
-		//Disable multiverse chat tags
-		multiverse.getMVConfig().setPrefixChat(false);
-		
 		//Disable compass teleporting for ops
 		LocalConfiguration worldEditConfig = WorldEdit.getInstance().getConfiguration();
 		worldEditConfig.navigationWandMaxDistance = -1;
@@ -88,11 +75,13 @@ public class Main extends JavaPlugin {
 	}
 	public void onDisable() {
 		//Delete created game worlds
-		MultiverseCore mv = multiverse;
-		for(MultiverseWorld world : mv.getMVWorldManager().getMVWorlds()) {
-			if (!world.getName().toString().matches("world")) {
-				MVWorldManager wm = mv.getMVWorldManager();
-				wm.deleteWorld(world.getName());
+		for(World world : Bukkit.getWorlds()) {
+			String name = world.getName();
+			
+			if (!name.toString().matches("world")) {
+				Bukkit.getServer().unloadWorld(name,false);
+				WorldManager.deleteWorld(new File("./worlds/" + name));
+				new File("./plugins/Async-WorldManager/worldconfigs/" + name + ".yml").delete();
 			}
 		}
 		//Save every players play time and xp
@@ -147,9 +136,6 @@ public class Main extends JavaPlugin {
 	}
 	public CommandHandling getCommandHandling() {
 		return commandHandling;
-	}
-	public MultiverseCore getMultiverseInstance() {
-		return multiverse;
 	}
 	public DatabaseHandling getDatabaseInstance() {
 		return databaseHandling;

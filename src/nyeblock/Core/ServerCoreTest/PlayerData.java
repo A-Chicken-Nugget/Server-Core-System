@@ -23,6 +23,10 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
+
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 
@@ -54,7 +58,7 @@ public class PlayerData {
 	private DatabaseHandling databaseHandlingInstance;
 	//Instance variables
 	private Player player;
-	private int id;
+	private int id = -1;
 	private int points;
 	private double timePlayed;
 	private long timeJoined = System.currentTimeMillis() / 1000L;
@@ -67,6 +71,7 @@ public class PlayerData {
 	private MenuBase openedMenu;
 	private RealmBase currentRealm;
 	private boolean isSpectating = false;
+	private boolean isHidden = false;
 	private boolean queuingGame = false;
 	//Stats
 	private HashMap<String,Integer> realmXp = new HashMap<>();
@@ -81,6 +86,7 @@ public class PlayerData {
 		currentRealm = mainInstance.getHubInstance();
 		databaseHandlingInstance = mainInstance.getDatabaseInstance();
 		player = ply;
+		permissions = player.addAttachment(mainInstance);
 		
 		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
 			@Override
@@ -88,6 +94,7 @@ public class PlayerData {
 				// Teleport to spawn
 				player.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
 				createScoreboard();
+				mainInstance.getHubInstance().join(ply, false);
 			}
 		});
 	}
@@ -237,6 +244,13 @@ public class PlayerData {
 	// GETTERS
 	//
 	
+	/**
+	* Get the players hidden status
+	* @return if the player is hidden
+	*/
+	public boolean getHiddenStatus() {
+		return isHidden;
+	}
 	/**
 	* Get total games won
 	* @return the players total amount of games won for each realm
@@ -422,12 +436,19 @@ public class PlayerData {
 	//
 	
 	/**
+	* Set the players hidden status
+	* @param shouldHide - should the player be hidden
+	*/
+	public void setHidden(boolean shouldHide) {
+		isHidden = shouldHide;
+	}
+	/**
     * Set the players usergroup
     * @param group - group to change to
     */
 	public void setUserGroup(UserGroup group) {
 		userGroup = group;
-		currentRealm.updateUserGroups();
+		currentRealm.updateTeamsFromUserGroups();
 		mainInstance.getDatabaseInstance().query("UPDATE users SET userGroup = " + group.getValue() + " WHERE id = " + id, 0, true);
 	}
 	/**
@@ -469,7 +490,6 @@ public class PlayerData {
     */
 	public void setData(int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
 		this.id = id;
-		permissions = player.addAttachment(mainInstance);
 		this.points = points;
 		this.timePlayed = timePlayed;
 		this.ip = ip;
@@ -785,6 +805,7 @@ public class PlayerData {
 			player.setFireTicks(0);
 			//Reset title
 			player.sendTitle("", "", 0, 0, 0);
+			player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
 			//Reset spectating status
 			setSpectatingStatus(false);
 			player.setLevel(0);

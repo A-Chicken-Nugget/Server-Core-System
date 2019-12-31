@@ -6,15 +6,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.WorldType;
 import org.bukkit.World.Environment;
+import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
 
-import com.onarandombox.MultiverseCore.api.MVWorldManager;
-
+import de.xxschrandxx.awm.api.config.WorldData;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Interfaces.XY;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.VoidWorldGenerator;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.PvP;
@@ -180,8 +181,17 @@ public class GameHandling {
 					gameToJoin.setGamePos(addGameToList(gameToJoin));
 					
 					//Create void world
-					MVWorldManager mvwm = mainInstance.getMultiverseInstance().getMVWorldManager();
-					mvwm.addWorld(worldName, Environment.NORMAL, null, WorldType.FLAT, false, "VoidGenerator");
+					Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+						@Override
+						public void run() {
+							WorldData wd = new WorldData();
+							wd.setWorldName(worldName);
+							wd.setEnviroment(Environment.NORMAL);
+							wd.setWorldType(WorldType.FLAT);
+							wd.setGenerator(new VoidWorldGenerator());
+							de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
+						}
+					});
 					
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				} else {
@@ -200,8 +210,17 @@ public class GameHandling {
 					gameToJoin.setGamePos(addGameToList(gameToJoin));
 					
 					//Create void world
-					MVWorldManager mvwm = mainInstance.getMultiverseInstance().getMVWorldManager();
-					mvwm.addWorld(worldName, Environment.NORMAL, null, WorldType.FLAT, false, "VoidGenerator");			
+					Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+						@Override
+						public void run() {
+							WorldData wd = new WorldData();
+							wd.setWorldName(worldName);
+							wd.setEnviroment(Environment.NORMAL);
+							wd.setWorldType(WorldType.FLAT);
+							wd.setGenerator(new VoidWorldGenerator());
+							de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
+						}
+					});
 					
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				} else {
@@ -220,8 +239,17 @@ public class GameHandling {
 					gameToJoin.setGamePos(addGameToList(gameToJoin));
 					
 					//Create void world
-					MVWorldManager mvwm = mainInstance.getMultiverseInstance().getMVWorldManager();
-					mvwm.addWorld(worldName, Environment.NORMAL, null, WorldType.FLAT, false, "VoidGenerator");		
+					Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+						@Override
+						public void run() {
+							WorldData wd = new WorldData();
+							wd.setWorldName(worldName);
+							wd.setEnviroment(Environment.NORMAL);
+							wd.setWorldType(WorldType.FLAT);
+							wd.setGenerator(new VoidWorldGenerator());
+							de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
+						}
+					});
 					
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				} else {
@@ -245,8 +273,17 @@ public class GameHandling {
 							gameToJoin.setGamePos(addGameToList(gameToJoin));
 							
 							//Create void world
-							MVWorldManager mvwm = mainInstance.getMultiverseInstance().getMVWorldManager();
-							mvwm.addWorld(worldName, Environment.NORMAL, null, WorldType.FLAT, false, "VoidGenerator");		
+							Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+								@Override
+								public void run() {
+									WorldData wd = new WorldData();
+									wd.setWorldName(worldName);
+									wd.setEnviroment(Environment.NORMAL);
+									wd.setWorldType(WorldType.FLAT);
+									wd.setGenerator(new VoidWorldGenerator());
+									de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
+								}
+							});
 							
 							mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 						} else {
@@ -267,8 +304,17 @@ public class GameHandling {
 							gameToJoin.setGamePos(addGameToList(gameToJoin));
 							
 							//Create void world
-							MVWorldManager mvwm = mainInstance.getMultiverseInstance().getMVWorldManager();
-							mvwm.addWorld(worldName, Environment.NORMAL, null, WorldType.FLAT, false, "VoidGenerator");		
+							Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+								@Override
+								public void run() {
+									WorldData wd = new WorldData();
+									wd.setWorldName(worldName);
+									wd.setEnviroment(Environment.NORMAL);
+									wd.setWorldType(WorldType.FLAT);
+									wd.setGenerator(new VoidWorldGenerator());
+									de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
+								}
+							});
 							
 							mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 						} else {
@@ -284,20 +330,22 @@ public class GameHandling {
 	} 
 	public void checkWorld(Player ply, GameBase game) {
 		PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-				
-		mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
 		
-		if (game.getJoinStatus() && game.getPlayerCount() < game.getMaxPlayers()) {						
-			mainInstance.getPlayerHandlingInstance().getPlayerData(ply).clearScoreboard();
-			mainInstance.getHubInstance().leave(ply, true, null);
+		if (game.getJoinStatus()) {			
+			mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
 			
-			//Join game
-			game.join(ply,true);
-			
-			playerData.setQueuingStatus(false);
-		} else {
-			playerData.setQueuingStatus(false);
-			ply.sendMessage(ChatColor.YELLOW + "Unable to join game. Please try again.");
+			if (game.getPlayerCount() < game.getMaxPlayers()) {						
+				mainInstance.getPlayerHandlingInstance().getPlayerData(ply).clearScoreboard();
+				mainInstance.getHubInstance().leave(ply, true, null);
+				
+				//Join game
+				game.join(ply,true);
+				
+				playerData.setQueuingStatus(false);
+			} else {
+				playerData.setQueuingStatus(false);
+				ply.sendMessage(ChatColor.YELLOW + "Unable to join game. Please try again.");
+			}
 		}
 	}
 }

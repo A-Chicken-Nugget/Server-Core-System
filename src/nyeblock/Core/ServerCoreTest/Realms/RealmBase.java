@@ -44,7 +44,73 @@ public abstract class RealmBase {
 	// RANDOM METHODS
 	//
 	
-	public void updateUserGroups() {
+	/**
+	* Updates all the players hidden/shown players
+	*/
+	public void updateHiddenShownPlayers() {
+		for (Player ply : players) {
+			PlayerData pd = playerHandling.getPlayerData(ply);
+			
+			for (Player ply2 : players) {
+				PlayerData pd2 = playerHandling.getPlayerData(ply2);
+				
+				if (!ply.canSee(ply2)) {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players")) || !pd.getHiddenStatus()) {
+							System.out.println(ply2.getName() + " shown for " + ply.getName());
+							ply.showPlayer(mainInstance,ply2);
+						}
+					} else {
+						if (!pd.getHiddenStatus()) {
+							System.out.println(ply2.getName() + " shown for " + ply.getName());
+							ply.showPlayer(mainInstance,ply2);						
+						}
+					}
+				} else {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players")) || pd.getHiddenStatus()) {
+							System.out.println(ply2.getName() + " hidden for " + ply.getName());
+							ply.hidePlayer(mainInstance,ply2);
+						}
+					} else {
+						if (pd.getHiddenStatus()) {
+							System.out.println(ply2.getName() + " hidden for " + ply.getName());
+							ply.hidePlayer(mainInstance,ply2);
+						}
+					}
+				}
+				if (!ply2.canSee(ply)) {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (!Boolean.parseBoolean(pd2.getCustomDataKey("hide_players")) || !pd2.getHiddenStatus()) {
+							System.out.println(ply.getName() + " shown for " + ply2.getName());
+							ply2.showPlayer(mainInstance,ply);
+						}
+					} else {
+						if (!pd2.getHiddenStatus()) {
+							System.out.println(ply.getName() + " shown for " + ply2.getName());
+							ply2.showPlayer(mainInstance,ply);						
+						}
+					}
+				} else {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (Boolean.parseBoolean(pd2.getCustomDataKey("hide_players")) || pd2.getHiddenStatus()) {
+							System.out.println(ply.getName() + " hidden for " + ply2.getName());
+							ply2.hidePlayer(mainInstance,ply);
+						}
+					} else {
+						if (pd2.getHiddenStatus()) {
+							System.out.println(ply.getName() + " hidden for " + ply2.getName());
+							ply2.hidePlayer(mainInstance,ply);
+						}
+					}
+				}
+			}
+		}
+	}
+	/**
+	* Updates all the players teams according to the players usergroup
+	*/
+	public void updateTeamsFromUserGroups() {
 		for (Player ply : players) {	
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			
@@ -120,7 +186,7 @@ public abstract class RealmBase {
     * @param isGame - Is the player joining a game
     */
 	public void join(Player ply, boolean isGame) {
-		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Set the players current game
 		if (pd.getCurrentRealm() != this) {
@@ -147,7 +213,7 @@ public abstract class RealmBase {
 		//Show/hide players accordingly
 		for (Player ply2 : Bukkit.getOnlinePlayers()) {
 			if (players.contains(ply2)) {
-				PlayerData pd2 = mainInstance.getPlayerHandlingInstance().getPlayerData(ply2);
+				PlayerData pd2 = playerHandling.getPlayerData(ply2);
 				
 				if (!ply.canSee(ply2)) {
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
@@ -155,11 +221,17 @@ public abstract class RealmBase {
 							ply.showPlayer(mainInstance,ply2);
 						}
 					} else {
-						ply.showPlayer(mainInstance,ply2);						
+						if (!pd2.getHiddenStatus()) {							
+							ply.showPlayer(mainInstance,ply2);						
+						}
 					}
 				} else {
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
 						if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+							ply.hidePlayer(mainInstance,ply2);
+						}
+					} else {
+						if (pd2.getHiddenStatus()) {
 							ply.hidePlayer(mainInstance,ply2);
 						}
 					}
@@ -170,12 +242,18 @@ public abstract class RealmBase {
 							ply2.showPlayer(mainInstance,ply);
 						}
 					} else {
-						ply2.showPlayer(mainInstance,ply);						
+						if (!pd.getHiddenStatus()) {									
+							ply2.showPlayer(mainInstance,ply);						
+						}
 					}
 				} else {
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
 						if (Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
 							ply2.hidePlayer(mainInstance,ply);
+						}
+					} else {
+						if (pd.getHiddenStatus()) {
+							ply.hidePlayer(mainInstance,ply2);
 						}
 					}
 				}
@@ -204,12 +282,6 @@ public abstract class RealmBase {
 				} else {
 					mainInstance.getTimerInstance().deleteTimer("setGamemode_" + ply.getUniqueId());
 				}
-			}
-		});
-		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
-			@Override
-			public void run() {
-				ply.setGameMode(GameMode.ADVENTURE);
 			}
 		});
 	}

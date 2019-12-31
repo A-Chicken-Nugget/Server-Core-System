@@ -1,5 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,6 +31,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
+import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -128,6 +130,13 @@ public class PvP extends GameBase {
 		}
 	}
 	/**
+	* What needs to be ran when the world is deleted
+	*/
+	public void onDelete() {
+		mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
+		mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
+	}
+	/**
     * Run main checks for the game
     */
 	public void mainFunctions() {
@@ -146,10 +155,7 @@ public class PvP extends GameBase {
 		}
 		
 		//Check if the server is empty
-		if (players.size() > 0) {        			
-			if (emptyCount != 0) {
-				emptyCount = 0;
-			}
+		if (players.size() > 0) {
 			if (!active) {
 				if (players.size() >= minPlayers || forceStart) {					
 					if (readyCount == 0) {
@@ -195,21 +201,6 @@ public class PvP extends GameBase {
 					}
 					messageCount++;
 				}
-			}
-		} else {
-			emptyCount++;
-			
-			//Check if the server has been empty for 6 seconds
-			if (emptyCount >= 10) {
-				canUsersJoin = false;
-				
-				mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
-				mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
-				
-				//Delete world from server
-				mainInstance.getMultiverseInstance().deleteWorld(worldName);
-				//Remove game from games array
-				mainInstance.getGameInstance().removeGameFromList(gamePos);
 			}
 		}
 	}
@@ -384,6 +375,7 @@ public class PvP extends GameBase {
 			PlayerData pd = playerHandling.getPlayerData(killed);
 			isSpectating = true;
 			
+			killed.setGameMode(GameMode.ADVENTURE);
 			pd.setSpectatingStatus(true);
 			killed.setAllowFlight(true);
 			playersSpectating.add(killed);

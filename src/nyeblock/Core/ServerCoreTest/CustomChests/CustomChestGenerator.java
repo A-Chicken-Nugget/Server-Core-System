@@ -11,6 +11,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
@@ -35,10 +36,10 @@ public class CustomChestGenerator {
 			//Spawn chest
 			Block block = loc.getBlock();
 			if (!block.getType().equals(Material.CHEST)) {
-				block.setType(Material.CHEST);
+	            block.setType(Material.CHEST);
 			}
 			//Put floating text above chest
-			HologramsAPI.createHologram(mainInstance, loc.add(0, 1.5, 0)).appendTextLine(ChatColor.YELLOW + entry.getValue().toString() + " Tier");
+            HologramsAPI.createHologram(mainInstance, loc.add(0, 1.5, 0)).appendTextLine(ChatColor.YELLOW + entry.getValue().toString() + " Tier");
 			//Get chests inventory
 			Chest chest = (Chest)block.getState();
 			Inventory inv = chest.getBlockInventory();

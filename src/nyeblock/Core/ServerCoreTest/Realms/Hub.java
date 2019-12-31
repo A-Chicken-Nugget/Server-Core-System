@@ -132,7 +132,7 @@ public class Hub extends RealmBase {
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		
 		//Add players to proper scoreboard teams
-		updateUserGroups();
+		updateTeamsFromUserGroups();
 		
 		pd.setCurrentRealm(this);
 	}

@@ -1,5 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,17 +9,25 @@ import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.WorldType;
+import org.bukkit.World.Environment;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 import com.sk89q.worldedit.EditSession;
 
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.SchematicHandling;
 import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
 import nyeblock.Core.ServerCoreTest.Interfaces.XY;
+import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.RealmBase {
@@ -42,6 +51,7 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	protected boolean canUsersJoin = false;
 	protected boolean forceStart = false;
 	protected int playTimeCount = 0;
+	private boolean isSchematicSet = false;
 	
 	protected XY gamePos;
 	protected boolean isSchemSet = false;
@@ -55,64 +65,109 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 		
 		//Create timer to check when the game world is created
 		mainInstance.getTimerInstance().createTimer("worldCheck_" + worldName, 1, 0, "checkWorld", true, null, this);
+		
+		//Create timer to delete world when empty
+		mainInstance.getTimerInstance().createTimer2("deleteCheck_" + worldName, 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (players.size() > 0) {        			
+					if (emptyCount != 0) {
+						emptyCount = 0;
+					}
+				} else {
+					if (canUsersJoin) {				
+						emptyCount++;
+						
+						if (emptyCount >= 10) {
+							canUsersJoin = false;
+							onDelete();
+							
+							//Delete world from server
+							Bukkit.getServer().unloadWorld(worldName,false);
+							Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+								@Override
+								public void run() {
+									WorldManager.deleteWorld(new File("./worlds/" + worldName));
+									new File("./plugins/Async-WorldManager/worldconfigs/" + worldName + ".yml").delete();
+								}
+							});
+							System.out.println("[Core]: Deleting " + realm.toString() + " world. Name: " + worldName);
+							//Remove game from games array
+							mainInstance.getGameInstance().removeGameFromList(gamePos);
+						}
+					}
+				}
+			}
+		});
 	}
 	
+	public void onDelete() {}
 	/**
     * Checks if the world has been generated. If so then it sets a schematic and allows entry to the game
     */
 	public void checkWorld() {
-		if (Bukkit.getWorld(worldName) != null && !canUsersJoin) {
-			//Set map schematic
-			SchematicHandling sh = new SchematicHandling();
-			String schem = sh.setSchematic(mainInstance,this);
-			//Set map name
-			map = schem;
-			
-			//Get map points
+		if (Bukkit.getWorld(worldName) != null && !isSchematicSet) {
+			GameBase instance = this;
 			GameMapInfo gmi = new GameMapInfo();
-			ArrayList<HashMap<String,Location>> points = gmi.getMapInfo(this);
-			ArrayList<Location> spawnPoints = new ArrayList<Location>();
-			Location safeZonePoint1 = null;
-			Location safeZonePoint2 = null;
 			
-			for (int i = 0; i < maxPlayers; i++) {
-				spawnPoints.add(i,null);
-			}
-			
-			//Go through map points
-			for(int i = 0; i < points.size(); i++) {
-				HashMap<String,Location> point = points.get(i);
-				
-				for(Map.Entry<String, Location> entry : point.entrySet()) {
-					if (entry.getKey().contains("spawn")) {
-						String spawn[] = entry.getKey().split("_");
-						
-						spawnPoints.set(Integer.parseInt(spawn[1])-1,entry.getValue());
-					} else if (entry.getKey().equalsIgnoreCase("graceBound1")) {
-						safeZonePoint1 = entry.getValue();
-					} else if (entry.getKey().equalsIgnoreCase("graceBound2")) {
-						safeZonePoint2 = entry.getValue();
+			Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+				@Override
+				public void run() {
+					//Set map schematic
+					SchematicHandling sh = new SchematicHandling();
+					String schem = sh.setSchematic(mainInstance,instance);
+					//Set map name
+					map = schem;
+					
+					//Spawn/fill chests
+					if (realm == Realm.SKYWARS) {				
+						new BukkitRunnable() {
+					        public void run() {
+								CustomChestGenerator ccg = new CustomChestGenerator(mainInstance);
+								ccg.setChests(gmi.getChestInfo(instance),Bukkit.getWorld(worldName));
+							}
+					    }.runTask(mainInstance);
 					}
+					
+					//Get map points
+					ArrayList<HashMap<String,Location>> points = gmi.getMapInfo(instance);
+					ArrayList<Location> spawnPoints = new ArrayList<Location>();
+					Location safeZonePoint1 = null;
+					Location safeZonePoint2 = null;
+					
+					for (int i = 0; i < maxPlayers; i++) {
+						spawnPoints.add(i,null);
+					}
+					
+					//Go through map points
+					for(int i = 0; i < points.size(); i++) {
+						HashMap<String,Location> point = points.get(i);
+						
+						for(Map.Entry<String, Location> entry : point.entrySet()) {
+							if (entry.getKey().contains("spawn")) {
+								String spawn[] = entry.getKey().split("_");
+								
+								spawnPoints.set(Integer.parseInt(spawn[1])-1,entry.getValue());
+							} else if (entry.getKey().equalsIgnoreCase("graceBound1")) {
+								safeZonePoint1 = entry.getValue();
+							} else if (entry.getKey().equalsIgnoreCase("graceBound2")) {
+								safeZonePoint2 = entry.getValue();
+							}
+						}
+					}
+					spawnPoints.removeAll(Collections.singleton(null));
+					
+					if (realm == Realm.KITPVP) {	
+						//Set grace points
+						instance.safeZonePoint1 = safeZonePoint1.toVector();
+						instance.safeZonePoint2 = safeZonePoint2.toVector();
+					}
+					//Set spawn points
+					spawns = spawnPoints;
+					
+					instance.setJoinStatus(true);
 				}
-			}
-			
-			spawnPoints.removeAll(Collections.singleton(null));
-			
-			if (realm == Realm.KITPVP) {	
-				//Set grace points
-				this.safeZonePoint1 = safeZonePoint1.toVector();
-				this.safeZonePoint2 = safeZonePoint2.toVector();
-			}
-			//Set spawn points
-			spawns = spawnPoints;
-			
-			if (realm == Realm.SKYWARS) {				
-				//Spawn/fill chests
-				CustomChestGenerator ccg = new CustomChestGenerator(mainInstance);
-				ccg.setChests(gmi.getChestInfo(this),Bukkit.getWorld(worldName));
-			}
-			
-			canUsersJoin = true;
+			});
 			mainInstance.getTimerInstance().deleteTimer("worldCheck_" + worldName);
 		}
 	}
@@ -178,8 +233,10 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 		
 		playerJoin(ply);
 		
-		//Show player has joined	
-		messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
+		if (!playerHandling.getPlayerData(ply).getHiddenStatus()) {			
+			//Show player has joined	
+			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has joined the game!");
+		}
 	}
 	public Location playerRespawn(Player ply) { return null; }
 	
@@ -305,6 +362,9 @@ public abstract class GameBase extends nyeblock.Core.ServerCoreTest.Realms.Realm
 	//
 	// SETTERS
 	//
+	public void setJoinStatus(boolean status) {
+		canUsersJoin = status;
+	}
 	public void setEditSession(EditSession editSession) {
 		this.editSession = editSession;
 	}

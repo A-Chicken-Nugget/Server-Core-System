@@ -17,6 +17,7 @@ import nyeblock.Core.ServerCoreTest.Commands.Ban;
 import nyeblock.Core.ServerCoreTest.Commands.BanIp;
 import nyeblock.Core.ServerCoreTest.Commands.CommandBase;
 import nyeblock.Core.ServerCoreTest.Commands.ForceStart;
+import nyeblock.Core.ServerCoreTest.Commands.Hide;
 import nyeblock.Core.ServerCoreTest.Commands.Leave;
 import nyeblock.Core.ServerCoreTest.Commands.Send;
 import nyeblock.Core.ServerCoreTest.Commands.SetPermission;
@@ -49,6 +50,8 @@ public class CommandHandling implements CommandExecutor, TabCompleter {
 		commandPermissions.put("send", null);
 		commands.put(new SetUserGroup(mainInstance).getInstance(),"setUserGroup");
 		commandPermissions.put("setUserGroup", Arrays.asList(UserGroup.ADMIN));
+		commands.put(new Hide(mainInstance).getInstance(),"hide");
+		commandPermissions.put("hide", Arrays.asList(UserGroup.ADMIN));
 		
 		//
 		// END COMMANDS

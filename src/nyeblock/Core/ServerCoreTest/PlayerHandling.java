@@ -44,6 +44,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
@@ -53,12 +54,10 @@ import org.bukkit.inventory.EnchantingInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.projectiles.ProjectileSource;
-
-import com.onarandombox.MultiverseCore.MultiverseCore;
-import com.onarandombox.MultiverseCore.api.MVWorldManager;
-import com.onarandombox.MultiverseCore.api.MultiverseWorld;
+import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
+import nyeblock.Core.ServerCoreTest.Interfaces.DamagePlayer;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 import nyeblock.Core.ServerCoreTest.Items.MenuBase;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -73,6 +72,7 @@ import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
 	private HashMap<UUID, PlayerData> playersData = new HashMap<UUID, PlayerData>();
+	private HashMap<UUID, DamagePlayer> lastPlayerDamage = new HashMap<UUID, DamagePlayer>();
 	private HashMap<UUID, ArrayList<Long>> playerChatMessages = new HashMap<>();
 	private World world = Bukkit.getWorld("world");
 	private boolean worldsChecked = false;
@@ -308,13 +308,10 @@ public class PlayerHandling implements Listener {
 							+ ChatColor.RESET.toString() + ChatColor.YELLOW + " for their first time on the server!");
 						}
 					}
-					mainInstance.getHubInstance().join(ply, false);
 				}
 			});
 			playersData.put(ply.getUniqueId(), playerData);
 			playerChatMessages.put(ply.getUniqueId(), new ArrayList<Long>());
-			
-			playerData.setRealm(Realm.HUB,false,false,true);
 		} else {
 			mainInstance.getTimerInstance().deleteTimer("leave_" + ply.getUniqueId());
 			PlayerData pd = getPlayerData(ply);
@@ -395,19 +392,19 @@ public class PlayerHandling implements Listener {
 		}
 
 		// Check if there are any undeleted worlds that weren't deleted on the previous server shutdown
-		if (!worldsChecked) {
-			worldsChecked = true;
-			MultiverseCore mv = mainInstance.getMultiverseInstance();
-
-			for (MultiverseWorld world : mv.getMVWorldManager().getMVWorlds()) {
-				if (!world.getName().toString().matches("world")) {
-					MVWorldManager wm = mv.getMVWorldManager();
-					wm.deleteWorld(world.getName());
-				}
-			}
-		}
+		//TODO REDO
+//		if (!worldsChecked) {
+//			worldsChecked = true;
+//			MultiverseCore mv = mainInstance.getMultiverseInstance();
+//
+//			for (MultiverseWorld world : mv.getMVWorldManager().getMVWorlds()) {
+//				if (!world.getName().toString().matches("world")) {
+//					MVWorldManager wm = mv.getMVWorldManager();
+//					wm.deleteWorld(world.getName());
+//				}
+//			}
+//		}
 	}
-
 	// Handle when a player leaves the server
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent event) {
@@ -445,7 +442,6 @@ public class PlayerHandling implements Listener {
 		//Leave realm
 		pd.getCurrentRealm().leave(ply, true, null);
 	}
-
 	// Handle when a player respawns
 	@EventHandler
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
@@ -459,6 +455,16 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		
 		if (!ply.hasPermission("nyeblock.canMove")) {
+			event.setCancelled(true);
+		}
+	}
+	//Handle when a player attempts to pickup an item
+	@EventHandler
+	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+		Player ply = event.getPlayer();
+		PlayerData pd = getPlayerData(ply);
+		
+		if (pd.getSpectatingStatus() || pd.getHiddenStatus()) {
 			event.setCancelled(true);
 		}
 	}
@@ -514,6 +520,15 @@ public class PlayerHandling implements Listener {
 				event.setCancelled(true);
 			} else if (damaged.getHealth() <= 0) {
 				event.setCancelled(true);
+			} else {
+				DamagePlayer dp = lastPlayerDamage.get(damaged.getUniqueId());
+				
+				if (dp != null) {
+					dp.setPlayer(damager);
+					dp.setTime(System.currentTimeMillis());
+				} else {
+					lastPlayerDamage.put(damaged.getUniqueId(), new DamagePlayer(damager,System.currentTimeMillis()));
+				}
 			}
 		} else if (event.getDamager() instanceof Firework && event.getEntity() instanceof Player) {
 			event.setCancelled(true);
@@ -526,13 +541,15 @@ public class PlayerHandling implements Listener {
 
 		if (ent instanceof Player) {
 			Player ply = (Player)ent;
-			PlayerData playerData = playersData.get(ply.getUniqueId());
-
+			PlayerData playerData = getPlayerData(ply);
+			
 			if (playerData != null) {				
 				if (!ply.hasPermission("nyeblock.canBeDamaged")) {
 					event.setCancelled(true);
 				} else {
-					if (event.getCause() == DamageCause.FALL) {
+					DamageCause cause = event.getCause();
+					
+					if (cause == DamageCause.FALL) {
 						if (!ply.hasPermission("nyeblock.canTakeFallDamage")
 								|| ply.hasPermission("nyeblock.tempNoDamageOnFall")) {
 							playerData.setPermission("nyeblock.tempNoDamageOnFall", false);
@@ -562,6 +579,12 @@ public class PlayerHandling implements Listener {
 			} else if (projectile instanceof Egg) {
 				attacked.damage(0.0001);
 				attacked.setVelocity(attacked.getVelocity().add(attacked.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(1)));
+			} else if (projectile instanceof Fireball) {
+				Vector knockback = attacked.getVelocity();
+				knockback.add(new Vector(0,.3,0));
+				knockback.add(attacker.getLocation().getDirection().multiply(1.5));
+				
+				attacked.setVelocity(knockback);
 			}
 		}
 	}
@@ -569,7 +592,7 @@ public class PlayerHandling implements Listener {
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		Player killed = event.getEntity();
-		Player attacker = event.getEntity().getKiller();
+		Player attacker = killed.getKiller();
 		PlayerData playerData = playersData.get(killed.getUniqueId());
 		RealmBase game = playerData.getCurrentRealm();
 		
@@ -588,7 +611,27 @@ public class PlayerHandling implements Listener {
 			event.getDrops().clear();
 		}
 		
-		game.playerDeath(killed, (attacker instanceof Player ? attacker : null));
+		if (attacker != null) {
+			game.playerDeath(killed, attacker);			
+		} else {
+			Entity ent = killed.getLastDamageCause().getEntity();
+			
+			if (ent instanceof Player && (Player)ent != killed) {
+				game.playerDeath(killed, (Player)ent);		
+			} else {
+				DamagePlayer dp = lastPlayerDamage.get(killed.getUniqueId());
+				
+				if (dp != null) {				
+					if ((System.currentTimeMillis()-dp.getTime())/1000L < 10) {
+						game.playerDeath(killed, dp.getPlayer());	
+					} else {
+						game.playerDeath(killed, null);	
+					}
+				} else {					
+					game.playerDeath(killed, null);	
+				}
+			}
+		}
 	}
 	// Handle when a player shoots a bow
 	@EventHandler
@@ -739,6 +782,16 @@ public class PlayerHandling implements Listener {
 					event.setCancelled(true);
 				}
 			}
+		}
+	}
+	//Handle when a player interacts
+	@EventHandler
+	public void onPlayerInteract(PlayerInteractEvent event) {
+		Player ply = event.getPlayer();
+		PlayerData pd = getPlayerData(ply);
+		
+		if (pd.getSpectatingStatus() || pd.getHiddenStatus()) {
+			event.setCancelled(true);
 		}
 	}
 	//Handle when a player interacts with an entity

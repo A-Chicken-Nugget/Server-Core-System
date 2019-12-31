@@ -1,5 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
+import org.bukkit.GameMode;
 import org.bukkit.FireworkEffect.Type;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -31,6 +33,7 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
+import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 
 @SuppressWarnings({"deprecation","serial"})
 public class StepSpleef extends GameBase {
@@ -176,13 +179,21 @@ public class StepSpleef extends GameBase {
 		while(itr.hasNext())
 		{
 			Map.Entry<Vector, Long> entry = itr.next();
-			if (System.currentTimeMillis() - entry.getValue() >= 500L) {
+			if (System.currentTimeMillis() - entry.getValue() >= 300L) {
 				Vector vec = entry.getKey();
 				
 				Bukkit.getWorld(worldName).getBlockAt(new Location(Bukkit.getWorld(worldName),vec.getX(),vec.getY(),vec.getZ())).setType(Material.AIR);
 				itr.remove();
 			}
 		}
+	}
+	/**
+	* What needs to be ran when the world is deleted
+	*/
+	public void onDelete() {
+		mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
+		mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
+		mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
 	}
 	/**
     * Run main checks for the game
@@ -214,10 +225,7 @@ public class StepSpleef extends GameBase {
 			}
 		}
 		//Check if the server is empty
-		if (players.size() > 0) {        			
-			if (emptyCount != 0) {
-				emptyCount = 0;
-			}
+		if (players.size() > 0) {
 			if (!active) {
 				if (players.size() >= minPlayers || forceStart) {
 					if (readyCount == 0) {
@@ -259,22 +267,6 @@ public class StepSpleef extends GameBase {
 					}
 					messageCount++;
 				}
-			}
-		} else {
-			emptyCount++;
-			
-			//Check if the server has been empty for 6 seconds
-			if (emptyCount >= 10) {
-				canUsersJoin = false;
-				
-				mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
-				mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
-				mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
-				
-				//Delete world from server
-				mainInstance.getMultiverseInstance().deleteWorld(worldName);
-				//Remove game from games array
-				mainInstance.getGameInstance().removeGameFromList(gamePos);
 			}
 		}
 	}
@@ -420,6 +412,7 @@ public class StepSpleef extends GameBase {
 			if (!isSpectating) {	
 				PlayerData pd = playerHandling.getPlayerData(killed);
 				
+				killed.setGameMode(GameMode.ADVENTURE);
 				pd.setSpectatingStatus(true);
 				playersSpectating.add(killed);
 				killed.setAllowFlight(true);
@@ -460,7 +453,7 @@ public class StepSpleef extends GameBase {
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
 		
 		//Add players to proper scoreboard teams
-		updateUserGroups();
+		updateTeamsFromUserGroups();
 		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
 	}

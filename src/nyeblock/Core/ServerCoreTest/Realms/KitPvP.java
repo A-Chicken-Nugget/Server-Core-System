@@ -1,5 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Items.Fireball;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
+import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 
 @SuppressWarnings("deprecation")
 public class KitPvP extends GameBase {
@@ -67,9 +69,6 @@ public class KitPvP extends GameBase {
 		
 		//Scoreboard timer
 		mainInstance.getTimerInstance().createTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", false, null, this);
-		
-		//Delete timer
-		mainInstance.getTimerInstance().createTimer("delete_" + worldName, 1, 0, "checkForDeletion", false, null, this);
 	}
 	
 	//
@@ -88,28 +87,11 @@ public class KitPvP extends GameBase {
 		}
 	}
 	/**
-    * Checks if the server is empty, if it is for 10 seconds then delete timers and world
+    * What needs to be ran when the world is deleted
     */
-	public void checkForDeletion() {
-		if (players.size() > 0) {        			
-			if (emptyCount != 0) {
-				emptyCount = 0;
-			}
-		} else {
-			emptyCount++;
-			
-			if (emptyCount >= 10) {
-				canUsersJoin = false;
-				
-				//Delete timers
-				mainInstance.getTimerInstance().deleteTimer("scoreboard_" + worldName);
-				mainInstance.getTimerInstance().deleteTimer("delete_" + worldName);
-				//Delete world from server
-				mainInstance.getMultiverseInstance().deleteWorld(worldName);
-				//Remove game from games array
-				mainInstance.getGameInstance().removeGameFromList(gamePos);
-			}
-		}
+	public void onDelete() {
+		mainInstance.getTimerInstance().deleteTimer("scoreboard_" + worldName);
+		mainInstance.getTimerInstance().deleteTimer("delete_" + worldName);
 	}
 	/**
     * Sets the kitpvp scoreboard and manages world/grace zone
@@ -486,7 +468,7 @@ public class KitPvP extends GameBase {
 		playerKits.put(ply.getName(),"knight");
 		
 		//Add players to proper scoreboard teams
-		updateUserGroups();
+		updateTeamsFromUserGroups();
 		
 		//Teleport to random spawn
 		Location randSpawn = getRandomSpawnPoint();
