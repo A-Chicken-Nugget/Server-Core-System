@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import com.boydti.fawe.FaweAPI;
 import com.boydti.fawe.object.clipboard.DiskOptimizedClipboard;
@@ -35,10 +36,14 @@ import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.transform.Transform;
+import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.session.ClipboardHolder;
 
+import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.GameMapInfo;
 
 public class SchematicHandling {
 	//Create a schematic in a world based on the game
@@ -66,9 +71,19 @@ public class SchematicHandling {
 		String[] mapName = removeExtension[0].split("_");
 		System.out.println("[Core] Creating new " + realm.toString() + " game. Using map " + mapName[1]);
 		
+		BukkitWorld world = new BukkitWorld(Bukkit.getWorld(game.getWorldName()));
+		
+		//Paste schematic
 		DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(schem);
-		clipboard.toClipboard().paste(new BukkitWorld(Bukkit.getWorld(game.getWorldName())), BlockVector3.at(-42, 64, -6),false,false,null);
+		clipboard.toClipboard().paste(world, BlockVector3.at(-42, 64, -6),false,false,null);
 		clipboard.close();
+		
+		//Fix lighting
+		new BukkitRunnable() {
+	        public void run() {
+	        	Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "/cleanlight world " + game.getWorldName());
+			}
+	    }.runTask(mainInstance);
 		
 		game.setSchemStatus(true);
 	    

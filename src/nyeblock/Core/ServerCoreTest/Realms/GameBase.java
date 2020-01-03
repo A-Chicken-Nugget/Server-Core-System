@@ -84,8 +84,6 @@ public abstract class GameBase extends RealmBase {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		
-		GameBase instance = this;
-		
 		//Create timer to check when the game world is created
 		mainInstance.getTimerInstance().createTimer("worldCheck_" + worldName, 1, 0, "checkWorld", true, null, this);
 		

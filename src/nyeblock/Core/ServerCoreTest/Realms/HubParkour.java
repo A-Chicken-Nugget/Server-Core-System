@@ -375,9 +375,8 @@ public class HubParkour extends RealmBase {
 	/**
     * Handle when a player leaves parkour
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage) {
+	public void playerLeave(Player ply) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
-		System.out.println("Ran 1");
 		
 		playerCheckPoints.remove(ply.getName());
 		playerTimes.remove(ply.getName());

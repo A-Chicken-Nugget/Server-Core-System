@@ -127,7 +127,6 @@ public class Hub extends RealmBase {
 	*/
 	public void playerJoin(Player ply) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
-		System.out.println("ran2");
 		
 		//Setup team
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
@@ -140,7 +139,7 @@ public class Hub extends RealmBase {
 	/**
 	* When a player leaves the hub
 	*/
-	public void playerLeave(Player ply, boolean showLeaveMessage, boolean moveToHub) {
+	public void playerLeave(Player ply) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
 		
 		//Clear scoreboard info
