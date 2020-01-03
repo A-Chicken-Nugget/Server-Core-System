@@ -11,6 +11,8 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings("serial")
@@ -41,8 +43,8 @@ public class HubMenu extends MenuBase {
 		}}, new Runnable() {
 			@Override
 			public void run() {
-				mainInstance.getGameInstance().joinGame(player, Realm.KITPVP);
 				player.closeInventory();
+				mainInstance.getGameInstance().joinGame(player, Realm.KITPVP);
 			}
 		});
 		
@@ -60,8 +62,8 @@ public class HubMenu extends MenuBase {
 		}}, new Runnable() {
             @Override
             public void run() {       
-            	mainInstance.getGameInstance().joinGame(player, Realm.SKYWARS);
             	player.closeInventory();
+            	mainInstance.getGameInstance().joinGame(player, Realm.SKYWARS);
             }
 		});
 		
@@ -78,8 +80,8 @@ public class HubMenu extends MenuBase {
 		}}, new Runnable() {
             @Override
             public void run() {       
-            	mainInstance.getGameInstance().joinGame(player, Realm.STEPSPLEEF);
             	player.closeInventory();
+            	mainInstance.getGameInstance().joinGame(player, Realm.STEPSPLEEF);
             }
 		});
 		
@@ -147,6 +149,7 @@ public class HubMenu extends MenuBase {
 		
 		//Fist
 		subMenu.addOption(12, Material.RABBIT, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fist Fighting", new ArrayList<String>() {{
+			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(PvPMode.DUELS,PvPType.FIST) + ChatColor.YELLOW + " games active");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "Use your fists to fight the other player.");
 			add(ChatColor.RESET.toString());
@@ -162,6 +165,7 @@ public class HubMenu extends MenuBase {
 		
 		//Sword/Armor
 		subMenu.addOption(14, Material.IRON_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Weapon/Armor Fighting", new ArrayList<String>() {{
+			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(PvPMode.DUELS,PvPType.WEPSARMOR) + ChatColor.YELLOW + " games active");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "Use your weps to fight the other player.");
 			add(ChatColor.RESET.toString());
@@ -190,6 +194,7 @@ public class HubMenu extends MenuBase {
 		
 		//Fist
 		subMenu.addOption(12, Material.RABBIT, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fist Fighting", new ArrayList<String>() {{
+			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(PvPMode.TWOVTWO,PvPType.FIST) + ChatColor.YELLOW + " games active");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "Use your fists to fight the other players.");
 			add(ChatColor.RESET.toString());
@@ -205,6 +210,7 @@ public class HubMenu extends MenuBase {
 		
 		//Sword/Armor
 		subMenu.addOption(14, Material.IRON_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Weapon/Armor Fighting", new ArrayList<String>() {{
+			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(PvPMode.TWOVTWO,PvPType.WEPSARMOR) + ChatColor.YELLOW + " games active");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "Use your weapons/armor to fight the other players.");
 			add(ChatColor.RESET.toString());

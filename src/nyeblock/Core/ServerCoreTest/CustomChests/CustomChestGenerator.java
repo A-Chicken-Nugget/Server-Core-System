@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.WorldCreator;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
@@ -14,32 +16,37 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import com.boydti.fawe.bukkit.wrapper.AsyncWorld;
+import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
+import nyeblock.Core.ServerCoreTest.Realms.GameBase;
+import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 public class CustomChestGenerator {
-	private Main mainInstance;
-	
-	public CustomChestGenerator(Main mainInstance) {
-		this.mainInstance = mainInstance;
-	}
-	
-	public void setChests(HashMap<Vector,ChestValue> chests, World world) {
+	public static void setChests(HashMap<Vector,ChestValue> chests, Main mainInstance, GameBase game) {
+		World world = Bukkit.getWorld(game.getWorldName());
+		
 		for(Map.Entry<Vector,ChestValue> entry : chests.entrySet()) {
-			Vector vector = entry.getKey();
-			Location loc = new Location(world,vector.getX(),vector.getY(),vector.getZ());
+			Location loc = entry.getKey().toLocation(world);
 			
 			//Spawn chest
 			Block block = loc.getBlock();
 			if (!block.getType().equals(Material.CHEST)) {
-	            block.setType(Material.CHEST);
+				block.setType(Material.CHEST);
 			}
-			//Put floating text above chest
-            HologramsAPI.createHologram(mainInstance, loc.add(0, 1.5, 0)).appendTextLine(ChatColor.YELLOW + entry.getValue().toString() + " Tier");
+			
+			//Put floating text above chest				
+        	Hologram hologram = HologramsAPI.createHologram(mainInstance, loc.add(0, 1.5, 0));
+        	hologram.appendTextLine(ChatColor.YELLOW + entry.getValue().toString() + " Tier");
+        	if (game instanceof SkyWars) {
+        		((SkyWars)game).addHologram(hologram);
+        	}
+            
 			//Get chests inventory
 			Chest chest = (Chest)block.getState();
 			Inventory inv = chest.getBlockInventory();
@@ -58,7 +65,6 @@ public class CustomChestGenerator {
 					}
 				}
 			}
-			
 		}
 	}
 }

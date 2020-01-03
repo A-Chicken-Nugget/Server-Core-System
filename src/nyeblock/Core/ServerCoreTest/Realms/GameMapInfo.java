@@ -15,7 +15,7 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 public class GameMapInfo {
 	@SuppressWarnings("serial")
 	//Get vectors for specific maps used in games
-	public ArrayList<HashMap<String,Location>> getMapInfo(GameBase game) {
+	public static ArrayList<HashMap<String,Location>> getMapInfo(GameBase game) {
 		ArrayList<HashMap<String,Location>> mapInfo = null;
 		Realm realm = game.getRealm();
 		World world = Bukkit.getWorld(game.getWorldName());
@@ -52,10 +52,10 @@ public class GameMapInfo {
 					}});
 					//Grace area
 					add(new HashMap<String,Location>() {{
-						put("graceBound1", new Location(world,4.82,49.35,26.25));
+						put("graceBound1", new Location(world,5.71,49.66,25.5));
 					}});
 					add(new HashMap<String,Location>() {{
-						put("graceBound2", new Location(world,-12.18,60.56,42.51));
+						put("graceBound2", new Location(world,-12.32,60.16,43.74));
 					}});
 				}};
 			//nether
@@ -132,7 +132,7 @@ public class GameMapInfo {
 		return mapInfo;
 	}
 	//
-	public HashMap<Vector,ChestValue> getChestInfo(GameBase game) {
+	public static HashMap<Vector,ChestValue> getChestInfo(GameBase game) {
 		HashMap<Vector,ChestValue> chestInfo = new HashMap<>();
 		Realm realm = game.getRealm();
 		String map = game.getMap();

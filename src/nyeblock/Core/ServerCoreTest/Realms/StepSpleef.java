@@ -22,9 +22,13 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
+
+import com.boydti.fawe.bukkit.wrapper.AsyncWorld;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -38,8 +42,6 @@ import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 @SuppressWarnings({"deprecation","serial"})
 public class StepSpleef extends GameBase {
 	//Game info
-	private int duration;
-	private long startTime;
 	private boolean active = false;
 	//Player data
 	private ArrayList<Player> playersInGame = new ArrayList<>();
@@ -50,15 +52,15 @@ public class StepSpleef extends GameBase {
 	private long countdownStart;
 	private int readyCount = 0;
 	private int messageCount = 0;
-	private boolean endStarted = false;
 	private long lastNumber = 0;
 	private int playTimeCount = 0;
 	
-	public StepSpleef(Main mainInstance, String worldName, int duration, int minPlayers, int maxPlayers) {
+	public StepSpleef(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
 		super(mainInstance,worldName);
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.id = id;
 		this.worldName = worldName;
 		realm = Realm.STEPSPLEEF;
 		this.duration = duration;
@@ -80,12 +82,14 @@ public class StepSpleef extends GameBase {
     */
 	public void giveSnowballs() { 
 		for (Player ply : players) {
-			if (ply.getInventory().getItem(0) != null) {
-				if (ply.getInventory().getItem(0).getAmount() < 16) {
-					ply.getInventory().setItem(0, new ItemStack(Material.SNOWBALL,16));
+			PlayerInventory inv = ply.getInventory();
+			
+			if (inv.getItem(0) != null) {
+				if (inv.getItem(0).getAmount() < 16) {
+					inv.setItem(0, new ItemStack(Material.SNOWBALL,16));
 				}				
 			} else { 
-				ply.getInventory().setItem(0, new ItemStack(Material.SNOWBALL,16));
+				inv.setItem(0, new ItemStack(Material.SNOWBALL,16));
 			}
 		}
 	}
@@ -174,15 +178,14 @@ public class StepSpleef extends GameBase {
 				});
 			}
 		}
-		//Delete blocks that are over .5 seconds old
 		Iterator<Map.Entry<Vector, Long>> itr = blocksToDelete.entrySet().iterator();
 		while(itr.hasNext())
 		{
 			Map.Entry<Vector, Long> entry = itr.next();
 			if (System.currentTimeMillis() - entry.getValue() >= 300L) {
-				Vector vec = entry.getKey();
+				entry.getKey().toLocation(world).getBlock().setType(Material.AIR);
 				
-				Bukkit.getWorld(worldName).getBlockAt(new Location(Bukkit.getWorld(worldName),vec.getX(),vec.getY(),vec.getZ())).setType(Material.AIR);
+//				world.getBlockAt(new Location(world,vec.getX(),vec.getY(),vec.getZ())).setType(Material.AIR);
 				itr.remove();
 			}
 		}
@@ -249,6 +252,7 @@ public class StepSpleef extends GameBase {
 								ply.setVelocity(new Vector(0,0,0));
 								ply.setHealth(20);
 								ply.teleport(spawn);
+								playerHandling.getPlayerData(ply).addGamePlayed(realm, false);
 							}
 							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
 							mainInstance.getTimerInstance().deleteTimer("snowballs_" + worldName);
@@ -311,12 +315,12 @@ public class StepSpleef extends GameBase {
 				}
 			});
 			giveXP(ply,"Winning",150);
+			playerHandling.getPlayerData(ply).addGamePlayed(realm, true);
 			
 			//Print players xp summary
 			for (Player ply2 : players) {
 				PlayerData pd = playerHandling.getPlayerData(ply2);
 				
-				pd.addGamePlayed(Realm.STEPSPLEEF, ply2.getUniqueId().equals(ply.getUniqueId()) ? true : false);
 				printSummary(ply2,true);
 			}
 			mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
@@ -340,7 +344,6 @@ public class StepSpleef extends GameBase {
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
-		World world = Bukkit.getWorld(worldName);
 		if (world != null) {        			
 			world.setTime(1000);
 			if (world.hasStorm()) {
@@ -460,7 +463,7 @@ public class StepSpleef extends GameBase {
 	/**
     * Handle when a player leaves the game
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage) {
+	public void playerLeave(Player ply) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Clear scoreboard
@@ -475,11 +478,5 @@ public class StepSpleef extends GameBase {
 		playersSpectating.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
-		
-		if (showLeaveMessage) {
-			if (!active) {				
-				messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
-			}
-		}
 	}
 }

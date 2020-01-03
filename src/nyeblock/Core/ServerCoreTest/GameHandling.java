@@ -1,5 +1,6 @@
 package nyeblock.Core.ServerCoreTest;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -8,6 +9,8 @@ import org.bukkit.WorldType;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
+
+import com.boydti.fawe.bukkit.wrapper.AsyncWorld;
 
 import de.xxschrandxx.awm.api.config.WorldData;
 import net.md_5.bungee.api.ChatColor;
@@ -24,8 +27,15 @@ import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
 
 public class GameHandling {
 	private Main mainInstance;
-	private GameBase[][] games = new GameBase[200][200];
+	private GameBase[] games = new GameBase[100];
 	
+	public GameHandling(Main mainInstance) {
+		this.mainInstance = mainInstance;
+	}
+	
+	public GameBase[] getGames() {
+		return games;
+	}
 	/**
     * Find a game in the games list
     * @param realm - Realm of the game to find
@@ -34,11 +44,40 @@ public class GameHandling {
 	public GameBase findGame(Realm realm) {
 		GameBase gameToJoin = null;
 		
-		for (int x = 0; x < 200; x++) {
-			for (int y = 0; y < 200; y++) {
-				GameBase currentGame = games[x][y];
+		for (GameBase currentGame : games) {
+			if (currentGame != null && currentGame.getRealm().equals(realm)) {
+				if (gameToJoin != null) {		
+					if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
+							&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()
+							&& gameToJoin.getJoinStatus()) {			
+						gameToJoin = currentGame;
+					}
+				} else {						
+					if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
+							&& currentGame.getJoinStatus()) {			
+						gameToJoin = currentGame;
+					}
+				}
+			}
+		}
+		return gameToJoin;
+	}
+	/**
+    * Find a game in the games list
+    * @param mode - Mode of the pvp
+    * @param type - Type of the pvp
+    * @return game that has available player slots and is of the provided realm
+    */
+	public GameBase findGame(PvPMode mode, PvPType type) {
+		GameBase gameToJoin = null;
+		
+		for (GameBase currentGame : games) {
+			if (currentGame instanceof PvP) {					
+				PvP pvpGame = ((PvP)currentGame);
 				
-				if (currentGame != null && currentGame.getRealm().equals(realm)) {
+				if (currentGame != null && currentGame.getRealm().equals(Realm.PVP) 
+						&& pvpGame.getPvPMode().equals(mode)
+						&& pvpGame.getPvPType().equals(type)) {
 					if (gameToJoin != null) {		
 						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
 								&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()
@@ -57,97 +96,75 @@ public class GameHandling {
 		return gameToJoin;
 	}
 	/**
-    * Find a game in the games list
-    * @param realm - Realm of the game to find
-    * @param mode - Mode of the pvp
-    * @param type - Type of the pvp
-    * @return game that has available player slots and is of the provided realm
+    * Gets an available spot in the games list
+    * @return the index of the available spot
     */
-	public GameBase findGame(Realm realm, PvPMode mode, PvPType type) {
-		GameBase gameToJoin = null;
+	public int getAvailablePosition() {
+		int spot = -1;
 		
-		for (int x = 0; x < 200; x++) {
-			for (int y = 0; y < 200; y++) {
-				GameBase currentGame = games[x][y];
-				
-				if (currentGame instanceof PvP) {					
-					PvP pvpGame = ((PvP)currentGame);
-					
-					if (currentGame != null && currentGame.getRealm().equals(realm) 
-							&& pvpGame.getPvPMode().equals(mode)
-							&& pvpGame.getPvPType().equals(type)) {
-						if (gameToJoin != null) {		
-							if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
-									&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()
-									&& gameToJoin.getJoinStatus()) {			
-								gameToJoin = currentGame;
-							}
-						} else {						
-							if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
-									&& currentGame.getJoinStatus()) {			
-								gameToJoin = currentGame;
-							}
-						}
-					}
-				}
-			}
-		}
-		return gameToJoin;
-	}
-	/**
-    * Find an available slot and add the provided game to that slot
-    * @param game - The game to add
-    * @return the position the game was added to
-    */
-	public XY addGameToList(GameBase game) {
-		XY pos = null;
-		
-		for (int x = 0; x < 200; x++) {
-			if (pos == null) {				
-				for (int y = 0; y < 200; y++) {
-					if (pos == null) {						
-						if (games[x][y] == null) {
-							games[x][y] = game;
-							pos = new XY(x,y);
-						}
-					} else {
-						break;
-					}
-				}
-			} else {
+		for (int i = 0; i < games.length; i++) {
+			GameBase currentGame = games[i];
+			
+			if (currentGame == null) {
+				spot = i;
 				break;
 			}
 		}
-		return pos;
+		return spot;
+	}
+	/**
+    * Add game to the games list
+    * @param game - the game to add to the list
+    */
+	public void addGameToList(GameBase game) {
+		for (int i = 0; i < games.length; i++) {
+			GameBase currentGame = games[i];
+			
+			if (currentGame == null) {	
+				games[i] = game;
+				break;
+			}
+		}
 	}
 	/**
     * Remove game from the games list
-    * @param gamePos - The position of the game in the games list
+    * @param id - the id if the game to remove
     */
-	public void removeGameFromList(XY gamePos) {
-		games[gamePos.x][gamePos.y] = null;
+	public void removeGameFromList(int id) {
+		games[id] = null;
 	}
 	/**
     * Get the number of games active for the given realm
-    * @param gamePos - The position of the game in the games list
+    * @param realm - The realm to search for
     */
 	public int getGamesCount(Realm realm) {
 		int count = 0;
 		
-		for (int x = 0; x < 200; x++) {		
-			for (int y = 0; y < 200; y++) {	
-				GameBase game = games[x][y];
-								
-				if (game != null && game.getRealm() == realm) {
+		for (GameBase currentGame : games) {
+			if (currentGame != null && currentGame.getRealm().equals(realm)) {
+				count++;
+			}
+		}
+		return count;
+	}
+	/**
+    * Get the number of games active for the given realm
+    * @param mode - Mode of the pvp
+    * @param type - Type of the pvp
+    */
+	public int getGamesCount(PvPMode mode, PvPType type) {
+		int count = 0;
+		
+		for (GameBase currentGame : games) {
+			if (currentGame != null && currentGame.getRealm().equals(Realm.PVP)) {
+				PvP pvpGame = ((PvP)currentGame);
+				
+				if (pvpGame.getPvPMode() == mode && pvpGame.getPvPType() == type) {					
 					count++;
 				}
 			}
 		}
 		return count;
-	}
-	
-	public GameHandling(Main mainInstance) {
-		this.mainInstance = mainInstance;
 	}
 	
 	/**
@@ -175,24 +192,11 @@ public class GameHandling {
 				
 				//If no games are found, create one
 				if (gameToJoin == null) {
+					int id = getAvailablePosition();
+					gameToJoin = new KitPvP(mainInstance,id,"gameWorld_" + (id+1),900,20);
+					addGameToList(gameToJoin);
+					
 					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-					String worldName = "game_" + UUID.randomUUID();
-					gameToJoin = new KitPvP(mainInstance,worldName,900,20);
-					gameToJoin.setGamePos(addGameToList(gameToJoin));
-					
-					//Create void world
-					Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
-						@Override
-						public void run() {
-							WorldData wd = new WorldData();
-							wd.setWorldName(worldName);
-							wd.setEnviroment(Environment.NORMAL);
-							wd.setWorldType(WorldType.FLAT);
-							wd.setGenerator(new VoidWorldGenerator());
-							de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
-						}
-					});
-					
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
@@ -204,24 +208,11 @@ public class GameHandling {
 				
 				//If no games are found, create one
 				if (gameToJoin == null) {
+					int id = getAvailablePosition();
+					gameToJoin = new StepSpleef(mainInstance,id,"gameWorld_" + (id+1),600,5,20);
+					addGameToList(gameToJoin);
+					
 					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-					String worldName = "game_" + UUID.randomUUID();
-					gameToJoin = new StepSpleef(mainInstance,worldName,600,5,20);
-					gameToJoin.setGamePos(addGameToList(gameToJoin));
-					
-					//Create void world
-					Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
-						@Override
-						public void run() {
-							WorldData wd = new WorldData();
-							wd.setWorldName(worldName);
-							wd.setEnviroment(Environment.NORMAL);
-							wd.setWorldType(WorldType.FLAT);
-							wd.setGenerator(new VoidWorldGenerator());
-							de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
-						}
-					});
-					
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
@@ -233,24 +224,11 @@ public class GameHandling {
 				
 				//If no games are found, create one
 				if (gameToJoin == null) {
+					int id = getAvailablePosition();
+					gameToJoin = new SkyWars(mainInstance,id,"gameWorld_" + (id+1),900,4,8);
+					addGameToList(gameToJoin);
+					
 					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-					String worldName = "game_" + UUID.randomUUID();
-					gameToJoin = new SkyWars(mainInstance,worldName,900,4,8);
-					gameToJoin.setGamePos(addGameToList(gameToJoin));
-					
-					//Create void world
-					Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
-						@Override
-						public void run() {
-							WorldData wd = new WorldData();
-							wd.setWorldName(worldName);
-							wd.setEnviroment(Environment.NORMAL);
-							wd.setWorldType(WorldType.FLAT);
-							wd.setGenerator(new VoidWorldGenerator());
-							de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
-						}
-					});
-					
 					mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
@@ -263,28 +241,15 @@ public class GameHandling {
 				if (mode == PvPMode.DUELS) {
 					if (type == PvPType.FIST) {						
 						pd.setQueuingStatus(true);
-						GameBase gameToJoin = findGame(realm,mode,type);
+						GameBase gameToJoin = findGame(mode,type);
 						
 						//If no games are found, create one
 						if (gameToJoin == null) {
+							int id = getAvailablePosition();
+							gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,2,2,PvPMode.DUELS,PvPType.FIST);
+							addGameToList(gameToJoin);
+							
 							ply.sendMessage(ChatColor.YELLOW + "No " + mode.toString() + " \u00BB " + type.toString() + " worlds found! Creating a new one for you...");
-							String worldName = "game_" + UUID.randomUUID();
-							gameToJoin = new PvP(mainInstance,worldName,300,2,2,PvPMode.DUELS,PvPType.FIST);
-							gameToJoin.setGamePos(addGameToList(gameToJoin));
-							
-							//Create void world
-							Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
-								@Override
-								public void run() {
-									WorldData wd = new WorldData();
-									wd.setWorldName(worldName);
-									wd.setEnviroment(Environment.NORMAL);
-									wd.setWorldType(WorldType.FLAT);
-									wd.setGenerator(new VoidWorldGenerator());
-									de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
-								}
-							});
-							
 							mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 						} else {
 							ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
@@ -294,28 +259,15 @@ public class GameHandling {
 				} else if (mode == PvPMode.TWOVTWO) {
 					if (type == PvPType.FIST) {
 						pd.setQueuingStatus(true);
-						GameBase gameToJoin = findGame(realm,mode,type);
+						GameBase gameToJoin = findGame(mode,type);
 						
 						//If no games are found, create one
 						if (gameToJoin == null) {
+							int id = getAvailablePosition();
+							gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,2,2,PvPMode.TWOVTWO,PvPType.FIST);
+							addGameToList(gameToJoin);
+							
 							ply.sendMessage(ChatColor.YELLOW + "No " + mode.toString() + " \u00BB " + type.toString() + " worlds found! Creating a new one for you...");
-							String worldName = "game_" + UUID.randomUUID();
-							gameToJoin = new PvP(mainInstance,worldName,300,4,4,PvPMode.TWOVTWO,PvPType.FIST);
-							gameToJoin.setGamePos(addGameToList(gameToJoin));
-							
-							//Create void world
-							Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
-								@Override
-								public void run() {
-									WorldData wd = new WorldData();
-									wd.setWorldName(worldName);
-									wd.setEnviroment(Environment.NORMAL);
-									wd.setWorldType(WorldType.FLAT);
-									wd.setGenerator(new VoidWorldGenerator());
-									de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
-								}
-							});
-							
 							mainInstance.getTimerInstance().createTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 						} else {
 							ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
@@ -329,13 +281,12 @@ public class GameHandling {
 		}
 	} 
 	public void checkWorld(Player ply, GameBase game) {
-		PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-		
-		if (game.getJoinStatus()) {			
+		if (game.getSchematicStatus()) {			
+			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 			mainInstance.getTimerInstance().deleteTimer("worldWait_" + ply.getName());
 			
 			if (game.getPlayerCount() < game.getMaxPlayers()) {						
-				mainInstance.getPlayerHandlingInstance().getPlayerData(ply).clearScoreboard();
+				playerData.clearScoreboard();
 				mainInstance.getHubInstance().leave(ply, true, null);
 				
 				//Join game

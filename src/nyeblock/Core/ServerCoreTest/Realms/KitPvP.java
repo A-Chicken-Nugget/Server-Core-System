@@ -29,6 +29,10 @@ import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.Team;
 
+import com.boydti.fawe.Fawe;
+import com.boydti.fawe.FaweAPI;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
+
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -41,26 +45,23 @@ import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 
 @SuppressWarnings("deprecation")
 public class KitPvP extends GameBase {
-	//Game info
-	private int duration;
-	private long startTime;
 	//Player data
 	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private HashMap<String,String> playerKits = new HashMap<>();
 	private HashMap<String,Boolean> playerInGraceBounds = new HashMap<>();
 	//Etc
-	private boolean endStarted = false;
 	private ArrayList<String> top5 = new ArrayList<>();
 	
 	//
 	// CONSTRUCTOR
 	//
 	
-	public KitPvP(Main mainInstance, String worldName, int duration, int maxPlayers) {
+	public KitPvP(Main mainInstance, int id, String worldName, int duration, int maxPlayers) {
 		super(mainInstance,worldName);
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.id = id;
 		this.worldName = worldName;
 		realm = Realm.KITPVP;
 		this.duration = duration;
@@ -167,7 +168,6 @@ public class KitPvP extends GameBase {
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
-		World world = Bukkit.getWorld(worldName);
 		if (world != null) {        			
 			world.setTime(1000);
 			if (world.hasStorm()) {
@@ -238,7 +238,6 @@ public class KitPvP extends GameBase {
 					
 					for (Map.Entry<String,Integer> entry : playerKills.entrySet()) {
 						Player ply = Bukkit.getServer().getPlayer(entry.getKey());
-						won = ply.getUniqueId();
 						
 						if (entry.getValue() == top) {
 							mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
@@ -260,6 +259,7 @@ public class KitPvP extends GameBase {
 							});
 							messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + entry.getKey() + " has won!");
 							giveXP(ply,"Placing #1",200);
+							playerHandling.getPlayerData(ply).addGamePlayed(realm, true);
 						} else {						
 							int place = 0;
 							for (int i = 0; i < top5.size(); i++) {
@@ -276,7 +276,6 @@ public class KitPvP extends GameBase {
 					for (Player player : players) {
 						PlayerData pd = playerHandling.getPlayerData(player);
 						
-						pd.addGamePlayed(realm, player.getUniqueId().equals(won) ? true : false);
 						//Print the players xp summary
 						printSummary(player,false);
 					}
@@ -467,6 +466,8 @@ public class KitPvP extends GameBase {
 		playerKills.put(ply.getName(), 0);
 		playerKits.put(ply.getName(),"knight");
 		
+		pd.addGamePlayed(realm, false);
+		
 		//Add players to proper scoreboard teams
 		updateTeamsFromUserGroups();
 		
@@ -488,14 +489,13 @@ public class KitPvP extends GameBase {
     * @param bool - should a leave message be shown?
     * @param bool - should the player be moved to the hub?
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage) {
+	public void playerLeave(Player ply) {
 		PlayerData playerData = playerHandling.getPlayerData(ply);
 		
 		//Remove player from hashmaps
 		playerKills.remove(ply.getName());
 		playerKits.remove(ply.getName());
 		playerInGraceBounds.remove(ply.getName());
-		playerXP.remove(ply);
 		
 		//Remove player from top5 list
 		ArrayList<String> plyToRemove = new ArrayList<String>();
@@ -514,10 +514,6 @@ public class KitPvP extends GameBase {
 			PlayerData pd2 = playerHandling.getPlayerData(player);
 			
 			pd2.removePlayerFromTeam(playerData.getUserGroup().toString(), ply);
-		}
-		
-		if (showLeaveMessage) {			
-			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
 		}
 	}
 }

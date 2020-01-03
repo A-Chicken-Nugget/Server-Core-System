@@ -39,8 +39,6 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 @SuppressWarnings({"deprecation","serial"})
 public class PvP extends GameBase {
 	//Game info
-	private int duration;
-	private long startTime;
 	private boolean active = false;
 	private boolean gameBegun = false;
 	//Player data
@@ -50,7 +48,6 @@ public class PvP extends GameBase {
 	private long countdownStart;
 	private int readyCount = 0;
 	private int messageCount = 0;
-	private boolean endStarted = false;
 	private long lastNumber = 0;
 	private PvPMode pvpMode;
 	private PvPType pvpType;
@@ -59,9 +56,10 @@ public class PvP extends GameBase {
 	// CONSTRUCTOR
 	//
 	
-	public PvP(Main mainInstance, String worldName, int duration, int minPlayers, int maxPlayers, PvPMode pvpMode, PvPType pvpType) {
+	public PvP(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers, PvPMode pvpMode, PvPType pvpType) {
 		super(mainInstance,worldName);
 		
+		this.id = id;
 		this.worldName = worldName;
 		realm = Realm.PVP;
 		this.duration = duration;
@@ -186,6 +184,7 @@ public class PvP extends GameBase {
 								}
 								ply.setHealth(20);
 								ply.setVelocity(new Vector(0,0,0));
+								pd.addGamePlayed(pvpMode, pvpType, false);
 							}
 						}
 					}
@@ -249,6 +248,7 @@ public class PvP extends GameBase {
 							teamPlayers.add(entry.getValue());
 							playersWon.add(entry.getValue().getUniqueId());
 							giveXP(entry.getValue(),"Winning",150);
+							playerHandling.getPlayerData(entry.getValue()).addGamePlayed(pvpMode, pvpType, true);
 						}
 					}
 					
@@ -280,7 +280,6 @@ public class PvP extends GameBase {
 					for (Player ply : players) {
 						PlayerData pd = playerHandling.getPlayerData(ply);
 						
-						pd.addGamePlayed(pvpMode, pvpType, playersWon.contains(ply.getUniqueId()) ? true : false);
 						//Print the players xp summary
 						printSummary(ply,true);
 					}
@@ -312,7 +311,6 @@ public class PvP extends GameBase {
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
-		World world = Bukkit.getWorld(worldName);
 		if (world != null) {        			
 			world.setTime(1000);
 			if (world.hasStorm()) {
@@ -482,7 +480,7 @@ public class PvP extends GameBase {
 	/**
     * Handle when a player leaves the game
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage) {
+	public void playerLeave(Player ply) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Remove player from team
@@ -513,12 +511,6 @@ public class PvP extends GameBase {
 		int teamIndex = getPlayerTeam(ply);
 		for (Player player : players) {
 			playerHandling.getPlayerData(player).removePlayerFromTeam("team" + (teamIndex+1), ply);
-		}
-		
-		if (showLeaveMessage) {
-			if (!active) {				
-				messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
-			}
 		}
 	}
 }

@@ -110,24 +110,26 @@ public class PlayerData {
 	/**
     * Add game played
     * @param realm - realm to add to the games played
-    * @param won - did the player win
+    * @param set - what to set
     */
-	public void addGamePlayed(Realm realm, boolean won) {
-		totalGamesPlayed.put(realm.getDBName(), totalGamesPlayed.get(realm.getDBName()) + 1);
-		if (won) {
-			totalGamesWon.put(realm.getDBName(), totalGamesWon.get(realm.getDBName()) + 1);
+	public void addGamePlayed(Realm realm, boolean set) {
+		if (!set) {			
+			totalGamesPlayed.put(realm.getDBName(), totalGamesPlayed.get(realm.getDBName()) + 1);
+		} else {
+			totalGamesWon.put(realm.getDBName(), totalGamesWon.get(realm.getDBName()) + 1);			
 		}
 	}
 	/**
     * Add game played
     * @param mode - The PvP mode
 	* @param type - The PvP type
-	* @param won - did the player win
+	* @param set - what to set
     */
-	public void addGamePlayed(PvPMode mode, PvPType type, boolean won) {
-		totalGamesPlayed.put(mode.getDBName() + "_" + type.getDBName(), totalGamesPlayed.get(mode.getDBName() + "_" + type.getDBName()) + 1);
-		if (won) {
-			totalGamesWon.put(mode.getDBName() + "_" + type.getDBName(), totalGamesWon.get(mode.getDBName() + "_" + type.getDBName()) + 1);
+	public void addGamePlayed(PvPMode mode, PvPType type, boolean set) {
+		if (!set) {
+			totalGamesPlayed.put(mode.getDBName() + "_" + type.getDBName(), totalGamesPlayed.get(mode.getDBName() + "_" + type.getDBName()) + 1);
+		} else {
+			totalGamesWon.put(mode.getDBName() + "_" + type.getDBName(), totalGamesWon.get(mode.getDBName() + "_" + type.getDBName()) + 1);			
 		}
 	}
 	/**
@@ -146,7 +148,7 @@ public class PlayerData {
 		
 		int newLevel = getLevel(realm);
 		if (currentLevel < newLevel) {
-			player.sendMessage(ChatColor.YELLOW + "You have leveled up! You are new level " + ChatColor.GREEN + newLevel + ChatColor.YELLOW + "!");
+			player.sendMessage(ChatColor.YELLOW + "You have leveled up! You are now level " + ChatColor.GREEN + newLevel + ChatColor.YELLOW + "!");
 		}
 	}
 	/**
@@ -165,7 +167,7 @@ public class PlayerData {
 		
 		int newLevel = getLevel(mode,type);
 		if (currentLevel < newLevel) {
-			player.sendMessage(ChatColor.YELLOW + "You have leveled up! Your " + realm.toString() + " level is now " + ChatColor.GREEN + newLevel + ChatColor.YELLOW + "!");
+			player.sendMessage(ChatColor.YELLOW + "You have leveled up! Your PvP \u00BB " + mode.toString() + " level is now " + ChatColor.GREEN + newLevel + ChatColor.YELLOW + "!");
 		}
 	}
 	/**

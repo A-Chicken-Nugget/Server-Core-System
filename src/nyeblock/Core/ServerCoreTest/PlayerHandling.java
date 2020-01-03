@@ -39,6 +39,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -48,6 +49,8 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
+import org.bukkit.event.world.WorldInitEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.EnchantingInventory;
@@ -57,6 +60,8 @@ import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Interfaces.DamagePlayer;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 import nyeblock.Core.ServerCoreTest.Items.MenuBase;
@@ -66,7 +71,6 @@ import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
-import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
 
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
@@ -75,7 +79,6 @@ public class PlayerHandling implements Listener {
 	private HashMap<UUID, DamagePlayer> lastPlayerDamage = new HashMap<UUID, DamagePlayer>();
 	private HashMap<UUID, ArrayList<Long>> playerChatMessages = new HashMap<>();
 	private World world = Bukkit.getWorld("world");
-	private boolean worldsChecked = false;
 
 	public PlayerHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
@@ -93,9 +96,13 @@ public class PlayerHandling implements Listener {
 						HashMap<String,Integer> totalGamesWon = pd.getTotalGamesPlayed();
 						HashMap<String,Integer> totalGamesPlayed = pd.getTotalGamesPlayed();
 						
+						if (pd.getHiddenStatus()) {							
+							ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You are currently hidden."));
+						}
+						
 						Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 							@Override
-							public void run() {     
+							public void run() {
 								String xpString = "";
 								
 								for (Map.Entry<String,Integer> entry : realmXp.entrySet()) {
@@ -308,6 +315,8 @@ public class PlayerHandling implements Listener {
 							+ ChatColor.RESET.toString() + ChatColor.YELLOW + " for their first time on the server!");
 						}
 					}
+					
+					playerData.getCurrentRealm().updateTeamsFromUserGroups();
 				}
 			});
 			playersData.put(ply.getUniqueId(), playerData);
@@ -390,20 +399,6 @@ public class PlayerHandling implements Listener {
 				}
 			}
 		}
-
-		// Check if there are any undeleted worlds that weren't deleted on the previous server shutdown
-		//TODO REDO
-//		if (!worldsChecked) {
-//			worldsChecked = true;
-//			MultiverseCore mv = mainInstance.getMultiverseInstance();
-//
-//			for (MultiverseWorld world : mv.getMVWorldManager().getMVWorlds()) {
-//				if (!world.getName().toString().matches("world")) {
-//					MVWorldManager wm = mv.getMVWorldManager();
-//					wm.deleteWorld(world.getName());
-//				}
-//			}
-//		}
 	}
 	// Handle when a player leaves the server
 	@EventHandler
@@ -441,6 +436,16 @@ public class PlayerHandling implements Listener {
 		
 		//Leave realm
 		pd.getCurrentRealm().leave(ply, true, null);
+	}
+	//When a world loads
+	@EventHandler
+	public void onWorldInit(WorldInitEvent event) {
+		World world = event.getWorld();
+		
+		if (!world.getName().equals("world")) {			
+			world.setAutoSave(false);
+			world.setKeepSpawnInMemory(false);
+		}
 	}
 	// Handle when a player respawns
 	@EventHandler
@@ -659,13 +664,13 @@ public class PlayerHandling implements Listener {
 			event.setCancelled(true);
 		}
 	}
-	//TODO WORK ON LATER
-//	@EventHandler
-//	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-//		Player ply = event.getPlayer();
-//		
-//		System.out.println("Test: " + ply.getOpenInventory().getTitle());
-//	}
+	//Handle when a player changes their world
+	@EventHandler
+	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+		Player ply = event.getPlayer();
+		
+		ply.getOpenInventory().close();
+	}
 	// Handle potion splashes
 	@EventHandler
 	public void onPotionSpash(PotionSplashEvent event) {
@@ -745,7 +750,11 @@ public class PlayerHandling implements Listener {
 						if (menu.getCurrentMenu().hasOption(itemMeta.getLocalizedName())) {							
 							menu.getCurrentMenu().runOption(itemMeta.getLocalizedName());
 						} else {
-							//TODO REMOVE MENU
+							ItemBase itemm = playerData.getCustomItem(itemMeta.getLocalizedName());
+							
+							if (itemm != null) {							
+								playerData.getCustomItem(itemMeta.getLocalizedName()).use(item);
+							}
 						}
 					} else {
 						ItemBase itemm = playerData.getCustomItem(itemMeta.getLocalizedName());
@@ -776,7 +785,7 @@ public class PlayerHandling implements Listener {
 				String itemName = itemMeta.getLocalizedName();
 				
 				ItemBase itemm = pd.getCustomItem(itemName);
-		          
+		        
 				if (itemm != null) {
 					pd.getCustomItem(itemName).use(item);
 					event.setCancelled(true);
@@ -790,7 +799,7 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		PlayerData pd = getPlayerData(ply);
 		
-		if (pd.getSpectatingStatus() || pd.getHiddenStatus()) {
+		if (pd.getSpectatingStatus()) {
 			event.setCancelled(true);
 		}
 	}

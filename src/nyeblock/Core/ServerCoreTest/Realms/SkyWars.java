@@ -21,17 +21,26 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.FireworkEffect.Type;
+import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.Vector;
+
+import com.gmail.filoghost.holographicdisplays.api.Hologram;
+import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
@@ -39,8 +48,6 @@ import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 @SuppressWarnings({"deprecation","serial"})
 public class SkyWars extends GameBase {
 	//Game info
-	private int duration;
-	private long startTime;
 	private boolean gameBegun = false;
 	//Player data
 	private HashMap<String,Integer> playerKills = new HashMap<>();
@@ -52,18 +59,20 @@ public class SkyWars extends GameBase {
 	private long countdownStart;
 	private int readyCount = 0;
 	private int messageCount = 0;
-	private boolean endStarted = false;
 	private long lastNumber = 0;
+	protected ArrayList<Hologram> holograms = new ArrayList<>();
+	protected HashMap<Vector,ChestValue> chests = new HashMap<>();
 	
 	//
 	// CONSTRUCTOR
 	//
 	
-	public SkyWars(Main mainInstance, String worldName, int duration, int minPlayers, int maxPlayers) {
+	public SkyWars(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
 		super(mainInstance,worldName);
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.id = id;
 		this.worldName = worldName;
 		realm = Realm.SKYWARS;
 		this.duration = duration;
@@ -128,6 +137,8 @@ public class SkyWars extends GameBase {
 				setPlayerKit(ply,playerKits.get(ply.getName()));
 				
 				ply.setGameMode(GameMode.SURVIVAL);
+				
+				pd.addGamePlayed(realm, false);
 			}
 			titleToAll(ChatColor.YELLOW + "Go!"," ",0,10);
 			soundToAll(Sound.BLOCK_NOTE_BLOCK_BELL,1f);
@@ -140,9 +151,41 @@ public class SkyWars extends GameBase {
 		}
 	}
 	/**
+	* What needs to be ran when the game is created
+	*/
+	public void onCreate() {
+		GameBase instance = this;
+		
+		new BukkitRunnable() {
+	        public void run() {
+	        	//Spawn/fill chests
+	        	chests = GameMapInfo.getChestInfo(instance);
+	        	CustomChestGenerator.setChests(chests,mainInstance,instance);
+			}
+	    }.runTask(mainInstance);
+	}
+	/**
 	* What needs to be ran when the world is deleted
 	*/
 	public void onDelete() {
+		new BukkitRunnable() {
+	        public void run() {
+	        	if (chests.size() > 0) {
+	        		for(Map.Entry<Vector,ChestValue> entry : chests.entrySet()) {
+	        			Block block = world.getBlockAt(entry.getKey().toLocation(world));
+    					Chest chest = (Chest)block.getState();
+    					chest.getInventory().clear();
+	        			block.setType(Material.AIR);
+	        		}
+	        	}
+	        	if (holograms.size() > 0) {
+	        		for (Hologram hologram : holograms) {
+	        			hologram.delete();
+	        		}
+	        	}
+			}
+	    }.runTask(mainInstance);
+		
 		mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
 		mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
 	}
@@ -242,10 +285,10 @@ public class SkyWars extends GameBase {
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 					giveXP(ply,"Placing #1",200);
+					playerHandling.getPlayerData(ply).addGamePlayed(realm, true);
 					for (Player player : players) {
 						PlayerData pd = playerHandling.getPlayerData(player);
 						
-						pd.addGamePlayed(realm, player.getUniqueId().equals(ply.getUniqueId()) ? true : false);
 						//Print the players xp summary
 						printSummary(player,true);
 					}
@@ -274,7 +317,6 @@ public class SkyWars extends GameBase {
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
-		World world = Bukkit.getWorld(worldName);
 		if (world != null) {        			
 			world.setTime(1000);
 			if (world.hasStorm()) {
@@ -307,11 +349,8 @@ public class SkyWars extends GameBase {
 		}
 		return found;
 	}
-	/**
-    * Get the close status of the game
-    */
-	public boolean isGameClosed() {
-		return endStarted;
+	public void addHologram(Hologram hologram) {
+		holograms.add(hologram);
 	}
 	/**
     * Get the status of the game
@@ -567,7 +606,7 @@ public class SkyWars extends GameBase {
 	/**
     * Handle when a player leaves the game
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage) {
+	public void playerLeave(Player ply) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Remove player from the current game
@@ -591,12 +630,6 @@ public class SkyWars extends GameBase {
 			
 			if (entry.getValue().equalsIgnoreCase(ply.getName())) {
 				itr.remove();
-			}
-		}
-		
-		if (showLeaveMessage) {
-			if (!active) {				
-				messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " has left the game!");
 			}
 		}
 	}

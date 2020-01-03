@@ -127,6 +127,7 @@ public class Hub extends RealmBase {
 	*/
 	public void playerJoin(Player ply) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
+		System.out.println("ran2");
 		
 		//Setup team
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);

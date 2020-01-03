@@ -52,55 +52,73 @@ public abstract class RealmBase {
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			
 			for (Player ply2 : players) {
-				PlayerData pd2 = playerHandling.getPlayerData(ply2);
-				
-				if (!ply.canSee(ply2)) {
-					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
-						if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players")) || !pd.getHiddenStatus()) {
-							System.out.println(ply2.getName() + " shown for " + ply.getName());
-							ply.showPlayer(mainInstance,ply2);
+				if (ply != ply2) {
+					PlayerData pd2 = mainInstance.getPlayerHandlingInstance().getPlayerData(ply2);
+					
+					if (!ply.canSee(ply2)) {
+						if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+							if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+								if (!pd2.getHiddenStatus()) {
+									ply.showPlayer(mainInstance,ply2);
+								}
+							} else {
+								if (!pd2.getHiddenStatus()) {
+									ply.showPlayer(mainInstance,ply2);
+								}
+							}
+						} else {
+							if (!pd2.getHiddenStatus()) {
+								ply.showPlayer(mainInstance,ply2);						
+							}
 						}
 					} else {
-						if (!pd.getHiddenStatus()) {
-							System.out.println(ply2.getName() + " shown for " + ply.getName());
-							ply.showPlayer(mainInstance,ply2);						
+						if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+							if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+								if (pd2.getHiddenStatus()) {
+									ply.hidePlayer(mainInstance,ply2);
+								}
+							} else {
+								if (pd2.getHiddenStatus()) {
+									ply.hidePlayer(mainInstance,ply2);
+								}
+							}
+						} else {
+							if (pd2.getHiddenStatus()) {
+								ply.hidePlayer(mainInstance,ply2);
+							}
 						}
 					}
-				} else {
-					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
-						if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players")) || pd.getHiddenStatus()) {
-							System.out.println(ply2.getName() + " hidden for " + ply.getName());
-							ply.hidePlayer(mainInstance,ply2);
+					if (!ply2.canSee(ply)) {
+						if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+							if (!Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
+								if (!pd.getHiddenStatus()) {
+									ply2.showPlayer(mainInstance,ply);
+								}
+							} else {
+								if (!pd.getHiddenStatus()) {
+									ply2.showPlayer(mainInstance,ply);
+								}
+							}
+						} else {
+							if (!pd.getHiddenStatus()) {
+								ply2.showPlayer(mainInstance,ply);						
+							}
 						}
 					} else {
-						if (pd.getHiddenStatus()) {
-							System.out.println(ply2.getName() + " hidden for " + ply.getName());
-							ply.hidePlayer(mainInstance,ply2);
-						}
-					}
-				}
-				if (!ply2.canSee(ply)) {
-					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
-						if (!Boolean.parseBoolean(pd2.getCustomDataKey("hide_players")) || !pd2.getHiddenStatus()) {
-							System.out.println(ply.getName() + " shown for " + ply2.getName());
-							ply2.showPlayer(mainInstance,ply);
-						}
-					} else {
-						if (!pd2.getHiddenStatus()) {
-							System.out.println(ply.getName() + " shown for " + ply2.getName());
-							ply2.showPlayer(mainInstance,ply);						
-						}
-					}
-				} else {
-					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
-						if (Boolean.parseBoolean(pd2.getCustomDataKey("hide_players")) || pd2.getHiddenStatus()) {
-							System.out.println(ply.getName() + " hidden for " + ply2.getName());
-							ply2.hidePlayer(mainInstance,ply);
-						}
-					} else {
-						if (pd2.getHiddenStatus()) {
-							System.out.println(ply.getName() + " hidden for " + ply2.getName());
-							ply2.hidePlayer(mainInstance,ply);
+						if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+							if (Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
+								if (pd.getHiddenStatus()) {
+									ply2.hidePlayer(mainInstance,ply);
+								}
+							} else {
+								if (pd.getHiddenStatus()) {
+									ply2.hidePlayer(mainInstance,ply);
+								}
+							}
+						} else {
+							if (pd.getHiddenStatus()) {
+								ply2.hidePlayer(mainInstance,ply);
+							}
 						}
 					}
 				}
@@ -218,42 +236,58 @@ public abstract class RealmBase {
 				if (!ply.canSee(ply2)) {
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
 						if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
-							ply.showPlayer(mainInstance,ply2);
+							if (!pd2.getHiddenStatus()) {
+								ply.showPlayer(mainInstance,ply2);
+							}
+						} else {
+							if (!pd2.getHiddenStatus()) {
+								ply.showPlayer(mainInstance,ply2);
+							}
 						}
 					} else {
-						if (!pd2.getHiddenStatus()) {							
+						if (!pd2.getHiddenStatus()) {
 							ply.showPlayer(mainInstance,ply2);						
 						}
 					}
 				} else {
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
 						if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
-							ply.hidePlayer(mainInstance,ply2);
-						}
-					} else {
-						if (pd2.getHiddenStatus()) {
-							ply.hidePlayer(mainInstance,ply2);
+							if (pd2.getHiddenStatus()) {
+								ply.hidePlayer(mainInstance,ply2);
+							}
+						} else {
+							if (pd2.getHiddenStatus()) {
+								ply.hidePlayer(mainInstance,ply2);
+							}
 						}
 					}
 				}
 				if (!ply2.canSee(ply)) {
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
 						if (!Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
-							ply2.showPlayer(mainInstance,ply);
+							if (!pd.getHiddenStatus()) {
+								ply2.showPlayer(mainInstance,ply);
+							}
+						} else {
+							if (!pd.getHiddenStatus()) {
+								ply2.showPlayer(mainInstance,ply);
+							}
 						}
 					} else {
-						if (!pd.getHiddenStatus()) {									
+						if (!pd.getHiddenStatus()) {
 							ply2.showPlayer(mainInstance,ply);						
 						}
 					}
 				} else {
 					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
 						if (Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
-							ply2.hidePlayer(mainInstance,ply);
-						}
-					} else {
-						if (pd.getHiddenStatus()) {
-							ply.hidePlayer(mainInstance,ply2);
+							if (pd.getHiddenStatus()) {
+								ply2.hidePlayer(mainInstance,ply);
+							}
+						} else {
+							if (pd.getHiddenStatus()) {
+								ply2.hidePlayer(mainInstance,ply);
+							}
 						}
 					}
 				}
@@ -288,17 +322,24 @@ public abstract class RealmBase {
 	/**
     * Sub class player leave method
     * @param ply - Player joining the game
-    * @param showLeaveMessage - Should a leave message be shown
-    * @param runLeaveMethod - Should the leave method of the current realm be ran
-    * @param moveToHub - Should the player be moved to the hub
     */
-	public void playerLeave(Player ply, boolean showLeaveMessage) {};
+	public void playerLeave(Player ply) {};
+	/**
+    * Player leave method
+    * @param ply - Player joining the game
+    * @param showLeaveMessage - Should a leave message be shown
+    * @param destination - The realm to send the player
+    */
 	public void leave(Player ply, boolean showLeaveMessage, Realm destination) {
 		players.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
-				
-		playerLeave(ply,showLeaveMessage);
+		
+		if (this instanceof GameBase) {
+			((GameBase)this).gameLeave(ply, showLeaveMessage);
+		} else {			
+			playerLeave(ply);
+		}
 		
 		if (destination != null) {			
 			mainInstance.getGameInstance().joinGame(ply, destination);

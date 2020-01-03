@@ -26,8 +26,14 @@ public class Send extends CommandBase {
 		if (args.length >= 2) {			
 			Player player = Bukkit.getPlayerExact(args[0]);
 			
-			if (player != null) {					
-				playerHandling.getPlayerData(ply).getCurrentRealm().leave(ply, true, Realm.HUB);
+			if (player != null) {
+				Realm realm = Realm.fromName(args[1]);
+				
+				if (realm != null) {					
+					playerHandling.getPlayerData(player).getCurrentRealm().leave(player, true, realm);
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Please enter a valid realm!");
+				}
 			} else {
 				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}
@@ -45,11 +51,8 @@ public class Send extends CommandBase {
 					autoCompletes.add(ply.getName());
 				}
 			}
-			if ("allplayersingame".contains(args[0].toLowerCase())) {	
-				autoCompletes.add("AllPlayersInGame");
-			}
 		} else if (args.length == 2) {
-			for (String permission : Arrays.asList("Hub")) {
+			for (String permission : Realm.listRealms()) {
 				if (permission.toLowerCase().contains(args[1].toLowerCase())) {
 					autoCompletes.add(permission);
 				}

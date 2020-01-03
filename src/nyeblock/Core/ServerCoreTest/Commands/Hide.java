@@ -15,7 +15,7 @@ public class Hide extends CommandBase {
 		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
 		
 		if (pd.getHiddenStatus()) {
-			ply.sendMessage(ChatColor.YELLOW + "You are now unhidden!");
+			ply.sendMessage(ChatColor.YELLOW + "You are now visible!");
 			pd.setHidden(false);
 		} else {
 			ply.sendMessage(ChatColor.YELLOW + "You are now hidden!");

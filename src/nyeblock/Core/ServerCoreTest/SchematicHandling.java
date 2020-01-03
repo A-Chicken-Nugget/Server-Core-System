@@ -44,7 +44,6 @@ public class SchematicHandling {
 	//Create a schematic in a world based on the game
 	public String setSchematic(Main mainInstance,GameBase game) {
 		Realm realm = game.getRealm();
-//		XY gamePos = game.getGamePos();
 		
 		ArrayList<File> schems = new ArrayList<File>();
 		schems.addAll(Arrays.asList(new File("./plugins/ServerCoreTest/maps").listFiles()));
@@ -65,11 +64,13 @@ public class SchematicHandling {
 		
 		String[] removeExtension = schem.getName().split(Pattern.quote("."));
 		String[] mapName = removeExtension[0].split("_");
-		System.out.println("[Core]: Creating new " + realm.toString() + " game. Using map " + mapName[1]);
+		System.out.println("[Core] Creating new " + realm.toString() + " game. Using map " + mapName[1]);
 		
 		DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(schem);
-		clipboard.toClipboard().paste(new BukkitWorld(Bukkit.getWorld(game.getWorldName())), BlockVector3.at(-42, 64, -6));
+		clipboard.toClipboard().paste(new BukkitWorld(Bukkit.getWorld(game.getWorldName())), BlockVector3.at(-42, 64, -6),false,false,null);
 		clipboard.close();
+		
+		game.setSchemStatus(true);
 	    
 	    return mapName[1];
 	}

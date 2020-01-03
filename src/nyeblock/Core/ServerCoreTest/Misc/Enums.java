@@ -1,5 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.bukkit.ChatColor;
@@ -24,6 +25,24 @@ public class Enums {
 			this.name = name;
 		}
 
+		public static ArrayList<String> listRealms() {
+			ArrayList<String> realms = new ArrayList<>();
+			
+			for (Realm rel : Realm.values()) {
+				realms.add(rel.getDBName());
+			}
+			return realms;
+		}
+		public static Realm fromName(String relm) {
+			Realm rel = null;
+			
+			for (Realm group : Realm.values()) {
+				if (group.getDBName().equalsIgnoreCase(relm)) {
+					rel = group;
+				}
+			}
+			return rel;
+		}
 		public int getValue() {
 			return value;
 		}
