@@ -5,23 +5,32 @@ import java.util.Arrays;
 
 import org.bukkit.ChatColor;
 
+import nyeblock.Core.ServerCoreTest.Realms.Hub;
+import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
+import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
+import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
+import nyeblock.Core.ServerCoreTest.Realms.PvP;
+import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
+
 public class Enums {
 	//Realm enums
 	public enum Realm {
-		HUB(1,"hub","Hub"),
-		KITPVP(2,"kitpvp","Kit Pvp"),
-		STEPSPLEEF(3,"stepspleef","Step Spleef"),
-		SKYWARS(4,"skywars","Sky Wars"),
-		PVP(5,"pvp","PvP"),
-		PARKOUR(6,"parkour","Parkour");
+		HUB(1,"hub",Hub.class,"Hub"),
+		KITPVP(2,"kitpvp",KitPvP.class,"Kit Pvp"),
+		STEPSPLEEF(3,"stepspleef",StepSpleef.class,"Step Spleef"),
+		SKYWARS(4,"skywars",SkyWars.class,"Sky Wars"),
+		PVP(5,"pvp",PvP.class,"PvP"),
+		PARKOUR(6,"parkour",HubParkour.class,"Parkour");
 
 		private int value; 
 		private String dbname;
+		private Class<?> classType;
 		private String name;
 
-		private Realm(int value, String dbname, String name) {
+		private Realm(int value, String dbname, Class<?> classType, String name) {
 			this.value = value;
 			this.dbname = dbname;
+			this.classType = classType;
 			this.name = name;
 		}
 
@@ -48,6 +57,9 @@ public class Enums {
 		}
 		public String getDBName() {
 			return dbname;
+		}
+		public Class<?> getClassType() {
+			return classType;
 		}
 		public String toString() {
 			return name;
@@ -120,7 +132,7 @@ public class Enums {
 	//PvP realm mode
 	public enum PvPMode {
 		DUELS(1,"duels","Duels"),
-		TWOVTWO(2,"2v2","2v2");
+		TWOVTWO(2,"2v2","2v2 PvP");
 
 		private int value; 
 		private String dbname;
@@ -224,5 +236,34 @@ public class Enums {
 			return max;
 		}
 	}
-	
+	//Map points enums
+	public enum MapPointType {
+		PLAYER_SPAWN(),
+		GRACE_BOUND(),
+		CHEST_SPAWN();
+	}
+	//Achievement enums
+	public enum Achievement {
+		KILLS_15("kills_15", new Runnable() {
+			@Override
+			public void run() {
+				
+			}
+		});
+		
+		private String dbname;
+		private Runnable requirement;
+		
+		private Achievement(String dbname, Runnable requirement) {
+			this.dbname = dbname;
+			this.requirement = requirement;
+		}
+		
+		public String getDBName() {
+			return dbname;
+		}
+//		public boolean tryRequirement(Main mainInstance, Player ply) {
+////			requirement.run(mainInstance,ply);
+//		}
+	}
 }

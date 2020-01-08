@@ -24,7 +24,7 @@ public class HidePlayers extends ItemBase {
 		
 		ItemStack item = new ItemStack(Material.COMPASS);
 		ItemMeta itemMeta = item.getItemMeta();		
-		itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + (Boolean.parseBoolean(pd.getCustomDataKey("hide_players")) ? (ChatColor.GREEN.toString() + ChatColor.BOLD + "Enabled") : (ChatColor.RED.toString() + ChatColor.BOLD + "Disabled")));
+		itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + (Boolean.parseBoolean(pd.getCustomDataKey("hide_players")) ? (ChatColor.GREEN + "Enabled") : (ChatColor.RED + "Disabled")));
 		itemMeta.setLocalizedName("hide_players");
 		item.setItemMeta(itemMeta);
 		
@@ -57,7 +57,7 @@ public class HidePlayers extends ItemBase {
 				}
 			}
 			playerData.setCustomDataKey("hide_players", "false");
-			itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.RED.toString() + ChatColor.BOLD + "Disabled");
+			itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.RED + "Disabled");
 		} else {
 			RealmBase game = playerData.getCurrentRealm();
 			
@@ -75,7 +75,7 @@ public class HidePlayers extends ItemBase {
 				}
 			}
 			playerData.setCustomDataKey("hide_players", "true");
-			itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.GREEN.toString() + ChatColor.BOLD + "Enabled");
+			itemMeta.setDisplayName(ChatColor.YELLOW + "Hide Players: " + ChatColor.GREEN + "Enabled");
 		}
 		item.setItemMeta(itemMeta);
 	}

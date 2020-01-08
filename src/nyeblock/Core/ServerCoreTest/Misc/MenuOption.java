@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Interfaces;
+package nyeblock.Core.ServerCoreTest.Misc;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -11,11 +11,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class MenuOption {
 	private String name;
 	private int position;
+	protected SubMenu subMenu;
 	private ItemStack item;
-	private Runnable action;
+	protected Runnable action;
 	
-	public MenuOption(int position) {
+	public MenuOption(int position,SubMenu subMenu) {
 		this.position = position;
+		this.subMenu = subMenu;
 		name = UUID.randomUUID().toString();
 	}
 	

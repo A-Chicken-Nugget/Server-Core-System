@@ -10,7 +10,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
-import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
+import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -28,7 +28,7 @@ public class HubMenu extends MenuBase {
 		//
 		// Game menu
 		//
-		subMenu = new SubMenu("Game Menu",36);
+		subMenu = new SubMenu("Game Menu",36,this);
 		
 		//KitPvp
 		subMenu.addOption(11, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "KitPvp (Beta)", new ArrayList<String>() {{
@@ -99,11 +99,10 @@ public class HubMenu extends MenuBase {
             }
 		});
 		
-		super.addSubMenu(subMenu);
 		//
 		// PvP games
 		//
-		subMenu = new SubMenu("PvP Games",36);
+		subMenu = new SubMenu("PvP Games",36,this);
 		
 		//Duels
 		subMenu.addOption(12, Material.GOLDEN_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Duels", new ArrayList<String>() {{
@@ -141,11 +140,10 @@ public class HubMenu extends MenuBase {
 			}
 		});
 		
-		super.addSubMenu(subMenu);
 		//
 		// Duels modes
 		//
-		subMenu = new SubMenu("Duels Modes",36);
+		subMenu = new SubMenu("Duels Modes",36,this);
 		
 		//Fist
 		subMenu.addOption(12, Material.RABBIT, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fist Fighting", new ArrayList<String>() {{
@@ -186,11 +184,10 @@ public class HubMenu extends MenuBase {
 			}
 		});
 		
-		super.addSubMenu(subMenu);
 		//
 		// 2v2 modes
 		//
-		subMenu = new SubMenu("2v2 Modes",36);
+		subMenu = new SubMenu("2v2 Modes",36,this);
 		
 		//Fist
 		subMenu.addOption(12, Material.RABBIT, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fist Fighting", new ArrayList<String>() {{
@@ -231,13 +228,12 @@ public class HubMenu extends MenuBase {
 			}
 		});
 		
-		super.addSubMenu(subMenu);
 	}
 	//Give the player this item
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.NETHER_STAR);
 		ItemMeta shopMeta = item.getItemMeta();
-		shopMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Game Menu" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		shopMeta.setDisplayName(ChatColor.YELLOW + "Game Menu" + ChatColor.GREEN + " (RIGHT-CLICK)");
 		shopMeta.setLocalizedName("hub_menu");
 		item.setItemMeta(shopMeta);
 		

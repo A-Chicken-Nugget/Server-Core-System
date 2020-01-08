@@ -9,15 +9,14 @@ import org.bukkit.inventory.ItemStack;
 
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Interfaces.MenuOption;
-import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
+import nyeblock.Core.ServerCoreTest.Misc.MenuOption;
+import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 
 public abstract class MenuBase extends ItemBase {
 	private Inventory inventory;
 	private ArrayList<SubMenu> menus = new ArrayList<>();
-	private SubMenu currentMenu;
+	protected SubMenu currentMenu;
 	
-	public void use(ItemStack item) {}
 	/**
 	 * Default constructor with parameters
 	 * @param mainInstance - the plugin instance
@@ -31,8 +30,11 @@ public abstract class MenuBase extends ItemBase {
 	 */
 	public ItemStack give() { return null; }
 	public void setContents() {}
-	public void addSubMenu(SubMenu subMenu) {
+	public void use(ItemStack item) {}
+	public MenuBase addSubMenu(SubMenu subMenu) {
 		menus.add(subMenu);
+		
+		return this;
 	}
 	public void open() {
 		openMenu(null);
@@ -64,7 +66,7 @@ public abstract class MenuBase extends ItemBase {
 				pd.setMenu(this);
 			}
 			player.openInventory(inventory);
-			mainInstance.getTimerInstance().createTimer2("invCheck_" + player.getUniqueId(), .5, 0, new Runnable() {
+			mainInstance.getTimerInstance().createRunnableTimer("invCheck_" + player.getUniqueId(), .5, 0, new Runnable() {
 				@Override
 				public void run() {
 					if (!currentMenu.getTitle().equalsIgnoreCase(player.getOpenInventory().getTitle()) && pd.getMenu() == instance) {
@@ -77,5 +79,8 @@ public abstract class MenuBase extends ItemBase {
 	}
 	public SubMenu getCurrentMenu() {
 		return currentMenu;
+	}
+	public Player getPlayer() {
+		return player;
 	}
 }

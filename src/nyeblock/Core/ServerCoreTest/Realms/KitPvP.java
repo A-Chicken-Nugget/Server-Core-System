@@ -1,6 +1,5 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,7 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -17,10 +15,10 @@ import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.World;
 import org.bukkit.FireworkEffect.Type;
 import org.bukkit.GameMode;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -28,10 +26,7 @@ import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scoreboard.Team;
-
-import com.boydti.fawe.Fawe;
-import com.boydti.fawe.FaweAPI;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
+import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -39,9 +34,10 @@ import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Items.Fireball;
+import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.MapPointType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
-import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 
 @SuppressWarnings("deprecation")
 public class KitPvP extends GameBase {
@@ -50,12 +46,33 @@ public class KitPvP extends GameBase {
 	private HashMap<String,String> playerKits = new HashMap<>();
 	private HashMap<String,Boolean> playerInGraceBounds = new HashMap<>();
 	//Etc
+	private Vector safeZonePoint1;
+	private Vector safeZonePoint2;
 	private ArrayList<String> top5 = new ArrayList<>();
+	private boolean pointsSet = false;
 	
 	//
-	// CONSTRUCTOR
+	// CONSTRUCTORS
 	//
 	
+	/**
+    * Default game making constructor
+    */
+	public KitPvP(Main mainInstance, int id, String worldName) {
+		super(mainInstance,worldName);
+		
+		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.id = id;
+		this.worldName = worldName;
+		realm = Realm.KITPVP;
+		duration = 900;
+		maxPlayers = 20;
+		startTime = System.currentTimeMillis() / 1000L;
+	}
+	/**
+    * Custom game constructor
+    */
 	public KitPvP(Main mainInstance, int id, String worldName, int duration, int maxPlayers) {
 		super(mainInstance,worldName);
 		
@@ -67,9 +84,6 @@ public class KitPvP extends GameBase {
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		startTime = System.currentTimeMillis() / 1000L;
-		
-		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", false, null, this);
 	}
 	
 	//
@@ -86,6 +100,30 @@ public class KitPvP extends GameBase {
 		for (Player ply : tempPlayers) {
 			leave(ply,false,Realm.HUB);
 		}
+	}
+	/**
+	* What needs to be ran when the world is created
+	*/
+	public void onCreate() {
+		//Set points
+		for (MapPoint point : map.getPoints()) {
+			if (point.getType() == MapPointType.PLAYER_SPAWN) {
+				spawns.add(point.getLocation());
+			} else if (point.getType() == MapPointType.GRACE_BOUND) {
+				if (safeZonePoint1 == null) {
+					safeZonePoint1 = point.getLocation().toVector();
+				} else {
+					safeZonePoint2 = point.getLocation().toVector();
+				}
+			}
+		}
+		pointsSet = true;
+		
+		//Clear all entities
+		for (Entity ent : world.getEntities()) ent.remove();
+		
+		//Scoreboard timer
+		mainInstance.getTimerInstance().createMethodTimer("scoreboard_" + worldName, .5, 0, "setScoreboard", false, null, this);
 	}
 	/**
     * What needs to be ran when the world is deleted
@@ -175,7 +213,7 @@ public class KitPvP extends GameBase {
     		}
 		}
 		//Manage invincible area
-		if (players.size() > 0) {
+		if (pointsSet && players.size() > 0) {
 			for(Player ply : players) {
 				Location loc = ply.getLocation();
 				
@@ -233,14 +271,12 @@ public class KitPvP extends GameBase {
 				int top = Collections.max(playerKills.values());
 				
 				//TODO REDO
-				if (top > 0) {        					
-					UUID won = null;
-					
+				if (top > 0) {
 					for (Map.Entry<String,Integer> entry : playerKills.entrySet()) {
 						Player ply = Bukkit.getServer().getPlayer(entry.getKey());
 						
 						if (entry.getValue() == top) {
-							mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
+							mainInstance.getTimerInstance().createRunnableTimer(worldName + "_fireworks", .7, 0, new Runnable() {
 								@Override
 								public void run() {
 									List<Color> c = new ArrayList<Color>();
@@ -274,8 +310,6 @@ public class KitPvP extends GameBase {
 						}
 					}
 					for (Player player : players) {
-						PlayerData pd = playerHandling.getPlayerData(player);
-						
 						//Print the players xp summary
 						printSummary(player,false);
 					}
@@ -284,7 +318,7 @@ public class KitPvP extends GameBase {
 				}
 				soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 				//Wait 10 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 10, 1, "kickEveryone", false, null, this);
+				mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 10, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}
@@ -475,7 +509,7 @@ public class KitPvP extends GameBase {
 		Location randSpawn = getRandomSpawnPoint();
 		ply.teleport(randSpawn);
 		
-		ply.sendTitle(ChatColor.YELLOW + "Welcome to KitPvP",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
+		ply.sendTitle(ChatColor.YELLOW + "Welcome to KitPvP",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map.getName());
 		
 		for (Player player : players) {
 			if (player.getHealth() == 20) {				
@@ -505,9 +539,6 @@ public class KitPvP extends GameBase {
 			}
 		}
 		top5.removeAll(plyToRemove);
-		
-		//Clear scoreboard
-		playerData.clearScoreboard();
 		
 		//Remove players from teams
 		for (Player player : players) {

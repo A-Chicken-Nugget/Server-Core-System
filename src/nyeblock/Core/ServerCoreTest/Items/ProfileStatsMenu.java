@@ -11,11 +11,11 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
-import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
+import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 
 @SuppressWarnings({"deprecation","serial"})
 public class ProfileStatsMenu extends MenuBase {
@@ -31,7 +31,7 @@ public class ProfileStatsMenu extends MenuBase {
 		//
 		// Profile/Stats menu
 		//
-		subMenu = new SubMenu("Profile/Stats Menu",27);
+		subMenu = new SubMenu("Profile/Stats Menu",27,this);
 		
 		//My Stats
 		subMenu.addOption(12, Material.COMMAND_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "My Stats", new ArrayList<String>() {{
@@ -54,11 +54,10 @@ public class ProfileStatsMenu extends MenuBase {
             }
 		});
 		
-		super.addSubMenu(subMenu);
 		//
 		// My Stats menu
 		//
-		subMenu = new SubMenu("My Stats",36);
+		subMenu = new SubMenu("My Stats",36,this);
 		
 		//Kitpvp
 		int kitpvpLevel = playerData.getLevel(Realm.KITPVP);
@@ -117,11 +116,10 @@ public class ProfileStatsMenu extends MenuBase {
 			}
 		});
 		
-		super.addSubMenu(subMenu);
 		//
 		// PvP Stats
 		//
-		subMenu = new SubMenu("PvP Stats",27);
+		subMenu = new SubMenu("PvP Stats",27,this);
 		
 		//Duels >> Fists
 		int duelsfistsLevel = playerData.getLevel(PvPMode.DUELS,PvPType.FIST);
@@ -156,14 +154,12 @@ public class ProfileStatsMenu extends MenuBase {
 				playerHandling.getPlayerData(player).getMenu().openMenu("My Stats");
 			}
 		});
-		
-		super.addSubMenu(subMenu);
 	}
 	//Give the player this item
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.PLAYER_HEAD);
 		SkullMeta shopMeta = (SkullMeta)item.getItemMeta();
-		shopMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "My Profile/Stats" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		shopMeta.setDisplayName(ChatColor.YELLOW + "My Profile/Stats" + ChatColor.GREEN + " (RIGHT-CLICK)");
 		shopMeta.setLocalizedName("profile_stats_menu");
 		shopMeta.setOwner(player.getName());
 		item.setItemMeta(shopMeta);

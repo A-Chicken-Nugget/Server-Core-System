@@ -77,10 +77,10 @@ public class HubParkour extends RealmBase {
 		top5Text.appendItemLine(new ItemStack(Material.CLOCK));
 
 		// Zones timer
-		mainInstance.getTimerInstance().createTimer("parkour_functions", .15, 0, "mainFunctions", false, null, this);
+		mainInstance.getTimerInstance().createMethodTimer("parkour_functions", .15, 0, "mainFunctions", false, null, this);
 		
 		//Timers used to update the top 5 text. One if is asynchrous query and one to update the actual text
-		mainInstance.getTimerInstance().createTimer2("parkour_getTop5", 60, 0, new Runnable() {
+		mainInstance.getTimerInstance().createRunnableTimer("parkour_getTop5", 60, 0, new Runnable() {
 			@Override
 			public void run() {
 				Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
@@ -92,7 +92,7 @@ public class HubParkour extends RealmBase {
 				});
 			}
 		});
-		mainInstance.getTimerInstance().createTimer2("parkour_textFlip", 30, 0, new Runnable() {
+		mainInstance.getTimerInstance().createRunnableTimer("parkour_textFlip", 30, 0, new Runnable() {
 			@Override
 			public void run() {				
 				if (displayCompTop5) {
@@ -142,7 +142,7 @@ public class HubParkour extends RealmBase {
 		});
 
 		// Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("parkour_scoreboard", .5, 0, "setScoreboard", false, null, this);
+		mainInstance.getTimerInstance().createMethodTimer("parkour_scoreboard", .5, 0, "setScoreboard", false, null, this);
 	}
 
 	/**
@@ -321,6 +321,23 @@ public class HubParkour extends RealmBase {
 		ply.teleport(new Location(world,tempPos.getX()+.5,tempPos.getY()+1,tempPos.getZ()+.5,tempDirection[0],tempDirection[1]));
 		playerCheckPoints.put(ply.getName(), 0);
 	}
+	/**
+	* When a player respawns
+	* @param ply - Player that is being respawned
+	* @return location to respawn the player
+	*/
+	public Location playerRespawn(Player ply) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
+		pd.setItems();
+		Location tempPos = checkPointLocations.get(0);
+		Float[] tempDirection = checkPointDirections.get(0);
+		playerCheckPoints.put(ply.getName(), 0);
+		return new Location(world,tempPos.getX()+.5,tempPos.getY()+1,tempPos.getZ()+.5,tempDirection[0],tempDirection[1]);
+	}
+	/**
+	* When a player joins the hub
+	*/
 	public void playerJoin(Player ply) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
@@ -383,8 +400,6 @@ public class HubParkour extends RealmBase {
 		validPlayers.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
-		
-		pd.clearScoreboard();
 				
 		if (!mainInstance.getTimerInstance().timerExists("leave_" + ply.getUniqueId())) {			
 			mainInstance.getHubInstance().join(ply, false);

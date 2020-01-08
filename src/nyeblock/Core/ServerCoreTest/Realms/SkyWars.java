@@ -1,38 +1,28 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Effect;
-import org.bukkit.FireworkEffect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.FireworkEffect.Type;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
-import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
-import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -40,10 +30,11 @@ import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
+import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.MapPointType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
-import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 
 @SuppressWarnings({"deprecation","serial"})
 public class SkyWars extends GameBase {
@@ -60,6 +51,7 @@ public class SkyWars extends GameBase {
 	private int readyCount = 0;
 	private int messageCount = 0;
 	private long lastNumber = 0;
+	private boolean setWorldTime = true;
 	protected ArrayList<Hologram> holograms = new ArrayList<>();
 	protected HashMap<Vector,ChestValue> chests = new HashMap<>();
 	
@@ -67,6 +59,24 @@ public class SkyWars extends GameBase {
 	// CONSTRUCTOR
 	//
 	
+	/**
+    * Default game making constructor
+    */
+	public SkyWars(Main mainInstance, int id, String worldName) {
+		super(mainInstance,worldName);
+		
+		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.id = id;
+		this.worldName = worldName;
+		realm = Realm.SKYWARS;
+		duration = 900;
+		minPlayers = 4;
+		maxPlayers = 8;
+	}
+	/**
+    * Custom game constructor
+    */
 	public SkyWars(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
 		super(mainInstance,worldName);
 		
@@ -78,11 +88,6 @@ public class SkyWars extends GameBase {
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
-		
-		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
-		//Main functions timer
-		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 	}
 	
 	//
@@ -94,6 +99,7 @@ public class SkyWars extends GameBase {
     */
 	public void kickEveryone() {
 		mainInstance.getTimerInstance().deleteTimer(worldName + "_fireworks");
+		mainInstance.getTimerInstance().deleteTimer(worldName + "_timeWarp");
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
@@ -136,6 +142,10 @@ public class SkyWars extends GameBase {
 				ply.getInventory().clear();
 				setPlayerKit(ply,playerKits.get(ply.getName()));
 				
+				if (ply.getOpenInventory() != null) {
+					ply.getOpenInventory().close();
+				}
+				
 				ply.setGameMode(GameMode.SURVIVAL);
 				
 				pd.addGamePlayed(realm, false);
@@ -156,35 +166,49 @@ public class SkyWars extends GameBase {
 	public void onCreate() {
 		GameBase instance = this;
 		
+		//Set points
+		for (MapPoint point : map.getPoints()) {
+			if (point.getType() == MapPointType.PLAYER_SPAWN) {				
+				spawns.add(point.getLocation());
+			} else {
+				chests.put(point.getLocation().toVector(), point.getChestValue());
+			}
+		}
+		
+		//Spawn/fill chests
 		new BukkitRunnable() {
 	        public void run() {
-	        	//Spawn/fill chests
-	        	chests = GameMapInfo.getChestInfo(instance);
 	        	CustomChestGenerator.setChests(chests,mainInstance,instance);
 			}
 	    }.runTask(mainInstance);
+	    
+	    //Scoreboard timer
+	    mainInstance.getTimerInstance().createMethodTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
+	    
+	    //Main functions timer
+	    mainInstance.getTimerInstance().createMethodTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 	}
 	/**
 	* What needs to be ran when the world is deleted
 	*/
 	public void onDelete() {
-		new BukkitRunnable() {
-	        public void run() {
-	        	if (chests.size() > 0) {
-	        		for(Map.Entry<Vector,ChestValue> entry : chests.entrySet()) {
-	        			Block block = world.getBlockAt(entry.getKey().toLocation(world));
-    					Chest chest = (Chest)block.getState();
-    					chest.getInventory().clear();
-	        			block.setType(Material.AIR);
-	        		}
-	        	}
-	        	if (holograms.size() > 0) {
-	        		for (Hologram hologram : holograms) {
-	        			hologram.delete();
-	        		}
-	        	}
-			}
-	    }.runTask(mainInstance);
+		//Remove chests/holograms
+    	if (chests.size() > 0) {
+    		for(Map.Entry<Vector,ChestValue> entry : chests.entrySet()) {
+    			Block block = entry.getKey().toLocation(world).getBlock();
+    			
+    			if (block.getType() == Material.CHEST) {	        				
+    				Chest chest = (Chest)block.getState();
+    				chest.getInventory().clear();
+    				block.setType(Material.AIR);
+    			}
+    		}
+    	}
+    	if (holograms.size() > 0) {
+    		for (Hologram hologram : holograms) {
+    			hologram.delete();
+    		}
+    	}
 		
 		mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
 		mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
@@ -219,7 +243,7 @@ public class SkyWars extends GameBase {
 							active = true;
 							countdownStart = System.currentTimeMillis() / 1000L;
 							
-							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
+							mainInstance.getTimerInstance().createMethodTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
 						}
 					}
 					readyCount++;
@@ -264,35 +288,45 @@ public class SkyWars extends GameBase {
 				if (!endStarted) {
 					endStarted = true;
 					canUsersJoin = false;
+					setWorldTime = false;
 					
-					mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
+					mainInstance.getTimerInstance().createRunnableTimer(worldName + "_timeWarp", .1, 0, new Runnable() {
 						@Override
 						public void run() {
-							List<Color> c = new ArrayList<Color>();
-			                c.add(Color.GREEN);
-			                c.add(Color.RED);
-			                c.add(Color.BLUE);
-			                c.add(Color.ORANGE);
-			                c.add(Color.YELLOW);
-			                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();		                		
-	                		Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
-	                		FireworkMeta fireworkMeta = firework.getFireworkMeta();
-	                		fireworkMeta.addEffect(effect);
-	                		fireworkMeta.setPower(2);
-	                		firework.setFireworkMeta(fireworkMeta);
+							if (world.getTime() < 23000L) {
+								world.setTime(world.getTime() + 1000L);
+							} else {
+								world.setTime(0);
+							}
 						}
 					});
+//					mainInstance.getTimerInstance().createRunnableTimer(worldName + "_fireworks", .7, 0, new Runnable() {
+//						@Override
+//						public void run() {
+//							List<Color> c = new ArrayList<Color>();
+//			                c.add(Color.GREEN);
+//			                c.add(Color.RED);
+//			                c.add(Color.BLUE);
+//			                c.add(Color.ORANGE);
+//			                c.add(Color.YELLOW);
+//			                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();		                		
+//	                		Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
+//	                		FireworkMeta fireworkMeta = firework.getFireworkMeta();
+//	                		fireworkMeta.addEffect(effect);
+//	                		fireworkMeta.setPower(2);
+//	                		firework.setFireworkMeta(fireworkMeta);
+//						}
+//					});
+					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 					giveXP(ply,"Placing #1",200);
 					playerHandling.getPlayerData(ply).addGamePlayed(realm, true);
 					for (Player player : players) {
-						PlayerData pd = playerHandling.getPlayerData(player);
-						
 						//Print the players xp summary
 						printSummary(player,true);
 					}
-					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
+					mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
 			}
 		}
@@ -317,8 +351,10 @@ public class SkyWars extends GameBase {
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
-		if (world != null) {        			
-			world.setTime(1000);
+		if (world != null) {   
+			if (setWorldTime) {				
+				world.setTime(1000);
+			}
 			if (world.hasStorm()) {
 				world.setStorm(false);
     		}
@@ -332,7 +368,7 @@ public class SkyWars extends GameBase {
 				messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
+				mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}
@@ -584,18 +620,20 @@ public class SkyWars extends GameBase {
 		playerKits.put(ply.getName(),"default");
 		
 		//Find available spot for player
-		boolean foundSpot = false;
-		for (int i = 0; i < spawns.size(); i++) {
-			if (!foundSpot && !playerSpots.containsKey(i)) {
-				playerSpots.put(i,ply.getName());
-				foundSpot = true;
-				
-				Location spawn = spawns.get(i);
-				ply.teleport(spawn);				
-			}
+		if (spawns.size() > 0) {
+			for (int i = 0; i < spawns.size(); i++) {
+				if (!playerSpots.containsKey(i)) {
+					Location spawn = spawns.get(i);
+					
+					playerSpots.put(i,ply.getName());
+					ply.teleport(spawn);	
+					break;
+				}
+			}			
+		} else {			
+			ply.teleport(Bukkit.getWorld(worldName).getSpawnLocation());
 		}
-//		ply.teleport(Bukkit.getWorld(worldName).getSpawnLocation());
-		ply.sendTitle(ChatColor.YELLOW + "Welcome to Sky Wars",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
+		ply.sendTitle(ChatColor.YELLOW + "Welcome to Sky Wars",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map.getName());
 		
 		for (Player player : players) {
 			if (player.getHealth() == 20) {				
@@ -607,8 +645,6 @@ public class SkyWars extends GameBase {
     * Handle when a player leaves the game
     */
 	public void playerLeave(Player ply) {
-		PlayerData pd = playerHandling.getPlayerData(ply);
-		
 		//Remove player from the current game
 		playersInGame.removeAll(new ArrayList<Player>() {{
 			add(ply);
@@ -618,9 +654,6 @@ public class SkyWars extends GameBase {
 		playersSpectating.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
-		
-		//Clear scoreboard
-		pd.clearScoreboard();
 		
 		//Remove player from the spots list
 		Iterator<Map.Entry<Integer, String>> itr = playerSpots.entrySet().iterator();

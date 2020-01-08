@@ -22,7 +22,7 @@ public class Fireball extends ItemBase {
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.FIRE_CHARGE,amount);
 		ItemMeta itemMeta = item.getItemMeta();
-		itemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fire Ball");
+		itemMeta.setDisplayName(ChatColor.YELLOW + "Fire Ball");
 		itemMeta.setLocalizedName("fireball");
 		item.setItemMeta(itemMeta);
 		

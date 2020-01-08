@@ -11,5 +11,6 @@
 	<classpathentry kind="lib" path="L:/Eclipse Jars/Async-WorldManager-pre_0.8_62.jar"/>
 	<classpathentry kind="lib" path="L:/Eclipse Jars/FastAsyncWorldEdit-1.15-13.jar"/>
 	<classpathentry kind="lib" path="L:/Eclipse Jars/CoreProtect-2.17.5.jar"/>
+	<classpathentry kind="lib" path="L:/Eclipse Jars/LightCleaner-1.14.4-v1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

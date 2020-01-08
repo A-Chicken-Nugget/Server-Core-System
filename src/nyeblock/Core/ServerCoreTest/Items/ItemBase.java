@@ -18,4 +18,7 @@ public abstract class ItemBase {
 	
 	public void use(ItemStack item) {}
 	public ItemStack give() { return null; }
+	public Main getMainInstance() {
+		return mainInstance;
+	}
 }

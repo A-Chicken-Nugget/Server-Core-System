@@ -10,11 +10,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
+import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
-import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
-import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 
 @SuppressWarnings("serial")
 public class KitSelector extends MenuBase {
@@ -24,7 +22,7 @@ public class KitSelector extends MenuBase {
 	
 	public void setContents() {
 		GameBase game = (GameBase)mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm();
-		SubMenu subMenu = new SubMenu("Kit Selector",9);
+		SubMenu subMenu = new SubMenu("Kit Selector",9,this);
 		
 		if (game.getRealm() == Realm.KITPVP) {
 			String kitSelected = (game.getPlayerKit(player) == null ? "knight" : game.getPlayerKit(player));
@@ -149,12 +147,11 @@ public class KitSelector extends MenuBase {
 	            }
 			});
 		}
-		super.addSubMenu(subMenu);
 	}
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.EMERALD);
 		ItemMeta itemMeta = item.getItemMeta();
-		itemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Select Kit" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		itemMeta.setDisplayName(ChatColor.YELLOW + "Select Kit" + ChatColor.GREEN + " (RIGHT-CLICK)");
 		itemMeta.setLocalizedName("kit_selector");
 		item.setItemMeta(itemMeta);
 		

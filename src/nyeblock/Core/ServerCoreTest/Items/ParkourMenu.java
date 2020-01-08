@@ -12,7 +12,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Interfaces.SubMenu;
+import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 
 @SuppressWarnings("serial")
 public class ParkourMenu extends MenuBase {
@@ -21,7 +21,7 @@ public class ParkourMenu extends MenuBase {
 	}
 	
 	public void setContents() {
-		SubMenu subMenu = new SubMenu("Parkour Menu",9);
+		SubMenu subMenu = new SubMenu("Parkour Menu",9,this);
 		
 		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(player);
 		if (pd.getCustomDataKey("parkour_mode") == null) {
@@ -56,13 +56,12 @@ public class ParkourMenu extends MenuBase {
             	player.closeInventory();
             }
 		});
-		super.addSubMenu(subMenu);
 	}
 	//Give the player this item
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.CLOCK);
 		ItemMeta itemMeta = item.getItemMeta();
-		itemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Parkour Menu" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		itemMeta.setDisplayName(ChatColor.YELLOW + "Parkour Menu" + ChatColor.GREEN + " (RIGHT-CLICK)");
 		itemMeta.setLocalizedName("parkour_menu");
 		itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 		item.setItemMeta(itemMeta);

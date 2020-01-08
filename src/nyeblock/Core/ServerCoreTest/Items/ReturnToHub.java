@@ -18,7 +18,7 @@ public class ReturnToHub extends ItemBase {
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.LEAD);
 		ItemMeta itemMeta = item.getItemMeta();
-		itemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Return to Hub" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		itemMeta.setDisplayName(ChatColor.YELLOW + "Return to Hub" + ChatColor.GREEN + " (RIGHT-CLICK)");
 		itemMeta.setLocalizedName("return_to_hub");
 		item.setItemMeta(itemMeta);
 		

@@ -9,5 +9,15 @@ public abstract class ShopBase extends MenuBase {
 		super(mainInstance,player,name);
 	}
 	
-	
+//	public boolean canBuyOption(String name) {
+//		boolean canBuy = false;
+//		
+//		for (MenuOption option : currentMenu.getOptions()) {
+//			if (option.getName().equalsIgnoreCase(name)) {
+//				
+//				exists = true;
+//			}
+//		}
+//		return canBuy;
+//	}
 }

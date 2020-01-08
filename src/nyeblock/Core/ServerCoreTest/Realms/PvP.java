@@ -1,6 +1,5 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,7 +9,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Effect;
@@ -18,7 +16,6 @@ import org.bukkit.FireworkEffect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
-import org.bukkit.World;
 import org.bukkit.FireworkEffect.Type;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
@@ -30,8 +27,8 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
-import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -67,11 +64,6 @@ public class PvP extends GameBase {
 		this.maxPlayers = maxPlayers;
 		this.pvpMode = pvpMode;
 		this.pvpType = pvpType;
-		
-		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
-		//Main functions timer
-		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 	}
 	
 	//
@@ -128,6 +120,36 @@ public class PvP extends GameBase {
 		}
 	}
 	/**
+	* What needs to be ran when the world is created
+	*/
+	public void onCreate() {
+		//Set points
+		for (int i = 0; i < map.getPoints().size(); i++) {
+			spawns.add(i,null);
+		}
+		for (MapPoint point : map.getPoints()) {
+			spawns.set(point.getPosition()-1,point.getLocation());
+		}
+		
+		//Setup team spawns if they haven't been already
+		int getCount = maxPlayers / 2;
+		
+		for (int team = 0; team < 2; team++) {				
+			HashMap<Location,Player> teamSpawns = new HashMap<>();
+			
+			for (int spawn = 0; spawn < getCount; spawn++) {
+				teamSpawns.put(spawns.get((team*getCount) + spawn), null);
+			}
+			teamsSetup.add(team,teamSpawns);
+		}
+		
+		//Scoreboard timer
+		mainInstance.getTimerInstance().createMethodTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
+		
+		//Main functions timer
+		mainInstance.getTimerInstance().createMethodTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
+	}
+	/**
 	* What needs to be ran when the world is deleted
 	*/
 	public void onDelete() {
@@ -138,20 +160,6 @@ public class PvP extends GameBase {
     * Run main checks for the game
     */
 	public void mainFunctions() {
-		//Setup team spawns if they haven't been already
-		if (spawns.size() > 0 && teamsSetup.size() == 0) {
-			int getCount = maxPlayers / 2;
-			
-			for (int team = 0; team < 2; team++) {				
-				HashMap<Location,Player> teamSpawns = new HashMap<>();
-				
-				for (int spawn = 0; spawn < getCount; spawn++) {
-					teamSpawns.put(spawns.get((team*getCount) + spawn), null);
-				}
-				teamsSetup.add(team,teamSpawns);
-			}
-		}
-		
 		//Check if the server is empty
 		if (players.size() > 0) {
 			if (!active) {
@@ -164,7 +172,7 @@ public class PvP extends GameBase {
 							active = true;
 							countdownStart = System.currentTimeMillis() / 1000L;
 							
-							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
+							mainInstance.getTimerInstance().createMethodTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
 							
 							for (Player ply : players) {
 								PlayerData pd = playerHandling.getPlayerData(ply);
@@ -175,7 +183,7 @@ public class PvP extends GameBase {
 								ply.getInventory().clear(8);
 								
 								if (ply.getFireTicks() > 0) {									
-									mainInstance.getTimerInstance().createTimer2("extinguish_" + ply.getName(), 1, 1, new Runnable() {
+									mainInstance.getTimerInstance().createRunnableTimer("extinguish_" + ply.getName(), 1, 1, new Runnable() {
 										@Override
 										public void run() {
 											ply.setFireTicks(0);
@@ -252,7 +260,7 @@ public class PvP extends GameBase {
 						}
 					}
 					
-					mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
+					mainInstance.getTimerInstance().createRunnableTimer(worldName + "_fireworks", .7, 0, new Runnable() {
 						@Override
 						public void run() {
 							List<Color> c = new ArrayList<Color>();
@@ -278,12 +286,10 @@ public class PvP extends GameBase {
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + namesString + " won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 					for (Player ply : players) {
-						PlayerData pd = playerHandling.getPlayerData(ply);
-						
 						//Print the players xp summary
 						printSummary(ply,true);
 					}
-					mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
+					mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 					break;
 				}
 			}
@@ -327,7 +333,7 @@ public class PvP extends GameBase {
 				messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
+				mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}
@@ -469,7 +475,7 @@ public class PvP extends GameBase {
 			}
 		}
 		
-		ply.sendTitle(ChatColor.YELLOW + "Welcome to PvP \u00BB " + pvpType.toString(),ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
+		ply.sendTitle(ChatColor.YELLOW + "Welcome to PvP \u00BB " + pvpType.toString(),ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map.getName());
 		
 		for (Player player : players) {
 			if (player.getHealth() == 20) {				
@@ -481,8 +487,6 @@ public class PvP extends GameBase {
     * Handle when a player leaves the game
     */
 	public void playerLeave(Player ply) {
-		PlayerData pd = playerHandling.getPlayerData(ply);
-		
 		//Remove player from team
 		for (int team = 0; team < 2; team++) {
 			for (Map.Entry<Location,Player> entry : teamsSetup.get(team).entrySet()) {
@@ -503,9 +507,6 @@ public class PvP extends GameBase {
 		playersSpectating.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
-		
-		//Clear scoreboard
-		pd.clearScoreboard();
 		
 		//Remove player from other players teams
 		int teamIndex = getPlayerTeam(ply);

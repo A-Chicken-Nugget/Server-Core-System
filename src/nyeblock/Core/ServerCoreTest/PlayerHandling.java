@@ -50,7 +50,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.world.WorldInitEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.EnchantingInventory;
@@ -62,9 +61,9 @@ import org.bukkit.util.Vector;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import nyeblock.Core.ServerCoreTest.Interfaces.DamagePlayer;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 import nyeblock.Core.ServerCoreTest.Items.MenuBase;
+import nyeblock.Core.ServerCoreTest.Misc.DamagePlayer;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
@@ -336,7 +335,7 @@ public class PlayerHandling implements Listener {
 							&& game.getJoinStatus()) {
 						realm.join(ply, true);
 					} else {
-						ply.sendMessage(ChatColor.YELLOW + "Unable to rejoin " + realm.getRealm().toString() + " game. It is not longer active.");
+						ply.sendMessage(ChatColor.YELLOW + "Unable to rejoin " + realm.getRealm().toString() + " game. It is no longer active.");
 						mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
 					}
 				} else {
@@ -410,7 +409,7 @@ public class PlayerHandling implements Listener {
 		// Remove default quit message
 		event.setQuitMessage("");
 		
-		mainInstance.getTimerInstance().createTimer2("leave_" + ply.getUniqueId(), 60, 1, new Runnable() {
+		mainInstance.getTimerInstance().createRunnableTimer("leave_" + ply.getUniqueId(), 60, 1, new Runnable() {
 			@Override
 			public void run() {
 				if (!ply.isOnline()) {
@@ -669,7 +668,12 @@ public class PlayerHandling implements Listener {
 	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
 		Player ply = event.getPlayer();
 		
-		ply.getOpenInventory().close();
+		mainInstance.getTimerInstance().createRunnableTimer("beans", .5, 1, new Runnable() {
+			@Override
+			public void run() {
+				ply.getOpenInventory().close();
+			}
+		});
 	}
 	// Handle potion splashes
 	@EventHandler
@@ -703,7 +707,7 @@ public class PlayerHandling implements Listener {
 				EnchantingInventory inv = (EnchantingInventory) event.getInventory();
 				inv.setItem(1,new ItemStack(Material.LAPIS_LAZULI,20));
 				
-				mainInstance.getTimerInstance().createTimer2("lapisReplacement_" + ply.getUniqueId(), .5, 0, new Runnable() {
+				mainInstance.getTimerInstance().createRunnableTimer("lapisReplacement_" + ply.getUniqueId(), .5, 0, new Runnable() {
 					@Override
 					public void run() {
 						inv.setItem(1,new ItemStack(Material.LAPIS_LAZULI,20));

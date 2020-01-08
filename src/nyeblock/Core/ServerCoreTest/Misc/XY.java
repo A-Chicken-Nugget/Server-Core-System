@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Interfaces;
+package nyeblock.Core.ServerCoreTest.Misc;
 	
 public class XY {
 	public int x;

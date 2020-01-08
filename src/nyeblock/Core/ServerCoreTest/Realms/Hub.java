@@ -63,7 +63,7 @@ public class Hub extends RealmBase {
 		spawnText.appendItemLine(new ItemStack(Material.NETHER_STAR));
 		
 		//Main functions timer
-		mainInstance.getTimerInstance().createTimer("hub_functions", .5, 0, "mainFunctions", false, null, this);
+		mainInstance.getTimerInstance().createMethodTimer("hub_functions", .5, 0, "mainFunctions", false, null, this);
 		
 		ArrayList<String> hints = new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "Use the " + ChatColor.BOLD + "GAME MENU " + ChatColor.RESET.toString() + ChatColor.YELLOW + "item to browse the available game modes!");
@@ -72,7 +72,7 @@ public class Hub extends RealmBase {
 		}};
 		
 		//Hint messages timer
-		mainInstance.getTimerInstance().createTimer2("hint_messages", 90, 0, new Runnable() {
+		mainInstance.getTimerInstance().createRunnableTimer("hint_messages", 90, 0, new Runnable() {
 			@Override
 			public void run() {
 				messageToAll(hints.get(new Random().nextInt(hints.size())));
@@ -102,9 +102,11 @@ public class Hub extends RealmBase {
 			HashMap<Integer, String> scores = new HashMap<>();
 			
 			//Scoreboard
-			scores.put(5, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+			scores.put(7, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+			scores.put(6, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+			scores.put(5, ChatColor.YELLOW + "Players online: " + ChatColor.GREEN + playersOnline);
 			scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(3, ChatColor.YELLOW + "Players online: " + ChatColor.GREEN + playersOnline);
+			scores.put(3, ChatColor.YELLOW + "Points: " + ChatColor.GREEN + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()));
 			scores.put(2, ChatColor.RESET.toString());
 			scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
 			pd.setScoreboardTitle(boardAnim.getMessage());
@@ -141,9 +143,6 @@ public class Hub extends RealmBase {
 	*/
 	public void playerLeave(Player ply) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
-		
-		//Clear scoreboard info
-		pd.clearScoreboard();
 		
 		//Remove players from teams
 		for (Player player : players) {

@@ -17,7 +17,7 @@ public class ReturnToStart extends ItemBase {
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.LEAD);
 		ItemMeta itemMeta = item.getItemMeta();
-		itemMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Return to Start" + ChatColor.GREEN.toString() + ChatColor.BOLD + " (RIGHT-CLICK)");
+		itemMeta.setDisplayName(ChatColor.YELLOW + "Return to Start" + ChatColor.GREEN + " (RIGHT-CLICK)");
 		itemMeta.setLocalizedName("parkour_start");
 		item.setItemMeta(itemMeta);
 		

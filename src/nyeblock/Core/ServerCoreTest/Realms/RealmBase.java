@@ -206,6 +206,9 @@ public abstract class RealmBase {
 	public void join(Player ply, boolean isGame) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
+		//Create scoreboard
+		pd.createScoreboard();
+		
 		//Set the players current game
 		if (pd.getCurrentRealm() != this) {
 			pd.setCurrentRealm(this);
@@ -308,7 +311,7 @@ public abstract class RealmBase {
 			playerJoin(ply);
 		}
 		
-		mainInstance.getTimerInstance().createTimer2("setGamemode_" + ply.getUniqueId(), 1, 0, new Runnable() {
+		mainInstance.getTimerInstance().createRunnableTimer("setGamemode_" + ply.getUniqueId(), 1, 0, new Runnable() {
 			@Override
 			public void run() {
 				if (ply.getGameMode() != GameMode.ADVENTURE) {
@@ -331,16 +334,24 @@ public abstract class RealmBase {
     * @param destination - The realm to send the player
     */
 	public void leave(Player ply, boolean showLeaveMessage, Realm destination) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
+		//Remove from the players array
 		players.removeAll(new ArrayList<Player>() {{
 			add(ply);
 		}});
 		
+		//Clear players scoreboard
+		pd.clearScoreboard();
+		
+		//Leave current realm
 		if (this instanceof GameBase) {
 			((GameBase)this).gameLeave(ply, showLeaveMessage);
 		} else {			
 			playerLeave(ply);
 		}
 		
+		//Join destination
 		if (destination != null) {			
 			mainInstance.getGameInstance().joinGame(ply, destination);
 		}

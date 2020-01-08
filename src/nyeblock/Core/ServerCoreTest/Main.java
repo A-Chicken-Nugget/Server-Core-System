@@ -8,7 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
-import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -45,6 +44,17 @@ public class Main extends JavaPlugin {
 		timerHandling = new TimerHandling();
 		CoreProtect coreProtect = (CoreProtect) getServer().getPluginManager().getPlugin("CoreProtect");
 		coreProtectAPI = coreProtect.getAPI();
+		
+		//Delete left over game worlds
+		for(World world : Bukkit.getWorlds()) {
+			String name = world.getName();
+			
+			if (!name.toString().matches("world")) {
+				Bukkit.getServer().unloadWorld(name,false);
+				WorldManager.deleteWorld(new File("./worlds/" + name));
+				new File("./plugins/Async-WorldManager/worldconfigs/" + name + ".yml").delete();
+			}
+		}
 		
 		//Set spawn point for hub world
 		Bukkit.getWorld("world").setSpawnLocation(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));

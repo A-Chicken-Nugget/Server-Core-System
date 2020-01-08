@@ -1,6 +1,5 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,7 +16,6 @@ import org.bukkit.FireworkEffect.Type;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
@@ -27,17 +25,14 @@ import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
-import com.boydti.fawe.bukkit.wrapper.AsyncWorld;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
-
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
-import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 
 @SuppressWarnings({"deprecation","serial"})
 public class StepSpleef extends GameBase {
@@ -55,6 +50,24 @@ public class StepSpleef extends GameBase {
 	private long lastNumber = 0;
 	private int playTimeCount = 0;
 	
+	/**
+    * Default game making constructor
+    */
+	public StepSpleef(Main mainInstance, int id, String worldName) {
+		super(mainInstance,worldName);
+		
+		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.id = id;
+		this.worldName = worldName;
+		realm = Realm.STEPSPLEEF;
+		duration = 600;
+		minPlayers = 5;
+		maxPlayers = 20;
+	}
+	/**
+    * Custom game constructor
+    */
 	public StepSpleef(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
 		super(mainInstance,worldName);
 		
@@ -66,15 +79,6 @@ public class StepSpleef extends GameBase {
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
-		
-		//Scoreboard timer
-		mainInstance.getTimerInstance().createTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
-		//Main functions timer
-		mainInstance.getTimerInstance().createTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
-		//Block deletion timer
-		mainInstance.getTimerInstance().createTimer("blocks_" + worldName, .1, 0, "manageBlocks", false, null, this);
-		//Snow ball timer
-		mainInstance.getTimerInstance().createTimer("snowballs_" + worldName, 1, 0, "giveSnowballs", false, null, this);
 	}
 	
 	/**
@@ -191,6 +195,24 @@ public class StepSpleef extends GameBase {
 		}
 	}
 	/**
+	* What needs to be ran when the world is created
+	*/
+	public void onCreate() {
+		//Set points
+		for (MapPoint point : map.getPoints()) {
+			spawns.add(point.getLocation());
+		}
+		
+		//Scoreboard timer
+		mainInstance.getTimerInstance().createMethodTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
+		//Main functions timer
+		mainInstance.getTimerInstance().createMethodTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
+		//Block deletion timer
+		mainInstance.getTimerInstance().createMethodTimer("blocks_" + worldName, .1, 0, "manageBlocks", false, null, this);
+		//Snow ball timer
+		mainInstance.getTimerInstance().createMethodTimer("snowballs_" + worldName, 1, 0, "giveSnowballs", false, null, this);
+	}
+	/**
 	* What needs to be ran when the world is deleted
 	*/
 	public void onDelete() {
@@ -254,7 +276,7 @@ public class StepSpleef extends GameBase {
 								ply.teleport(spawn);
 								playerHandling.getPlayerData(ply).addGamePlayed(realm, false);
 							}
-							mainInstance.getTimerInstance().createTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
+							mainInstance.getTimerInstance().createMethodTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
 							mainInstance.getTimerInstance().deleteTimer("snowballs_" + worldName);
 							clearSnowballs();
 						}
@@ -296,7 +318,7 @@ public class StepSpleef extends GameBase {
 			
 			messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 			soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
-			mainInstance.getTimerInstance().createTimer2(worldName + "_fireworks", .7, 0, new Runnable() {
+			mainInstance.getTimerInstance().createRunnableTimer(worldName + "_fireworks", .7, 0, new Runnable() {
 				@Override
 				public void run() {
 					List<Color> c = new ArrayList<Color>();
@@ -319,11 +341,9 @@ public class StepSpleef extends GameBase {
 			
 			//Print players xp summary
 			for (Player ply2 : players) {
-				PlayerData pd = playerHandling.getPlayerData(ply2);
-				
 				printSummary(ply2,true);
 			}
-			mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
+			mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 		}
 		//Update players scoreboard
 		for(Player ply : players)
@@ -359,7 +379,7 @@ public class StepSpleef extends GameBase {
 				messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 				//Wait 8 seconds, then kick everyone
-				mainInstance.getTimerInstance().createTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
+				mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
 	}
@@ -458,17 +478,12 @@ public class StepSpleef extends GameBase {
 		//Add players to proper scoreboard teams
 		updateTeamsFromUserGroups();
 		
-		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map);
+		ply.sendTitle(ChatColor.YELLOW + "Welcome to Step Spleef",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map.getName());
 	}
 	/**
     * Handle when a player leaves the game
     */
 	public void playerLeave(Player ply) {
-		PlayerData pd = playerHandling.getPlayerData(ply);
-		
-		//Clear scoreboard
-		pd.clearScoreboard();
-		
 		//Remove player from the current game
 		playersInGame.removeAll(new ArrayList<Player>() {{
 			add(ply);

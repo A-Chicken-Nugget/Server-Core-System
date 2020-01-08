@@ -54,7 +54,7 @@ public class Ban extends CommandBase {
 		List<String> autoCompletes = new ArrayList<>();
 		
 		if (args.length == 1) {
-			for (Player ply : Bukkit.getOnlinePlayers()) {
+			for (Player ply : player.getWorld().getPlayers()) {
 				if (ply.getName().contains(args[0])) {						
 					autoCompletes.add(ply.getName());
 				}

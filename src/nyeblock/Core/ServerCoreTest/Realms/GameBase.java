@@ -1,51 +1,31 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.World;
-import org.bukkit.WorldType;
-import org.bukkit.World.Environment;
-import org.bukkit.WorldCreator;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.Vector;
 
-import com.boydti.fawe.bukkit.wrapper.AsyncWorld;
 import com.boydti.fawe.object.clipboard.DiskOptimizedClipboard;
-import com.gmail.filoghost.holographicdisplays.api.Hologram;
-import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
-import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.math.BlockVector3;
 
-import de.xxschrandxx.awm.api.config.WorldData;
 import net.coreprotect.CoreProtectAPI;
 import net.coreprotect.CoreProtectAPI.ParseResult;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.SchematicHandling;
-import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
-import nyeblock.Core.ServerCoreTest.Interfaces.XY;
-import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
+import nyeblock.Core.ServerCoreTest.Maps.MapBase;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.VoidWorldGenerator;
 
 public abstract class GameBase extends RealmBase {
 	//Instances
@@ -54,11 +34,9 @@ public abstract class GameBase extends RealmBase {
 	//Game info
 	protected int id;
 	protected String worldName;
-	protected String map;
+	protected MapBase map;
 	protected boolean gameBegun = false;
 	protected long created = System.currentTimeMillis();
-	protected EditSession beforeSession;
-	protected EditSession schematicSession;
 	protected World world;
 	//Player data
 	protected ArrayList<HashMap<Location,Player>> teamsSetup = new ArrayList<>();
@@ -66,8 +44,6 @@ public abstract class GameBase extends RealmBase {
 	protected ArrayList<String> totalUsers = new ArrayList<>();
 	//Game points
 	protected ArrayList<Location> spawns = new ArrayList<>();
-	protected Vector safeZonePoint1;
-	protected Vector safeZonePoint2;
 	//Etc
 	protected int duration;
 	protected long startTime;
@@ -85,10 +61,10 @@ public abstract class GameBase extends RealmBase {
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		
 		//Create timer to check when the game world is created
-		mainInstance.getTimerInstance().createTimer("worldCheck_" + worldName, 1, 0, "checkWorld", true, null, this);
+		mainInstance.getTimerInstance().createMethodTimer("worldCheck_" + worldName, 1, 0, "checkWorld", true, null, this);
 		
 		//Create timer to delete world when empty
-		mainInstance.getTimerInstance().createTimer2("deleteCheck_" + worldName, 1, 0, new Runnable() {
+		mainInstance.getTimerInstance().createRunnableTimer("deleteCheck_" + worldName, 1, 0, new Runnable() {
 			@Override
 			public void run() {
 				if (players.size() > 0) {        			
@@ -119,16 +95,7 @@ public abstract class GameBase extends RealmBase {
 		
 		System.out.println("[Core] Cleaning up " + worldName);
 		
-		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
-			@Override
-			public void run() {
-				onDelete();
-				
-				DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(new File("./plugins/ServerCoreTest/maps/clear/" + realm.getValue() + "_" + map + ".bd"));
-				clipboard.toClipboard().paste(new BukkitWorld(world), BlockVector3.at(-42, 64, -6),false,true,null);
-				clipboard.close();
-			}
-		});
+		onDelete();
 		
 		//Clear all entities
 		for (Entity ent : world.getEntities()) ent.remove();
@@ -140,10 +107,23 @@ public abstract class GameBase extends RealmBase {
 		if (lookup != null) {
 			for (String[] value : lookup) {
 				ParseResult result = cp.parseResult(value);
+				Block block = new Location(world,result.getX(),result.getY(),result.getZ()).getBlock();
 				
-				new Location(world,result.getX(),result.getY(),result.getZ()).getBlock().setType(Material.AIR);
+				if (block.getType() != Material.AIR) {
+					block.setType(Material.AIR);
+				}
 			}
 		}
+		
+		//Clear schematic
+		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
+			@Override
+			public void run() {
+				DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(map.getClearSchematicFile());
+				clipboard.paste(new BukkitWorld(world), BlockVector3.at(-42, 30, -6),false,true,null);
+				clipboard.close();
+			}
+		});
 		
 		mainInstance.getGameInstance().removeGameFromList(id);
 	}
@@ -154,54 +134,24 @@ public abstract class GameBase extends RealmBase {
 		if (Bukkit.getWorld(worldName) != null && !isSchematicSet) {
 			GameBase instance = this;
 			world = Bukkit.getWorld(worldName);
-			beforeSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(new BukkitWorld(world), -1, null, null);
+			
+			System.out.println("[Core] Starting creation of a new " + instance.getRealm().toString() + " game.");
 			
 			Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 				@Override
 				public void run() {
-					//Set map schematic
-					SchematicHandling sh = new SchematicHandling();
-					String schem = sh.setSchematic(mainInstance,instance);
-					//Set map name
-					map = schem;
+					//Set map
+					map = GameMapInfo.getRandomMap(instance);
+					
+					System.out.println("[" + instance.getWorldName() + "] Setting " + map.getName() + " schematic.");
+					
+					//Set schematic
+					SchematicHandling.setSchematic(mainInstance,instance);
 				
+					System.out.println("[" + instance.getWorldName() + "] Finalizing.");
+					
+					//Run create method in sub class
 				    onCreate();
-				    
-					//Get map points
-					ArrayList<HashMap<String,Location>> points = GameMapInfo.getMapInfo(instance);
-					ArrayList<Location> spawnPoints = new ArrayList<Location>();
-					Location safeZonePoint1 = null;
-					Location safeZonePoint2 = null;
-					
-					for (int i = 0; i < maxPlayers; i++) {
-						spawnPoints.add(i,null);
-					}
-					
-					//Go through map points
-					for(int i = 0; i < points.size(); i++) {
-						HashMap<String,Location> point = points.get(i);
-						
-						for(Map.Entry<String, Location> entry : point.entrySet()) {
-							if (entry.getKey().contains("spawn")) {
-								String spawn[] = entry.getKey().split("_");
-								
-								spawnPoints.set(Integer.parseInt(spawn[1])-1,entry.getValue());
-							} else if (entry.getKey().equalsIgnoreCase("graceBound1")) {
-								safeZonePoint1 = entry.getValue();
-							} else if (entry.getKey().equalsIgnoreCase("graceBound2")) {
-								safeZonePoint2 = entry.getValue();
-							}
-						}
-					}
-					spawnPoints.removeAll(Collections.singleton(null));
-					
-					if (realm == Realm.KITPVP) {	
-						//Set grace points
-						instance.safeZonePoint1 = safeZonePoint1.toVector();
-						instance.safeZonePoint2 = safeZonePoint2.toVector();
-					}
-					//Set spawn points
-					spawns = spawnPoints;
 				}
 			});
 			mainInstance.getTimerInstance().deleteTimer("worldCheck_" + worldName);
@@ -384,7 +334,7 @@ public abstract class GameBase extends RealmBase {
 	/**
     * Get the name of the map schematic
     */
-	public String getMap() {
+	public MapBase getMap() {
 		return map;
 	}
 	/**

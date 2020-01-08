@@ -35,6 +35,7 @@ import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 import nyeblock.Core.ServerCoreTest.Items.KitSelector;
 import nyeblock.Core.ServerCoreTest.Items.MenuBase;
+import nyeblock.Core.ServerCoreTest.Items.NyeBlockMenu;
 import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ProfileStatsMenu;
@@ -59,7 +60,7 @@ public class PlayerData {
 	//Instance variables
 	private Player player;
 	private int id = -1;
-	private int points;
+	private int points = -1;
 	private double timePlayed;
 	private long timeJoined = System.currentTimeMillis() / 1000L;
 	private String ip;
@@ -99,6 +100,23 @@ public class PlayerData {
 		});
 	}
 	
+	public void addShopItem(String id) {
+		
+	}
+	/**
+	* Give points to player
+	* @param amount - the amount of points to give
+	*/
+	public void addPoints(int amount) {
+		points += amount;
+	}
+	/**
+	* Take points away
+	* @param amount - the amount of points to take away
+	*/
+	public void removePoints(int amount) {
+		points -= amount;
+	}
 	/**
 	* Associate a custom item with the player
 	* @param name - Name of the custom item
@@ -180,20 +198,10 @@ public class PlayerData {
 		player.setScoreboard(board);
 	}
 	/**
-    * Clear the players scoreboard teams, scores and health tags
+    * Deletes the players scoreboard
     */
 	public void clearScoreboard() {
-		for (Team team : board.getTeams()) {
-			team.unregister();
-		}
-		for (String score : board.getEntries()) {
-			board.resetScores(score);
-		}
-		for (Objective objective : board.getObjectives()) {
-			if (objective.getName().equals("healthtag")) {
-				objective.unregister();
-			}
-		}
+		player.getScoreboard().clearSlot(DisplaySlot.SIDEBAR);
 	}
 	/**
     * Add the given player to a specific team within the players scoreboard
@@ -206,7 +214,7 @@ public class PlayerData {
 		if (team != null) {
 			team.addPlayer(ply);
 		} else {
-			mainInstance.getTimerInstance().createTimer2("teamRecheck_" + ply.getUniqueId(), .5, 2, new Runnable() {
+			mainInstance.getTimerInstance().createRunnableTimer("teamRecheck_" + ply.getUniqueId(), .5, 2, new Runnable() {
 				@Override
 				public void run() {
 					if (board.getTeam(teamName) != null) {						
@@ -246,6 +254,12 @@ public class PlayerData {
 	// GETTERS
 	//
 	
+	/**
+	* Get the players points
+	*/
+	public int getPoints() {
+		return points;
+	}
 	/**
 	* Get the players hidden status
 	* @return if the player is hidden
@@ -694,6 +708,11 @@ public class PlayerData {
 			ProfileStatsMenu profileStatsMenu = new ProfileStatsMenu(mainInstance,player);
 			ItemStack ssm = profileStatsMenu.give();
 			player.getInventory().setItem(0, ssm);
+			
+			//NyeBlock
+			NyeBlockMenu nyeBlockMenu = new NyeBlockMenu(mainInstance,player);
+			ItemStack nbm = nyeBlockMenu.give();
+			player.getInventory().setItem(8, nbm);
 			
 		} else if (realm == Realm.PARKOUR) {
 			//Parkour menu

@@ -20,7 +20,7 @@ public class ForceStart extends CommandBase {
 		RealmBase realm = playerHandling.getPlayerData(ply).getCurrentRealm();
 		
 		if (realm instanceof GameBase) {
-			if (((GameBase)realm).getPlayerCount() > 1) {				
+			if (((GameBase)realm).getPlayerCount() > 0) {				
 				((GameBase)realm).forceStart();
 			} else {
 				ply.sendMessage(ChatColor.YELLOW + "Cannot force start a game with only 1 player!");

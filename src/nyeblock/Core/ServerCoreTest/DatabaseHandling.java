@@ -25,7 +25,7 @@ public class DatabaseHandling {
 		this.username = username;
 		this.password = password;
 		
-		mainInstance.getTimerInstance().createTimer("db_connection_montior", 2, 0, "checkConnectionStatus", false, null, this);
+		mainInstance.getTimerInstance().createMethodTimer("db_connection_montior", 2, 0, "checkConnectionStatus", false, null, this);
 	}
 	
 	public void checkConnectionStatus() {

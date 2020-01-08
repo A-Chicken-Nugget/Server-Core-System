@@ -9,7 +9,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 
 public class SetPermission extends CommandBase {
@@ -22,7 +21,7 @@ public class SetPermission extends CommandBase {
 	
 	public void execute(Player ply, String[] args) {
 		if (args.length >= 3) {
-			if (!args[0].equalsIgnoreCase("AllPlayersInGame")) {
+			if (!args[0].equalsIgnoreCase("<<_All_players_in_world_>>")) {
 				Player player = Bukkit.getPlayerExact(args[0]);
 				
 				if (player != null) {					
@@ -31,8 +30,8 @@ public class SetPermission extends CommandBase {
 					ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 				}
 			} else {
-				for (Player ply2 : playerHandling.getPlayerData(ply).getCurrentRealm().getPlayersInRealm()) {
-					playerHandling.getPlayerData(ply2).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
+				for (Player player : ply.getWorld().getPlayers()) {
+					playerHandling.getPlayerData(player).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
 				}
 			}
 		} else {
@@ -41,19 +40,28 @@ public class SetPermission extends CommandBase {
 	}
 	public List<String> autoCompletes(Player player, String[] args) {
 		List<String> autoCompletes = new ArrayList<>();
-		PlayerData pd = playerHandling.getPlayerData(player);
 		
 		if (args.length == 1) {
-			for (Player ply : pd.getCurrentRealm().getPlayersInRealm()) {
-				if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {						
+			boolean foundPlayer = false;
+			
+			for (Player ply : player.getWorld().getPlayers()) {
+				if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {	
+					foundPlayer = true;
 					autoCompletes.add(ply.getName());
 				}
 			}
-			if ("allplayersingame".contains(args[0].toLowerCase())) {	
-				autoCompletes.add("AllPlayersInGame");
+			if (!foundPlayer) {
+				for (Player ply : Bukkit.getOnlinePlayers()) {
+					if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {	
+						autoCompletes.add(ply.getName());
+					}
+				}
+			}
+			if ("<<_all_players_in_world_>>".contains(args[0].toLowerCase())) {	
+				autoCompletes.add("<<_All_players_in_world_>>");
 			}
 		} else if (args.length == 2) {
-			for (String permission : Arrays.asList("canBreakBlocks","canUseInventory","canPlaceBlocks","canBeDamaged","canDropItems")) {
+			for (String permission : Arrays.asList("canBreakBlocks","canUseInventory","canPlaceBlocks","canBeDamaged","canDropItems","shouldDropItemsOnDeath","canLoseHunger","canMove")) {
 				if (permission.toLowerCase().contains(args[1].toLowerCase())) {
 					autoCompletes.add(permission);
 				}

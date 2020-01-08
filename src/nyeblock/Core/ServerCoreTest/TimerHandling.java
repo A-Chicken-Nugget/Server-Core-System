@@ -16,7 +16,17 @@ public class TimerHandling {
 	private HashMap<String,BukkitTask> timers = new HashMap<String,BukkitTask>();
 	private HashMap<String,Integer> timesRan = new HashMap<String,Integer>();
 	
-	public void createTimer(String name, double delay, int timesToRun, String methodToRun, boolean isSuperMethod, Object[] args, Object classInstance) {
+	/**
+	* Creates a timer that calls a method
+	* @param name - unique name of the timer
+	* @param delay - how often does the timer run
+	* @param timesToRun - how many does should the timer run
+	* @param methodToRun - name of the method to run
+	* @param isSuperMethod - is this a method defined in the super class
+	* @param args - array of parameters to send into the method
+	* @param classInstance - instance of the class that the method is in
+	*/
+	public void createMethodTimer(String name, double delay, int timesToRun, String methodToRun, boolean isSuperMethod, Object[] args, Object classInstance) {
 		if (timers.get(name) == null) {
 			timesRan.put(name, 0);
 			BukkitTask task = Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"), new Runnable() {
@@ -93,7 +103,14 @@ public class TimerHandling {
 			timers.put(name, task);
 		}
 	}
-	public void createTimer2(String name, double delay, int timesToRun, Runnable runnable) {
+	/**
+	* Create a runnable timer
+	* @param name - unique name of the timer
+	* @param delay - how often does the timer run
+	* @param timesToRun - how many does should the timer run
+	* @param runnable - the runnable to run
+	*/
+	public void createRunnableTimer(String name, double delay, int timesToRun, Runnable runnable) {
 		if (timers.get(name) == null) {
 			timesRan.put(name, 0);
 			BukkitTask task = Bukkit.getScheduler().runTaskTimer(Bukkit.getServer().getPluginManager().getPlugin("ServerCoreTest"), new Runnable() {
@@ -129,9 +146,18 @@ public class TimerHandling {
 			timers.put(name, task);
 		}
 	}
+	/**
+	* Check if a timer already exists
+	* @param name - name of the timer
+	* @return whether or not the timer already exists
+	*/
 	public boolean timerExists(String name) {
 		return timers.get(name) != null;
 	}
+	/**
+	* Delete a timer
+	* @param name - name of the timer
+	*/
 	public void deleteTimer(String name) {
 		Iterator<Map.Entry<String, BukkitTask>> timersItr = timers.entrySet().iterator();
 		while(timersItr.hasNext())
