@@ -1,16 +1,14 @@
-package nyeblock.Core.ServerCoreTest.Misc;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
 
 import org.bukkit.Material;
 
-import nyeblock.Core.ServerCoreTest.Items.MenuBase;
-
 public class SubMenu {
-	private String title;
+	protected String title;
 	private int size;
 	protected MenuBase parent;
-	private ArrayList<MenuOption> options = new ArrayList<>();
+	protected ArrayList<MenuOption> options = new ArrayList<>();
 	
 	public SubMenu(String title, int size, MenuBase parent) {
 		this.title = title;
@@ -20,14 +18,8 @@ public class SubMenu {
 		parent.addSubMenu(this);
 	}
 	
-	public void addOption(int position, Material material, String itemName, ArrayList<String> desc, Runnable action) {
+	public void createOption(int position, Material material, String itemName, ArrayList<String> desc, Runnable action) {
 		MenuOption option = new MenuOption(position,this);
-		option.setItem(material, itemName, desc);
-		option.setAction(action);
-		options.add(option);
-	}
-	public void addShopOption(int position, Material material, String itemName, int cost, ArrayList<String> desc, Runnable action, String uniqueId) {
-		ShopMenuOption option = new ShopMenuOption(position,cost,this);
 		option.setItem(material, itemName, desc);
 		option.setAction(action);
 		options.add(option);

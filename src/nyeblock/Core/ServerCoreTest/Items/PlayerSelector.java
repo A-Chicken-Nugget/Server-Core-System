@@ -30,6 +30,9 @@ public class PlayerSelector extends ItemBase {
 		itemMeta.setLocalizedName("player_selector");
 		item.setItemMeta(itemMeta);
 		
+		PlayerData playerData = playerHandling.getPlayerData(player);
+		playerData.setCustomDataKey("player_selector_index","-1");
+		
 		return item;
 	}
 	public void use(ItemStack item) {
@@ -38,28 +41,36 @@ public class PlayerSelector extends ItemBase {
 		RealmBase game = playerData.getCurrentRealm();
 		ArrayList<Player> playersInGame = game.getPlayersInRealm();
 		ItemMeta itemMeta = item.getItemMeta();
-
-		if (playersInGame.size() > currentIndex + 1) {
-			Player playerToSpec = playersInGame.get(currentIndex + 1);
-
-			player.teleport(playerToSpec);
-			itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-					+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-					+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-			playerData.setCustomDataKey("player_selector_index",
-					String.valueOf(currentIndex + 1));
-		} else {
-			if (playersInGame.size() > 0) {
-				Player playerToSpec = playersInGame.get(0);
-
-				player.teleport(playerToSpec);
-				itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
-						+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
-						+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
-				playerData.setCustomDataKey("player_selector_index", "0");
+		boolean foundPlayer = false;
+		
+		for (Player ply : playersInGame) {
+			if (playersInGame.size() > currentIndex + 1) {
+				Player playerToSpec = playersInGame.get(currentIndex + 1);
+				
+				if (playerToSpec != player && !playerHandling.getPlayerData(playerToSpec).getSpectatingStatus()) {	
+					foundPlayer = true;
+					player.teleport(playerToSpec);
+					itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+							+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
+							+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+					playerData.setCustomDataKey("player_selector_index",
+							String.valueOf(currentIndex + 1));
+				}
 			} else {
-				itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
+				Player playerToSpec = playersInGame.get(0);
+				
+				if (playerToSpec != player && !playerHandling.getPlayerData(playerToSpec).getSpectatingStatus()) {
+					foundPlayer = true;
+					player.teleport(playerToSpec);
+					itemMeta.setDisplayName(ChatColor.YELLOW + "Spectating: "
+							+ ChatColor.GREEN.toString() + ChatColor.BOLD + playerToSpec.getName()
+							+ ChatColor.RESET.toString() + ChatColor.GREEN + " (RIGHT-CLICK)");
+					playerData.setCustomDataKey("player_selector_index", "0");
+				}
 			}
+		}
+		if (!foundPlayer) {
+			itemMeta.setDisplayName(ChatColor.YELLOW + "No players to spectate.");
 		}
 		item.setItemMeta(itemMeta);
 	}

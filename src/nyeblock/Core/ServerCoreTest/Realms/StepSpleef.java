@@ -235,20 +235,6 @@ public class StepSpleef extends GameBase {
 				}
 			}
 		}
-		//Set compass targets
-		for (Player ply : playersSpectating) {
-			PlayerData pd = playerHandling.getPlayerData(ply);
-			String key = pd.getCustomDataKey("player_selector_index");
-			int currentIndex = Integer.parseInt((key == null ? "0" : key));
-			
-			if (playersInGame.size() > currentIndex) {
-				ply.setCompassTarget(playersInGame.get(currentIndex).getLocation());
-			} else {
-				if (playersInGame.size() > 0) {
-					ply.setCompassTarget(playersInGame.get(0).getLocation());
-				}
-			}
-		}
 		//Check if the server is empty
 		if (players.size() > 0) {
 			if (!active) {

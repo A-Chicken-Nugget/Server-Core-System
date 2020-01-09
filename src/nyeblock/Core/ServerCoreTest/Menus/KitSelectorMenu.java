@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Items;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
 
@@ -10,13 +10,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 
 @SuppressWarnings("serial")
-public class KitSelector extends MenuBase {
-	public KitSelector(Main mainInstance, Player player) {
+public class KitSelectorMenu extends MenuBase {
+	public KitSelectorMenu(Main mainInstance, Player player) {
 		super(mainInstance,player,"kit_selector");
 	}
 	
@@ -28,7 +27,7 @@ public class KitSelector extends MenuBase {
 			String kitSelected = (game.getPlayerKit(player) == null ? "knight" : game.getPlayerKit(player));
 			
 			//Knight kit
-			subMenu.addOption(1, Material.IRON_CHESTPLATE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Knight", new ArrayList<String>() {{
+			subMenu.createOption(1, Material.IRON_CHESTPLATE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Knight", new ArrayList<String>() {{
 				add(ChatColor.YELLOW + "- Iron Sword (Sharpness 1)");
 				add(ChatColor.YELLOW + "- Iron Armor (Protection 1)");
 				add(ChatColor.YELLOW + "- x1 Golden Apple");
@@ -51,7 +50,7 @@ public class KitSelector extends MenuBase {
 			});
 			
 			//Brawler kit
-			subMenu.addOption(3, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Brawler", new ArrayList<String>() {{
+			subMenu.createOption(3, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Brawler", new ArrayList<String>() {{
 				add(ChatColor.YELLOW + "- Iron Axe (Sharpness 2)");
 				add(ChatColor.YELLOW + "- Leather Armor (Protection 2)");
 				add(ChatColor.YELLOW + "- x5 Golden Apple");
@@ -74,7 +73,7 @@ public class KitSelector extends MenuBase {
 			});
 			
 			//Archer kit
-			subMenu.addOption(5, Material.BOW, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Archer", new ArrayList<String>() {{
+			subMenu.createOption(5, Material.BOW, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Archer", new ArrayList<String>() {{
 				add(ChatColor.YELLOW + "- Gold Sword (Sharpness 1)");
 				add(ChatColor.YELLOW + "- Chain Armor (Protection 1)");
 				add(ChatColor.YELLOW + "- Bow (Power 1)");
@@ -98,7 +97,7 @@ public class KitSelector extends MenuBase {
 			});
 			
 			//Wizard kit
-			subMenu.addOption(7, Material.POTION, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Wizard", new ArrayList<String>() {{
+			subMenu.createOption(7, Material.POTION, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Wizard", new ArrayList<String>() {{
 				add(ChatColor.YELLOW + "- Iron Sword");
 				add(ChatColor.YELLOW + "- Leather Armor (Protection 1)");
 				add(ChatColor.YELLOW + "- x5 Fire balls");
@@ -125,7 +124,7 @@ public class KitSelector extends MenuBase {
 			String kitSelected = (game.getPlayerKit(player) == null ? "default" : game.getPlayerKit(player));
 			
 			//Default kit
-			subMenu.addOption(4, Material.WOODEN_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Default", new ArrayList<String>() {{
+			subMenu.createOption(4, Material.WOODEN_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Default", new ArrayList<String>() {{
 				add(ChatColor.YELLOW + "- Wood Sword");
 				add(ChatColor.YELLOW + "- x15 Concrete blocks");
 				add(ChatColor.YELLOW + "- x10 Beef");

@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Misc;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -9,10 +9,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class MenuOption {
-	private String name;
-	private int position;
+	protected String name;
+	protected int position;
 	protected SubMenu subMenu;
-	private ItemStack item;
+	protected ItemStack item;
 	protected Runnable action;
 	
 	public MenuOption(int position,SubMenu subMenu) {

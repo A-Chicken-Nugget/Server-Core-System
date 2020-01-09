@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Items;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
 
@@ -9,8 +9,7 @@ import org.bukkit.inventory.ItemStack;
 
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.MenuOption;
-import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
+import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 
 public abstract class MenuBase extends ItemBase {
 	private Inventory inventory;

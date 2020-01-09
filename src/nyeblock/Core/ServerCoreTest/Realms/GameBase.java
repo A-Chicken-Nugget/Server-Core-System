@@ -97,8 +97,12 @@ public abstract class GameBase extends RealmBase {
 		
 		onDelete();
 		
+		System.out.println("[" + worldName + "] Clearing entities.");
+		
 		//Clear all entities
 		for (Entity ent : world.getEntities()) ent.remove();
+				
+		System.out.println("[" + worldName + "] Undoing player changes.");
 		
 		//Undo player changes
 		CoreProtectAPI cp = mainInstance.getCoreProtectAPI();
@@ -115,6 +119,8 @@ public abstract class GameBase extends RealmBase {
 			}
 		}
 		
+		System.out.println("[" + worldName + "] Removing schematic.");
+		
 		//Clear schematic
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 			@Override
@@ -126,6 +132,7 @@ public abstract class GameBase extends RealmBase {
 		});
 		
 		mainInstance.getGameInstance().removeGameFromList(id);
+		System.out.println("[" + worldName + "] Finished.");
 	}
 	/**
     * Checks if the world has been generated. If so then it sets a schematic and allows entry to the game
@@ -135,23 +142,33 @@ public abstract class GameBase extends RealmBase {
 			GameBase instance = this;
 			world = Bukkit.getWorld(worldName);
 			
-			System.out.println("[Core] Starting creation of a new " + instance.getRealm().toString() + " game.");
+			System.out.println("[Core] Starting creation of a new " + instance.getRealm().toString() + " game. Using world " + worldName);
 			
 			Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 				@Override
-				public void run() {
+				public void run() {	
 					//Set map
 					map = GameMapInfo.getRandomMap(instance);
 					
-					System.out.println("[" + instance.getWorldName() + "] Setting " + map.getName() + " schematic.");
+					System.out.println("[" + worldName + "] Using map " + map.getName());
+					
+					System.out.println("[" + worldName + "] Setting schematic.");
 					
 					//Set schematic
-					SchematicHandling.setSchematic(mainInstance,instance);
-				
-					System.out.println("[" + instance.getWorldName() + "] Finalizing.");
+					DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(map.getSchematicFile());
+					clipboard.paste(new BukkitWorld(world), BlockVector3.at(-42, 30, -6),false,false,null);
+					clipboard.close();
 					
 					//Run create method in sub class
 				    onCreate();
+				    
+				    mainInstance.getTimerInstance().createRunnableTimer("schematicWait_" + worldName, 2, 1, new Runnable() {
+				    	@Override
+				    	public void run() {				
+				    		setSchemStatus(true);
+				    	}
+				    });
+				    System.out.println("[" + worldName + "] Finished.");
 				}
 			});
 			mainInstance.getTimerInstance().deleteTimer("worldCheck_" + worldName);

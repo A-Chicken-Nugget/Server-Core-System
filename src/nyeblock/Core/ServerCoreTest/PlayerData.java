@@ -24,6 +24,9 @@ import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -31,17 +34,18 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 
 import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
-import nyeblock.Core.ServerCoreTest.Items.HubMenu;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
-import nyeblock.Core.ServerCoreTest.Items.KitSelector;
-import nyeblock.Core.ServerCoreTest.Items.MenuBase;
-import nyeblock.Core.ServerCoreTest.Items.NyeBlockMenu;
-import nyeblock.Core.ServerCoreTest.Items.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
-import nyeblock.Core.ServerCoreTest.Items.ProfileStatsMenu;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToStart;
-import nyeblock.Core.ServerCoreTest.Items.ShopMenu;
+import nyeblock.Core.ServerCoreTest.Menus.HubMenu;
+import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
+import nyeblock.Core.ServerCoreTest.Menus.MenuBase;
+import nyeblock.Core.ServerCoreTest.Menus.NyeBlockMenu;
+import nyeblock.Core.ServerCoreTest.Menus.ParkourMenu;
+import nyeblock.Core.ServerCoreTest.Menus.ProfileStatsMenu;
+import nyeblock.Core.ServerCoreTest.Menus.ShopMenu;
+import nyeblock.Core.ServerCoreTest.Menus.ShopItem;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
@@ -69,6 +73,7 @@ public class PlayerData {
 	private Realm realm = Realm.HUB;
 	private HashMap<String,String> customData = new HashMap<>();
 	private HashMap<String,ItemBase> customItems = new HashMap<>();
+	private ArrayList<ShopItem> shopItems = new ArrayList<>();
 	private MenuBase openedMenu;
 	private RealmBase currentRealm;
 	private boolean isSpectating = false;
@@ -100,8 +105,23 @@ public class PlayerData {
 		});
 	}
 	
-	public void addShopItem(String id) {
+	public void addShopItem(String uniqueId) {
+		boolean found = false;
 		
+		for (ShopItem item : shopItems) {
+			if (item.getUniqueId().equalsIgnoreCase(uniqueId)) {
+				item.updateQuantity(true);
+				found = true;
+			}
+		}
+		if (!found) {
+			shopItems.add(new ShopItem(uniqueId,1,false));
+		}
+	}
+	public void removeShopItem(ShopItem item) {
+		if (item.updateQuantity(false)) {
+			shopItems.remove(item);
+		}
 	}
 	/**
 	* Give points to player
@@ -249,11 +269,189 @@ public class PlayerData {
 			player.setHealth(player.getHealth() - 0.0001);
 		}
 	}
+	/**
+    * Save the players DB info
+    */
+	public void saveToDB() {
+		DatabaseHandling dh = mainInstance.getDatabaseInstance();
+		
+		//Save players points and time played
+		dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getTimeJoined()) + "), points = " + points + " WHERE name = '" + player.getName() + "'", 0, true);			
+		
+		//Save players realm xp
+		HashMap<String,Integer> realmXp = getRealmXp();
+		String xpString = "";
+		
+		for (Map.Entry<String,Integer> entry : realmXp.entrySet()) {
+			if (xpString.equals("")) {
+				xpString = entry.getKey() + " = " + entry.getValue();
+			} else {
+				xpString += ", " + entry.getKey() + " = " + entry.getValue();
+			}
+		}
+		dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + player.getUniqueId() + "'", 0, true);
+
+		//Save players total games won
+		HashMap<String,Integer> totalGamesWon = getTotalGamesPlayed();
+		String wonString = "";
+		
+		for (Map.Entry<String,Integer> entry : totalGamesWon.entrySet()) {
+			if (wonString.equals("")) {
+				wonString = entry.getKey() + " = " + entry.getValue();
+			} else {
+				wonString += ", " + entry.getKey() + " = " + entry.getValue();
+			}
+		}
+		dh.query("UPDATE userGamesWon SET " + wonString + " WHERE uniqueId = '" + player.getUniqueId() + "'", 0, true);	
+		
+		//Save players total games
+		HashMap<String,Integer> totalGamesPlayed = getTotalGamesPlayed();
+		String totalString = "";
+		
+		for (Map.Entry<String,Integer> entry : totalGamesPlayed.entrySet()) {
+			if (totalString.equals("")) {
+				totalString = entry.getKey() + " = " + entry.getValue();
+			} else {
+				totalString += ", " + entry.getKey() + " = " + entry.getValue();
+			}
+		}
+		dh.query("UPDATE userTotalGames SET " + totalString + " WHERE uniqueId = '" + player.getUniqueId() + "'", 0, true);	
+		
+		//Save players shop items
+		if (shopItems.size() > 0) {									
+			String shopItemsJSON = new Gson().toJson(shopItems);
+			
+			dh.query("UPDATE userShopItems SET items = '" + shopItemsJSON + "' WHERE uniqueId = '" + player.getUniqueId() + "'", 0, true);	
+		}
+	}
+	/**
+    * Load/Set the players DB info
+    */
+	public void loadFromDB() {
+		DatabaseHandling db = mainInstance.getDatabaseInstance();
+    	
+    	//Get the players realm xp
+    	ArrayList<HashMap<String, String>> realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    	
+    	//If the player exists in the userXP table
+    	if (realmXPQuery.size() > 0) {
+    		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
+    		
+    		//Set the players realm xp
+    		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
+    		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
+    		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
+    		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
+    		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
+    	} else {
+    		//Insert the user in the userXP table
+    		db.query("INSERT INTO userXP (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
+    		
+    		realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
+    		
+    		//Set the players realm xp
+    		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
+    		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
+    		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
+    		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
+    		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
+    	}
+    	
+    	//Get the players total games played
+    	ArrayList<HashMap<String, String>> totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    	
+    	//If the player exists in the table
+    	if (totalGamesQuery.size() > 0) {
+    		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
+    		
+    		//Set the players total games played
+    		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
+    		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
+    		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
+    		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
+    		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
+    	} else {
+    		//Insert the user in the table
+    		db.query("INSERT INTO userTotalGames (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
+    		
+    		totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
+    		
+    		//Set the players total games played
+    		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
+    		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
+    		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
+    		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
+    		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
+    	}
+    	
+    	//Get the players game wins
+    	ArrayList<HashMap<String, String>> gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    	
+    	//If the player exists in the table
+    	if (gamesWonQuery.size() > 0) {
+    		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
+    		
+    		//Set the players games won
+    		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
+    		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
+    		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
+    		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
+    		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
+    	} else {
+    		//Insert the user in the table
+    		db.query("INSERT INTO userGamesWon (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
+    		
+    		gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
+    		
+    		//Set the players games won
+    		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
+    		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
+    		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
+    		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
+    		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
+    	}
+    	
+    	//Get the players shop items
+    	ArrayList<HashMap<String, String>> shopItemsQuery = db.query("SELECT * FROM userShopItems WHERE uniqueId = '" + player.getUniqueId() + "'", 3, false);
+    	
+    	if (shopItemsQuery.size() > 0) {
+    		ArrayList<ShopItem> test = new Gson().fromJson(shopItemsQuery.get(0).get("items"), new TypeToken<ArrayList<ShopItem>>(){}.getType());
+    		
+    		shopItems = test;
+    	} else {
+    		//Insert the user in the table
+    		db.query("INSERT INTO userShopItems (uniqueId,items) VALUES ('" + player.getUniqueId() + "','" + new Gson().toJson(new ArrayList<ShopItem>()) + "')", 0, true);
+    	}
+	}
 	
 	//
 	// GETTERS
 	//
 	
+	/**
+	* Get a specific shop item
+	* @param uniqueId - uniqueId of the item
+	* @return the requested item or null if not found
+	*/
+	public ShopItem getShopItems(String uniqueId) {
+		ShopItem returnItem = null;
+		
+		for (ShopItem item : shopItems) {
+			if (item.getUniqueId().equalsIgnoreCase(uniqueId)) {
+				returnItem = item;
+			}
+		}
+		return returnItem;
+	}
+	/**
+	* Get the players shop items
+	*/
+	public ArrayList<ShopItem> getShopItems() {
+		return shopItems;
+	}
 	/**
 	* Get the players points
 	*/
@@ -480,6 +678,27 @@ public class PlayerData {
     */
 	public void setSpectatingStatus(boolean status) {
 		isSpectating = status;
+		
+		if (isSpectating && !mainInstance.getTimerInstance().timerExists("compassTarget_" + player.getUniqueId())) {
+			mainInstance.getTimerInstance().createRunnableTimer("compassTarget_" + player.getUniqueId(), .5, 0, new Runnable() {
+				@Override
+				public void run() {					
+					String key = getCustomDataKey("player_selector_index");
+					
+					if (!key.equals("-1")) {
+						ArrayList<Player> players = currentRealm.getPlayersInRealm();
+						
+						if (players.size() > 0) {							
+							player.setCompassTarget(currentRealm.getPlayersInRealm().get(Integer.parseInt((key == null ? "0" : key))).getLocation());
+						}
+					}
+				}
+			});
+		} else {
+			if (mainInstance.getTimerInstance().timerExists("compassTarget_" + player.getUniqueId())) {
+				mainInstance.getTimerInstance().deleteTimer("compassTarget_" + player.getUniqueId());
+			}
+		}
 	}
 	/**
     * Set the players current game
@@ -513,90 +732,8 @@ public class PlayerData {
 		
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
-            public void run() {                   	
-            	//Get the players realm xp
-            	ArrayList<HashMap<String, String>> realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
-            	
-            	//If the player exists in the userXP table
-            	if (realmXPQuery.size() > 0) {
-            		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
-            		
-            		//Set the players realm xp
-            		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
-            		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
-            		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
-            		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
-            		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
-            	} else {
-            		//Insert the user in the userXP table
-            		mainInstance.getDatabaseInstance().query("INSERT INTO userXP (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
-            		
-            		realmXPQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
-            		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
-            		
-            		//Set the players realm xp
-            		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
-            		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
-            		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
-            		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
-            		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
-            	}
-            	
-            	//Get the players total games played
-            	ArrayList<HashMap<String, String>> totalGamesQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
-            	
-            	//If the player exists in the table
-            	if (totalGamesQuery.size() > 0) {
-            		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
-            		
-            		//Set the players total games played
-            		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
-            		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
-            		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
-            		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
-            		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
-            	} else {
-            		//Insert the user in the table
-            		mainInstance.getDatabaseInstance().query("INSERT INTO userTotalGames (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
-            		
-            		totalGamesQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
-            		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
-            		
-            		//Set the players total games played
-            		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
-            		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
-            		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
-            		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
-            		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
-            	}
-            	
-            	//Get the players game wins
-            	ArrayList<HashMap<String, String>> gamesWonQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
-            	
-            	//If the player exists in the table
-            	if (gamesWonQuery.size() > 0) {
-            		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
-            		
-            		//Set the players games won
-            		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
-            		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
-            		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
-            		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
-            		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
-            	} else {
-            		//Insert the user in the table
-            		mainInstance.getDatabaseInstance().query("INSERT INTO userGamesWon (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
-            		
-            		gamesWonQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
-            		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
-            		
-            		//Set the players games won
-            		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
-            		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
-            		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
-            		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
-            		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
-            	}
+            public void run() {
+            	loadFromDB();
             }
 		});
 		setPermissions();
@@ -734,7 +871,7 @@ public class PlayerData {
 			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 			player.getInventory().setItem(8, returnToHub.give());
 			//Select kit
-			KitSelector selectKit = new KitSelector(mainInstance,player);
+			KitSelectorMenu selectKit = new KitSelectorMenu(mainInstance,player);
 			player.getInventory().setItem(7, selectKit.give());
 			//Sword
 			ItemStack sword = new ItemStack(Material.IRON_SWORD);
@@ -777,7 +914,7 @@ public class PlayerData {
 						player.getInventory().setItem(4, selectPlayer.give());
 					} else {						
 						//Select kit
-						KitSelector selectKit = new KitSelector(mainInstance,player);
+						KitSelectorMenu selectKit = new KitSelectorMenu(mainInstance,player);
 						player.getInventory().setItem(4, selectKit.give());
 					}
 				}

@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Items;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
 
@@ -15,7 +15,6 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
-import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 
 @SuppressWarnings({"deprecation","serial"})
 public class ProfileStatsMenu extends MenuBase {
@@ -34,7 +33,7 @@ public class ProfileStatsMenu extends MenuBase {
 		subMenu = new SubMenu("Profile/Stats Menu",27,this);
 		
 		//My Stats
-		subMenu.addOption(12, Material.COMMAND_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "My Stats", new ArrayList<String>() {{
+		subMenu.createOption(12, Material.COMMAND_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "My Stats", new ArrayList<String>() {{
 			add(ChatColor.GREEN + "\u279D \u279D Click to view your stats");
 		}}, new Runnable() {
             @Override
@@ -44,7 +43,7 @@ public class ProfileStatsMenu extends MenuBase {
 		});
 		
 		//My Profile
-		subMenu.addOption(14, Material.SPONGE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "My Profile", new ArrayList<String>() {{
+		subMenu.createOption(14, Material.SPONGE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "My Profile", new ArrayList<String>() {{
 //			add(ChatColor.GREEN + "\u279D \u279D Click to view your profile");
 			add(ChatColor.RED + "\u2716 Currently not available \u2716");
 		}}, new Runnable() {
@@ -61,7 +60,7 @@ public class ProfileStatsMenu extends MenuBase {
 		
 		//Kitpvp
 		int kitpvpLevel = playerData.getLevel(Realm.KITPVP);
-		subMenu.addOption(11, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "KitPvp Stats", new ArrayList<String>() {{
+		subMenu.createOption(11, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "KitPvp Stats", new ArrayList<String>() {{
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Level Info");
 			add(ChatColor.YELLOW + "Level " + ChatColor.GREEN + kitpvpLevel);
 			add(ChatColor.YELLOW.toString() + kitpvpLevel + " " + LevelXPBar.getBarText(50, playerData.getXPFromLevel(kitpvpLevel), playerData.getXPFromLevel((kitpvpLevel+1))) + " " + ChatColor.YELLOW + (kitpvpLevel+1));
@@ -74,7 +73,7 @@ public class ProfileStatsMenu extends MenuBase {
 		
 		//Sky Wars
 		int skywarsLevel = playerData.getLevel(Realm.SKYWARS);
-		subMenu.addOption(13, Material.GRASS_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Sky Wars Stats", new ArrayList<String>() {{
+		subMenu.createOption(13, Material.GRASS_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Sky Wars Stats", new ArrayList<String>() {{
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Level Info");
 			add(ChatColor.YELLOW + "Level " + ChatColor.GREEN + playerData.getLevel(Realm.SKYWARS));
 			add(ChatColor.YELLOW.toString() + skywarsLevel + " " + LevelXPBar.getBarText(50, playerData.getXPFromLevel(skywarsLevel), playerData.getXPFromLevel((skywarsLevel+1))) + " " + ChatColor.YELLOW + (skywarsLevel+1));
@@ -87,7 +86,7 @@ public class ProfileStatsMenu extends MenuBase {
 		
 		//Step Spleef
 		int stepspleefLevel = playerData.getLevel(Realm.STEPSPLEEF);
-		subMenu.addOption(15, Material.IRON_BOOTS, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef Stats", new ArrayList<String>() {{
+		subMenu.createOption(15, Material.IRON_BOOTS, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef Stats", new ArrayList<String>() {{
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Level Info");
 			add(ChatColor.YELLOW + "Level " + ChatColor.GREEN + playerData.getLevel(Realm.STEPSPLEEF));
 			add(ChatColor.YELLOW.toString() + stepspleefLevel + " " + LevelXPBar.getBarText(50, playerData.getXPFromLevel(skywarsLevel), playerData.getXPFromLevel((stepspleefLevel+1))) + " " + ChatColor.YELLOW + (stepspleefLevel+1));
@@ -99,7 +98,7 @@ public class ProfileStatsMenu extends MenuBase {
 		}}, null);
 		
 		//PvP
-		subMenu.addOption(21, Material.FISHING_ROD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "PvP Stats", new ArrayList<String>() {{
+		subMenu.createOption(21, Material.FISHING_ROD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "PvP Stats", new ArrayList<String>() {{
 			add(ChatColor.GREEN + "\u279D \u279D Click to view your PvP stats");
 		}}, new Runnable() {
 			@Override
@@ -109,7 +108,7 @@ public class ProfileStatsMenu extends MenuBase {
 		});
 		
 		//Back
-		subMenu.addOption(27, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new Runnable() {
+		subMenu.createOption(27, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new Runnable() {
 			@Override
 			public void run() {
 				playerHandling.getPlayerData(player).getMenu().openMenu("Profile/Stats Menu");
@@ -123,7 +122,7 @@ public class ProfileStatsMenu extends MenuBase {
 		
 		//Duels >> Fists
 		int duelsfistsLevel = playerData.getLevel(PvPMode.DUELS,PvPType.FIST);
-		subMenu.addOption(12, Material.CHICKEN, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Duels \u00BB Fists Stats", new ArrayList<String>() {{
+		subMenu.createOption(12, Material.CHICKEN, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Duels \u00BB Fists Stats", new ArrayList<String>() {{
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Level Info");
 			add(ChatColor.YELLOW + "Level " + ChatColor.GREEN + duelsfistsLevel);
 			add(ChatColor.YELLOW.toString() + duelsfistsLevel + " " + LevelXPBar.getBarText(50, playerData.getXPFromLevel(duelsfistsLevel), playerData.getXPFromLevel((duelsfistsLevel+1))) + " " + ChatColor.YELLOW + (duelsfistsLevel+1));
@@ -136,7 +135,7 @@ public class ProfileStatsMenu extends MenuBase {
 		
 		//2v2 >> Fists
 		int twovtwofistsLevel = playerData.getLevel(PvPMode.TWOVTWO,PvPType.FIST);
-		subMenu.addOption(14, Material.COOKED_CHICKEN, ChatColor.YELLOW.toString() + ChatColor.BOLD + "2v2 \u00BB Fists Stats", new ArrayList<String>() {{
+		subMenu.createOption(14, Material.COOKED_CHICKEN, ChatColor.YELLOW.toString() + ChatColor.BOLD + "2v2 \u00BB Fists Stats", new ArrayList<String>() {{
 			add(ChatColor.YELLOW.toString() + ChatColor.ITALIC + "Level Info");
 			add(ChatColor.YELLOW + "Level " + ChatColor.GREEN + twovtwofistsLevel);
 			add(ChatColor.YELLOW.toString() + twovtwofistsLevel + " " + LevelXPBar.getBarText(50, playerData.getXPFromLevel(twovtwofistsLevel), playerData.getXPFromLevel((twovtwofistsLevel+1))) + " " + ChatColor.YELLOW + (twovtwofistsLevel+1));
@@ -148,7 +147,7 @@ public class ProfileStatsMenu extends MenuBase {
 		}}, null);
 		
 		//Back
-		subMenu.addOption(18, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new Runnable() {
+		subMenu.createOption(18, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new Runnable() {
 			@Override
 			public void run() {
 				playerHandling.getPlayerData(player).getMenu().openMenu("My Stats");

@@ -58,11 +58,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.util.Vector;
 
+import com.google.gson.Gson;
+
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
-import nyeblock.Core.ServerCoreTest.Items.MenuBase;
+import nyeblock.Core.ServerCoreTest.Menus.MenuBase;
 import nyeblock.Core.ServerCoreTest.Misc.DamagePlayer;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
@@ -74,9 +76,10 @@ import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
-	private HashMap<UUID, PlayerData> playersData = new HashMap<UUID, PlayerData>();
-	private HashMap<UUID, DamagePlayer> lastPlayerDamage = new HashMap<UUID, DamagePlayer>();
-	private HashMap<UUID, ArrayList<Long>> playerChatMessages = new HashMap<>();
+	private HashMap<UUID,PlayerData> playersData = new HashMap<UUID, PlayerData>();
+	private HashMap<UUID,DamagePlayer> lastPlayerDamage = new HashMap<UUID, DamagePlayer>();
+	private HashMap<UUID,ArrayList<Long>> playerChatMessages = new HashMap<>();
+	private HashMap<UUID,ArrayList<Long>> playerActions = new HashMap<>();
 	private World world = Bukkit.getWorld("world");
 
 	public PlayerHandling(Main mainInstance) {
@@ -86,57 +89,17 @@ public class PlayerHandling implements Listener {
 		Bukkit.getScheduler().runTaskTimer(mainInstance, new Runnable() {
 			@Override
 			public void run() {
-				DatabaseHandling dh = mainInstance.getDatabaseInstance();
 				for (Player ply : Bukkit.getOnlinePlayers()) {
 					PlayerData pd = getPlayerData(ply);
 					
-					if (pd != null) {						
-						HashMap<String,Integer> realmXp = pd.getRealmXp();
-						HashMap<String,Integer> totalGamesWon = pd.getTotalGamesPlayed();
-						HashMap<String,Integer> totalGamesPlayed = pd.getTotalGamesPlayed();
-						
+					if (pd != null) {
 						if (pd.getHiddenStatus()) {							
 							ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You are currently hidden."));
 						}
-						
 						Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 							@Override
 							public void run() {
-								String xpString = "";
-								
-								for (Map.Entry<String,Integer> entry : realmXp.entrySet()) {
-									if (xpString.equals("")) {
-										xpString = entry.getKey() + " = " + entry.getValue();
-									} else {
-										xpString += ", " + entry.getKey() + " = " + entry.getValue();
-									}
-								}
-								dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);			
-								dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
-
-								//Save every players total games won
-								String wonString = "";
-								
-								for (Map.Entry<String,Integer> entry : totalGamesWon.entrySet()) {
-									if (wonString.equals("")) {
-										wonString = entry.getKey() + " = " + entry.getValue();
-									} else {
-										wonString += ", " + entry.getKey() + " = " + entry.getValue();
-									}
-								}
-								dh.query("UPDATE userGamesWon SET " + wonString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
-								
-								//Save every players total games
-								String totalString = "";
-								
-								for (Map.Entry<String,Integer> entry : totalGamesPlayed.entrySet()) {
-									if (totalString.equals("")) {
-										totalString = entry.getKey() + " = " + entry.getValue();
-									} else {
-										totalString += ", " + entry.getKey() + " = " + entry.getValue();
-									}
-								}
-								dh.query("UPDATE userTotalGames SET " + totalString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
+								pd.saveToDB();
 							}
 						});
 		            }
@@ -320,6 +283,7 @@ public class PlayerHandling implements Listener {
 			});
 			playersData.put(ply.getUniqueId(), playerData);
 			playerChatMessages.put(ply.getUniqueId(), new ArrayList<Long>());
+			playerActions.put(ply.getUniqueId(), new ArrayList<Long>());
 		} else {
 			mainInstance.getTimerInstance().deleteTimer("leave_" + ply.getUniqueId());
 			PlayerData pd = getPlayerData(ply);
@@ -404,7 +368,6 @@ public class PlayerHandling implements Listener {
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player ply = event.getPlayer();
 		PlayerData pd = playersData.get(ply.getUniqueId());
-		DatabaseHandling dh = mainInstance.getDatabaseInstance();
 
 		// Remove default quit message
 		event.setQuitMessage("");
@@ -413,22 +376,12 @@ public class PlayerHandling implements Listener {
 			@Override
 			public void run() {
 				if (!ply.isOnline()) {
-					HashMap<String,Integer> realmXp = pd.getRealmXp();
-					String xpString = "";
-					
-					for (Map.Entry<String,Integer> entry : realmXp.entrySet()) {
-						if (xpString.equals("")) {
-							xpString = entry.getKey() + " = " + entry.getValue();
-						} else {
-							xpString += ", " + entry.getKey() + " = " + entry.getValue();
-						}
-					}
-					dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-pd.getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);			
-					dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
+					pd.saveToDB();
 					
 					//Remove player data
 					playersData.remove(ply.getUniqueId());
 					playerChatMessages.remove(ply.getUniqueId());
+					playerActions.remove(ply.getUniqueId());
 				}
 			}
 		});
@@ -751,15 +704,38 @@ public class PlayerHandling implements Listener {
 					MenuBase menu = playerData.getMenu();
 					
 					if (menu != null) {
-						if (menu.getCurrentMenu().hasOption(itemMeta.getLocalizedName())) {							
-							menu.getCurrentMenu().runOption(itemMeta.getLocalizedName());
-						} else {
-							ItemBase itemm = playerData.getCustomItem(itemMeta.getLocalizedName());
-							
-							if (itemm != null) {							
-								playerData.getCustomItem(itemMeta.getLocalizedName()).use(item);
+						ArrayList<Long> remove = new ArrayList<>();
+						boolean canDo = true;
+						int i = 0;
+						
+						for (Long message : playerActions.get(ply.getUniqueId())) {
+							if (System.currentTimeMillis()-message < 5000) {
+								i++;
+								
+								if (i >= 5) {
+									canDo = false;
+								}
+							} else {
+								remove.add(message);
 							}
 						}
+						
+						if (canDo) {			
+							playerActions.get(ply.getUniqueId()).removeAll(remove);
+							if (menu.getCurrentMenu().hasOption(itemMeta.getLocalizedName())) {							
+								menu.getCurrentMenu().runOption(itemMeta.getLocalizedName());
+							} else {
+								ItemBase itemm = playerData.getCustomItem(itemMeta.getLocalizedName());
+								
+								if (itemm != null) {							
+									playerData.getCustomItem(itemMeta.getLocalizedName()).use(item);
+								}
+							}
+						} else {
+							ply.sendMessage(ChatColor.YELLOW + "Please wait a few seconds before doing this action!");
+							event.setCancelled(true);
+						}									
+						playerActions.get(ply.getUniqueId()).add(System.currentTimeMillis());
 					} else {
 						ItemBase itemm = playerData.getCustomItem(itemMeta.getLocalizedName());
 						
@@ -791,8 +767,31 @@ public class PlayerHandling implements Listener {
 				ItemBase itemm = pd.getCustomItem(itemName);
 		        
 				if (itemm != null) {
-					pd.getCustomItem(itemName).use(item);
-					event.setCancelled(true);
+					ArrayList<Long> remove = new ArrayList<>();
+					boolean canDo = true;
+					int i = 0;
+					
+					for (Long message : playerActions.get(ply.getUniqueId())) {
+						if (System.currentTimeMillis()-message < 5000) {
+							i++;
+							
+							if (i >= 5) {
+								canDo = false;
+							}
+						} else {
+							remove.add(message);
+						}
+					}
+					
+					if (canDo) {			
+						playerActions.get(ply.getUniqueId()).removeAll(remove);
+						pd.getCustomItem(itemName).use(item);
+						event.setCancelled(true);
+					} else {
+						ply.sendMessage(ChatColor.YELLOW + "Please wait a few seconds before doing this action!");
+						event.setCancelled(true);
+					}									
+					playerActions.get(ply.getUniqueId()).add(System.currentTimeMillis());
 				}
 			}
 		}
@@ -810,8 +809,8 @@ public class PlayerHandling implements Listener {
 	//Handle when a player interacts with an entity
 	@EventHandler
 	public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
-		if (event.getRightClicked().getType().toString().equals("ITEM_FRAME")) {
-			event.setCancelled(true);
-		}
+//		if (event.getRightClicked().getType().toString().equals("ITEM_FRAME")) {
+//			event.setCancelled(true);
+//		}
 	}
 }

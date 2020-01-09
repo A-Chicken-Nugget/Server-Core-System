@@ -122,46 +122,8 @@ public class Main extends JavaPlugin {
 			}
 		}
 		//Save every players play time and xp
-		DatabaseHandling dh = this.getDatabaseInstance();
 		for (Player ply : Bukkit.getWorld("world").getPlayers()) {
-			HashMap<String,Integer> realmXp = playerHandling.getPlayerData(ply).getRealmXp();
-			String xpString = "";
-			
-			for (Map.Entry<String,Integer> entry : realmXp.entrySet()) {
-				if (xpString.equals("")) {
-					xpString = entry.getKey() + " = " + entry.getValue();
-				} else {
-					xpString += ", " + entry.getKey() + " = " + entry.getValue();
-				}
-			}
-			dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-playerHandling.getPlayerData(ply).getTimeJoined()) + ") WHERE name = '" + ply.getName() + "'", 0, true);			
-			dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
-			
-			//Save every players total games won
-			HashMap<String,Integer> totalGamesWon = playerHandling.getPlayerData(ply).getTotalGamesWon();
-			String wonString = "";
-			
-			for (Map.Entry<String,Integer> entry : totalGamesWon.entrySet()) {
-				if (wonString.equals("")) {
-					wonString = entry.getKey() + " = " + entry.getValue();
-				} else {
-					wonString += ", " + entry.getKey() + " = " + entry.getValue();
-				}
-			}
-			dh.query("UPDATE userGamesWon SET " + wonString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
-			
-			//Save every players total games
-			HashMap<String,Integer> totalGames = playerHandling.getPlayerData(ply).getTotalGamesPlayed();
-			String totalString = "";
-			
-			for (Map.Entry<String,Integer> entry : totalGames.entrySet()) {
-				if (totalString.equals("")) {
-					totalString = entry.getKey() + " = " + entry.getValue();
-				} else {
-					totalString += ", " + entry.getKey() + " = " + entry.getValue();
-				}
-			}
-			dh.query("UPDATE userTotalGames SET " + totalString + " WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);	
+			playerHandling.getPlayerData(ply).saveToDB();
 		}
 	}
 	

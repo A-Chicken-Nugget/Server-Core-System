@@ -21,12 +21,5 @@ public class SchematicHandling {
 		DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(schem);
 		clipboard.paste(new BukkitWorld(Bukkit.getWorld(game.getWorldName())), BlockVector3.at(-42, 30, -6),false,false,null);
 		clipboard.close();
-		
-		mainInstance.getTimerInstance().createRunnableTimer("schematicWait_" + game.getWorldName(), 1, 1, new Runnable() {
-			@Override
-			public void run() {				
-				game.setSchemStatus(true);
-			}
-		});
 	}
 }

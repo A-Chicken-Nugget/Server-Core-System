@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Items;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
 
@@ -12,20 +12,20 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
-import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings("serial")
-public class ShopMenu extends MenuBase {
+public class ShopMenu extends ShopBase {
 	private PlayerHandling playerHandling;
 	
 	public ShopMenu(Main mainInstance, Player player) {
-		super(mainInstance,player,"shop_menu"); //54
+		super(mainInstance,player,"shop_menu");
 	}
 	
 	public void setContents() {
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		SubMenu subMenu;
+		ShopSubMenu shopSubMenu;
 		
 		//
 		// Shop menu
@@ -33,7 +33,7 @@ public class ShopMenu extends MenuBase {
 		subMenu = new SubMenu("Shop Menu",36,this);
 		
 		//Kitpvp
-		subMenu.addOption(11, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "KitPvp Shop", new ArrayList<String>() {{
+		subMenu.createOption(11, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "KitPvp Shop", new ArrayList<String>() {{
 			add(ChatColor.GREEN + "\u279D \u279D Click to view the KitPvP Shop");
 		}}, new Runnable() {
 			@Override
@@ -43,7 +43,7 @@ public class ShopMenu extends MenuBase {
 		});
 		
 		//Sky Wars
-		subMenu.addOption(13, Material.GRASS_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Sky Wars Shop", new ArrayList<String>() {{
+		subMenu.createOption(13, Material.GRASS_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Sky Wars Shop", new ArrayList<String>() {{
 			add(ChatColor.GREEN + "\u279D \u279D Click to view the Sky Wars Shop");
 		}}, new Runnable() {
 			@Override
@@ -53,7 +53,7 @@ public class ShopMenu extends MenuBase {
 		});
 		
 		//Step Spleef
-		subMenu.addOption(15, Material.IRON_BOOTS, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef Shop", new ArrayList<String>() {{
+		subMenu.createOption(15, Material.IRON_BOOTS, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef Shop", new ArrayList<String>() {{
 			add(ChatColor.GREEN + "\u279D \u279D Click to view the Step Spleef Shop");
 		}}, new Runnable() {
 			@Override
@@ -63,7 +63,7 @@ public class ShopMenu extends MenuBase {
 		});
 		
 		//PvP
-		subMenu.addOption(21, Material.FISHING_ROD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "PvP Shop", new ArrayList<String>() {{
+		subMenu.createOption(21, Material.FISHING_ROD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "PvP Shop", new ArrayList<String>() {{
 			add(ChatColor.GREEN + "\u279D \u279D Click to view the PvP Shop");
 		}}, new Runnable() {
 			@Override
@@ -75,10 +75,10 @@ public class ShopMenu extends MenuBase {
 		//
 		// KitPvP Shop
 		//
-		subMenu = new SubMenu("KitPvP Shop",36,this);
+		subMenu = new SubMenu("KitPvP Shop",27,this);
 		
 		//Win actions
-		subMenu.addOption(11, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Win actions", new ArrayList<String>() {{
+		subMenu.createOption(12, Material.FIREWORK_ROCKET, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Win actions", new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "Win actions are played whenever");
 			add(ChatColor.YELLOW + "you win in any game.");
 			add(ChatColor.RESET.toString());
@@ -93,32 +93,67 @@ public class ShopMenu extends MenuBase {
 		//
 		// KitPvP Shop >> Win Actions
 		//
-		subMenu = new SubMenu("KitPvp Shop \u00BB Win Actions",36,this);
+		shopSubMenu = new ShopSubMenu("KitPvp Shop \u00BB Win Actions",27,true,1,this);
 		
 		//Rainbow scoreboard title
-		subMenu.addShopOption(11, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Rainbow Scoreboard Title", 500, new ArrayList<String>() {{
+		shopSubMenu.createOption(11, Material.BLUE_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Rainbow Scoreboard Title for KitPvP", new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "The title of the scoreboard will");
 			add(ChatColor.YELLOW + "change colors randomly.");
-			add(ChatColor.RESET.toString());
-			add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + "500 points");
-			add(ChatColor.YELLOW + "Level Requirement: " + ChatColor.GREEN + "Level 3 in KitPvP");
-			add(ChatColor.RESET.toString());
-			add(ChatColor.GREEN + "\u279D \u279D Click to purchase");
 		}}, new Runnable() {
 			@Override
 			public void run() {
 				PlayerData pd = playerHandling.getPlayerData(player);
 				
-				if (pd.getLevel(Realm.KITPVP) >= 3) {
-					player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-					player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + "Rainbow Scoreboard Title" + ChatColor.YELLOW + " for KitPvP!");
-					
-					pd.removePoints(500);
+				if (pd.getLevel(Realm.KITPVP) >= 1) {
+					shopSubMenu.purchaseItem("rainbow_scoreboard_kitpvp");
 				} else {
 					player.sendMessage(ChatColor.RED + "You do not meet the level requirement!");
 				}
 			}
-		}, "rainbow_scoreboard_kitpvp");
+		}, new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + "500 points");
+			add(ChatColor.YELLOW + "Level Requirement: " + ChatColor.GREEN + "Level 1 in KitPvP");
+		}}, "rainbow_scoreboard_kitpvp", 500, false);
+		
+		//Random Fireworks
+		shopSubMenu.createOption(13, Material.FIREWORK_ROCKET, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Random Fireworks for KitPvP", new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "Random fireworks will be shot");
+			add(ChatColor.YELLOW + "into the sky.");
+		}}, new Runnable() {
+			@Override
+			public void run() {
+				PlayerData pd = playerHandling.getPlayerData(player);
+				
+				if (pd.getLevel(Realm.KITPVP) >= 1) {
+					shopSubMenu.purchaseItem("random_fireworks_kitpvp");
+				} else {
+					player.sendMessage(ChatColor.RED + "You do not meet the level requirement!");
+				}
+			}
+		}, new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + "500 points");
+			add(ChatColor.YELLOW + "Level Requirement: " + ChatColor.GREEN + "Level 3 in KitPvP");
+		}}, "random_fireworks_kitpvp", 500, false);
+		
+		//Time speed up
+		shopSubMenu.createOption(15, Material.CLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Time Speed Up for KitPvP", new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "The timescale will speed up and");
+			add(ChatColor.YELLOW + "alternate through day/night quickly.");
+		}}, new Runnable() {
+			@Override
+			public void run() {
+				PlayerData pd = playerHandling.getPlayerData(player);
+				
+				if (pd.getLevel(Realm.KITPVP) >= 1) {
+					shopSubMenu.purchaseItem("time_speedup_kitpvp");
+				} else {
+					player.sendMessage(ChatColor.RED + "You do not meet the level requirement!");
+				}
+			}
+		}, new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + "500 points");
+			add(ChatColor.YELLOW + "Level Requirement: " + ChatColor.GREEN + "Level 3 in KitPvP");
+		}}, "time_speedup_kitpvp", 500, false);
 	}
 	//Give the player this item
 	public ItemStack give() {
@@ -132,8 +167,8 @@ public class ShopMenu extends MenuBase {
 	}
 	//Use the item
 	public void use(ItemStack item) {
-		player.sendMessage(ChatColor.YELLOW + "This feature is currently disabled.");
-//		setContents();
-//		open();
+//		player.sendMessage(ChatColor.YELLOW + "This feature is currently disabled.");
+		setContents();
+		open();
 	}
 }

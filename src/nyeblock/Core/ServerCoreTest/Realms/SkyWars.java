@@ -217,20 +217,6 @@ public class SkyWars extends GameBase {
     * Run main checks for the game
     */
 	public void mainFunctions() {
-		//Set compass targets
-		for (Player ply : playersSpectating) {
-			PlayerData pd = playerHandling.getPlayerData(ply);
-			String key = pd.getCustomDataKey("player_selector_index");
-			int currentIndex = Integer.parseInt((key == null ? "0" : key));
-			
-			if (playersInGame.size() > currentIndex) {
-				ply.setCompassTarget(players.get(currentIndex).getLocation());
-			} else {
-				if (playersInGame.size() > 0) {
-					ply.setCompassTarget(players.get(0).getLocation());
-				}
-			}
-		}
 		//Check if the server is empty
 		if (players.size() > 0) {
 			if (!active) {
@@ -300,23 +286,6 @@ public class SkyWars extends GameBase {
 							}
 						}
 					});
-//					mainInstance.getTimerInstance().createRunnableTimer(worldName + "_fireworks", .7, 0, new Runnable() {
-//						@Override
-//						public void run() {
-//							List<Color> c = new ArrayList<Color>();
-//			                c.add(Color.GREEN);
-//			                c.add(Color.RED);
-//			                c.add(Color.BLUE);
-//			                c.add(Color.ORANGE);
-//			                c.add(Color.YELLOW);
-//			                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();		                		
-//	                		Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
-//	                		FireworkMeta fireworkMeta = firework.getFireworkMeta();
-//	                		fireworkMeta.addEffect(effect);
-//	                		fireworkMeta.setPower(2);
-//	                		firework.setFireworkMeta(fireworkMeta);
-//						}
-//					});
 					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
@@ -522,7 +491,7 @@ public class SkyWars extends GameBase {
 		if (pd.getSpectatingStatus()) {
 			String index = pd.getCustomDataKey("player_selector_index");
 			
-			if (index != null) {
+			if (index != "-1") {
 				loc = players.get(Integer.parseInt(index)).getLocation();
 			} else {
 				Location location = ply.getLocation();

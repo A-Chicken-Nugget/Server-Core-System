@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Items;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import org.bukkit.entity.Player;
 

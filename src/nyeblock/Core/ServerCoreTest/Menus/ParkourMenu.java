@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Items;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
 
@@ -12,7 +12,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.SubMenu;
 
 @SuppressWarnings("serial")
 public class ParkourMenu extends MenuBase {
@@ -30,7 +29,7 @@ public class ParkourMenu extends MenuBase {
 		boolean isParkourMode = Boolean.parseBoolean(pd.getCustomDataKey("parkour_mode"));
 		
 		//Parkour mode
-		subMenu.addOption(4, isParkourMode ? Material.GREEN_WOOL : Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Parkour Mode " + (isParkourMode ? ("(" + ChatColor.GREEN + "Competitive" + ChatColor.YELLOW + ")") : ("(" + ChatColor.RED + "Normal" + ChatColor.YELLOW + ")")), new ArrayList<String>() {{
+		subMenu.createOption(4, isParkourMode ? Material.GREEN_WOOL : Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Parkour Mode " + (isParkourMode ? ("(" + ChatColor.GREEN + "Competitive" + ChatColor.YELLOW + ")") : ("(" + ChatColor.RED + "Normal" + ChatColor.YELLOW + ")")), new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "Set your parkour mode.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "If competitive then you will be timed and");
