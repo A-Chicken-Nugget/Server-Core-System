@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -51,21 +52,6 @@ public class StepSpleef extends GameBase {
 	private int playTimeCount = 0;
 	
 	/**
-    * Default game making constructor
-    */
-	public StepSpleef(Main mainInstance, int id, String worldName) {
-		super(mainInstance,worldName);
-		
-		this.mainInstance = mainInstance;
-		playerHandling = mainInstance.getPlayerHandlingInstance();
-		this.id = id;
-		this.worldName = worldName;
-		realm = Realm.STEPSPLEEF;
-		duration = 600;
-		minPlayers = 5;
-		maxPlayers = 20;
-	}
-	/**
     * Custom game constructor
     */
 	public StepSpleef(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
@@ -109,7 +95,6 @@ public class StepSpleef extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
-		mainInstance.getTimerInstance().deleteTimer(worldName + "_fireworks");
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
@@ -304,24 +289,7 @@ public class StepSpleef extends GameBase {
 			
 			messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 			soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
-			mainInstance.getTimerInstance().createRunnableTimer(worldName + "_fireworks", .7, 0, new Runnable() {
-				@Override
-				public void run() {
-					List<Color> c = new ArrayList<Color>();
-	                c.add(Color.GREEN);
-	                c.add(Color.RED);
-	                c.add(Color.BLUE);
-	                c.add(Color.ORANGE);
-	                c.add(Color.YELLOW);
-	                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();
-					
-					Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
-					FireworkMeta fireworkMeta = firework.getFireworkMeta();
-					fireworkMeta.addEffect(effect);
-					fireworkMeta.setPower(2);
-					firework.setFireworkMeta(fireworkMeta);
-				}
-			});
+			playWinAction(ply);
 			giveXP(ply,"Winning",150);
 			playerHandling.getPlayerData(ply).addGamePlayed(realm, true);
 			
@@ -346,12 +314,18 @@ public class StepSpleef extends GameBase {
 			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
+			if (shouldRainbowTitleText) {
+				pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "STEP SPLEEF");				
+			} else {				
+				pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
+			}
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
 		if (world != null) {        			
-			world.setTime(1000);
+			if (!setWorldTime) {				
+				world.setTime(1000);
+			}
 			if (world.hasStorm()) {
 				world.setStorm(false);
     		}

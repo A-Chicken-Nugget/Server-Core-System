@@ -1,15 +1,18 @@
 package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 
@@ -37,17 +40,19 @@ public class KitSelectorMenu extends MenuBase {
 				} else {
 					add(ChatColor.GREEN.toString() + ChatColor.BOLD + "Click to equip");			
 				}
-			}}, new Runnable() {
-	            @Override
-	            public void run() {       
-	            	if (!kitSelected.equalsIgnoreCase("knight")) {
-						game.setPlayerKit(player, "knight");
-						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Knight" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
-						player.closeInventory();
-					}
-	            }
-			});
+			}}, new HashMap<ClickType,Runnable>() {{
+					put(ClickType.LEFT,new Runnable() {
+						@Override
+						public void run() {       
+			            	if (!kitSelected.equalsIgnoreCase("knight")) {
+								game.setPlayerKit(player, "knight");
+								player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+								player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Knight" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
+								player.closeInventory();
+							}
+			            }
+					});
+			}});
 			
 			//Brawler kit
 			subMenu.createOption(3, Material.IRON_AXE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Brawler", new ArrayList<String>() {{
@@ -60,17 +65,19 @@ public class KitSelectorMenu extends MenuBase {
 				} else {
 					add(ChatColor.GREEN.toString() + ChatColor.BOLD + "Click to equip");			
 				}
-			}}, new Runnable() {
-	            @Override
-	            public void run() {       
-	            	if (!kitSelected.equalsIgnoreCase("brawler")) {
-						game.setPlayerKit(player, "brawler");
-						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Brawler" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
-						player.closeInventory();
-					}
-	            }
-			});
+			}}, new HashMap<ClickType,Runnable>() {{
+					put(ClickType.LEFT,new Runnable() {
+						@Override
+						public void run() {       
+			            	if (!kitSelected.equalsIgnoreCase("brawler")) {
+								game.setPlayerKit(player, "brawler");
+								player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+								player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Brawler" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
+								player.closeInventory();
+							}
+			            }
+					});
+			}});
 			
 			//Archer kit
 			subMenu.createOption(5, Material.BOW, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Archer", new ArrayList<String>() {{
@@ -84,17 +91,19 @@ public class KitSelectorMenu extends MenuBase {
 				} else {
 					add(ChatColor.GREEN.toString() + ChatColor.BOLD + "Click to equip");			
 				}
-			}}, new Runnable() {
-	            @Override
-	            public void run() {       
-	            	if (!kitSelected.equalsIgnoreCase("archer")) {
-						game.setPlayerKit(player, "archer");
-						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Archer" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
-						player.closeInventory();
-					}
-	            }
-			});
+			}}, new HashMap<ClickType,Runnable>() {{
+					put(ClickType.LEFT,new Runnable() {
+						@Override
+						public void run() {       
+			            	if (!kitSelected.equalsIgnoreCase("archer")) {
+								game.setPlayerKit(player, "archer");
+								player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+								player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Archer" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
+								player.closeInventory();
+							}
+			            }
+					});
+			}});
 			
 			//Wizard kit
 			subMenu.createOption(7, Material.POTION, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Wizard", new ArrayList<String>() {{
@@ -109,17 +118,19 @@ public class KitSelectorMenu extends MenuBase {
 				} else {
 					add(ChatColor.GREEN.toString() + ChatColor.BOLD + "Click to equip");			
 				}
-			}}, new Runnable() {
-	            @Override
-	            public void run() {       
-	            	if (!kitSelected.equalsIgnoreCase("wizard")) {
-						game.setPlayerKit(player, "wizard");
-						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Wizard" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
-						player.closeInventory();
-					}
-	            }
-			});
+			}}, new HashMap<ClickType,Runnable>() {{
+					put(ClickType.LEFT,new Runnable() {
+						@Override
+						public void run() {       
+			            	if (!kitSelected.equalsIgnoreCase("wizard")) {
+								game.setPlayerKit(player, "wizard");
+								player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+								player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Wizard" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
+								player.closeInventory();
+							}
+			            }
+					});
+			}});
 		} else if (game.getRealm() == Realm.SKYWARS) {
 			String kitSelected = (game.getPlayerKit(player) == null ? "default" : game.getPlayerKit(player));
 			
@@ -134,17 +145,19 @@ public class KitSelectorMenu extends MenuBase {
 				} else {
 					add(ChatColor.GREEN.toString() + ChatColor.BOLD + "Click to equip");			
 				}
-			}}, new Runnable() {
-	            @Override
-	            public void run() {       
-	            	if (!kitSelected.equalsIgnoreCase("default")) {
-						game.setPlayerKit(player, "default");
-						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Default" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
-						player.closeInventory();
-					}
-	            }
-			});
+			}}, new HashMap<ClickType,Runnable>() {{
+					put(ClickType.LEFT,new Runnable() {
+						@Override
+						public void run() {       
+			            	if (!kitSelected.equalsIgnoreCase("default")) {
+								game.setPlayerKit(player, "default");
+								player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+								player.sendMessage(ChatColor.YELLOW + "You equipped the " + ChatColor.BOLD + "Default" + ChatColor.RESET + ChatColor.YELLOW + " kit!");
+								player.closeInventory();
+							}
+			            }
+					});
+			}});
 		}
 	}
 	public ItemStack give() {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.lang.math.IntRange;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -101,5 +102,14 @@ public class Toolkit
 	    } catch (NumberFormatException nfe) {
 	        return false;
 	    }
+	}
+	//Get color from string
+	public static ChatColor getColorFromString(String color) {
+		ChatColor returnColor = ChatColor.WHITE;
+		
+		if (color != null) {
+			returnColor = ChatColor.valueOf(color);
+		}
+		return returnColor;
 	}
 }

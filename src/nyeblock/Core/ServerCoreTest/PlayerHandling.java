@@ -33,6 +33,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
@@ -68,6 +69,7 @@ import nyeblock.Core.ServerCoreTest.Menus.MenuBase;
 import nyeblock.Core.ServerCoreTest.Misc.DamagePlayer;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
@@ -153,8 +155,9 @@ public class PlayerHandling implements Listener {
 			String playerWorld = ply.getWorld().getName();
 			ArrayList<Player> playersToRemove = new ArrayList<Player>();
 			PlayerData playerData = playersData.get(ply.getUniqueId());
+			org.bukkit.ChatColor chatTextColor = playerData.getChatTextColor();
 			
-			event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET + event.getMessage());
+			event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET + (chatTextColor != null ? chatTextColor : ChatColor.WHITE) + event.getMessage());
 			
 			for (Player player : event.getRecipients()) {
 				if (!playerWorld.equalsIgnoreCase(player.getWorld().getName())) {
@@ -249,7 +252,8 @@ public class PlayerHandling implements Listener {
 						
 						playerData.setData(Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
 								Double.parseDouble(userQueryData.get("timePlayed")), ip,
-								UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))));
+								UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))), 
+								Toolkit.getColorFromString(userQueryData.get("chatTextColor")));
 						
 						//If the players ip has changed from whats in the DB
 						if (!userQueryData.get("ip").equals(ip)) {
@@ -269,7 +273,7 @@ public class PlayerHandling implements Listener {
 						//Get the users data from the users table. This is done to get their db id
 						userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 1, false);
 						HashMap<String, String> userQueryData = userQuery.get(0);
-						playerData.setData(Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER);
+						playerData.setData(Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER, null);
 						
 						// Let everyone know this is a new player
 						for (Player player : world.getPlayers()) {
@@ -473,7 +477,7 @@ public class PlayerHandling implements Listener {
 				event.setCancelled(true);
 			} else if (!damaged.hasPermission("nyeblock.canBeDamaged")) {
 				event.setCancelled(true);
-			} else if (damagedpd.getRealm() == Realm.PVP && damagedpd.getTeam() != null && damagedpd.getTeam().equals(damagerpd.getTeam())) {
+			} else if ((damagedpd.getRealm() == Realm.PVP_DUELS_FISTS || damagedpd.getRealm() == Realm.PVP_2V2_FISTS) && damagedpd.getTeam() != null && damagedpd.getTeam().equals(damagerpd.getTeam())) {
 				event.setCancelled(true);
 			} else if (damaged.getHealth() <= 0) {
 				event.setCancelled(true);
@@ -700,19 +704,20 @@ public class PlayerHandling implements Listener {
 				ItemMeta itemMeta = item.getItemMeta();
 				
 				if (itemMeta != null) {
+					ClickType clickType = event.getClick();
 					PlayerData playerData = playersData.get(ply.getUniqueId());
 					MenuBase menu = playerData.getMenu();
 					
-					if (menu != null) {
+					if (menu != null) {						
 						ArrayList<Long> remove = new ArrayList<>();
 						boolean canDo = true;
 						int i = 0;
 						
 						for (Long message : playerActions.get(ply.getUniqueId())) {
-							if (System.currentTimeMillis()-message < 5000) {
+							if (System.currentTimeMillis()-message < 3000) {
 								i++;
 								
-								if (i >= 5) {
+								if (i >= 7) {
 									canDo = false;
 								}
 							} else {
@@ -723,7 +728,7 @@ public class PlayerHandling implements Listener {
 						if (canDo) {			
 							playerActions.get(ply.getUniqueId()).removeAll(remove);
 							if (menu.getCurrentMenu().hasOption(itemMeta.getLocalizedName())) {							
-								menu.getCurrentMenu().runOption(itemMeta.getLocalizedName());
+								menu.getCurrentMenu().runOption(itemMeta.getLocalizedName(),clickType);
 							} else {
 								ItemBase itemm = playerData.getCustomItem(itemMeta.getLocalizedName());
 								
@@ -756,7 +761,7 @@ public class PlayerHandling implements Listener {
 	public void onPlayerUse(PlayerInteractEvent event) {
 		Player ply = event.getPlayer();
 
-		if (event.getAction().toString().matches("RIGHT_CLICK_AIR|RIGHT_CLICK_BLOCK")) {
+		if (event.getAction().toString().matches("RIGHT_CLICK_AIR|RIGHT_CLICK_BLOCK|LEFT_CLICK_AIR|LEFT_CLICK_BLOCK")) {
 			ItemStack item = ply.getItemInHand();
 			ItemMeta itemMeta = item.getItemMeta();
 

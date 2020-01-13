@@ -31,7 +31,8 @@ public class NyeBlockMenu extends MenuBase {
 	//Use the item
 	public void use(ItemStack item) {
 		player.sendMessage(ChatColor.YELLOW + "This feature is currently disabled.");
-//		setContents();
-//		open();
+//		if (mainInstance.getPlayerHandlingInstance().getPlayerData(player).getLoadedDBInfoStatus()) {			
+//			open();
+//		}
 	}
 }

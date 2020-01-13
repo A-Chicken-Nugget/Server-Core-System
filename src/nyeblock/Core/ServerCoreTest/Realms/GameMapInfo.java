@@ -27,7 +27,7 @@ public class GameMapInfo {
 		} else if (realm == Realm.SKYWARS) {
 			mapPool.add(new SkyWars_Savanna(game));
 			mapPool.add(new SkyWars_Woodland(game));
-		} else if (realm == Realm.PVP) {
+		} else if (realm == Realm.PVP_DUELS_FISTS || realm == Realm.PVP_2V2_FISTS) {
 			mapPool.add(new PvP_Nether(game));
 		}
 		map = mapPool.get(new Random().nextInt(mapPool.size()));

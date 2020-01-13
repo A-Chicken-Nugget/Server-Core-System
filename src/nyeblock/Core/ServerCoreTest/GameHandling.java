@@ -52,39 +52,6 @@ public class GameHandling {
 		return gameToJoin;
 	}
 	/**
-    * Find a game in the games list
-    * @param mode - Mode of the pvp
-    * @param type - Type of the pvp
-    * @return game that has available player slots and is of the provided realm
-    */
-	public GameBase findGame(PvPMode mode, PvPType type) {
-		GameBase gameToJoin = null;
-		
-		for (GameBase currentGame : games) {
-			if (currentGame instanceof PvP) {					
-				PvP pvpGame = ((PvP)currentGame);
-				
-				if (currentGame != null && currentGame.getRealm().equals(Realm.PVP) 
-						&& pvpGame.getPvPMode().equals(mode)
-						&& pvpGame.getPvPType().equals(type)) {
-					if (gameToJoin != null) {		
-						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
-								&& gameToJoin.getPlayerCount() < currentGame.getPlayerCount()
-								&& gameToJoin.getJoinStatus()) {			
-							gameToJoin = currentGame;
-						}
-					} else {						
-						if (currentGame.getPlayerCount() < currentGame.getMaxPlayers() 
-								&& currentGame.getJoinStatus()) {			
-							gameToJoin = currentGame;
-						}
-					}
-				}
-			}
-		}
-		return gameToJoin;
-	}
-	/**
     * Gets an available spot in the games list
     * @return the index of the available spot
     */
@@ -136,25 +103,6 @@ public class GameHandling {
 		}
 		return count;
 	}
-	/**
-    * Get the number of games active for the given realm
-    * @param mode - Mode of the pvp
-    * @param type - Type of the pvp
-    */
-	public int getGamesCount(PvPMode mode, PvPType type) {
-		int count = 0;
-		
-		for (GameBase currentGame : games) {
-			if (currentGame != null && currentGame.getRealm().equals(Realm.PVP)) {
-				PvP pvpGame = ((PvP)currentGame);
-				
-				if (pvpGame.getPvPMode() == mode && pvpGame.getPvPType() == type) {					
-					count++;
-				}
-			}
-		}
-		return count;
-	}
 	
 	/**
     * Sub class player leave method
@@ -175,47 +123,6 @@ public class GameHandling {
 				mainInstance.getHubInstance().join(ply, false);
 			} else if (realm == Realm.PARKOUR) {
 				mainInstance.getHubParkourInstance().join(ply, false);
-			} else if (realm == Realm.PVP) {
-				PvPMode mode = PvPMode.fromInt(Integer.parseInt(pd.getCustomDataKey("pvp_mode")));
-				PvPType type = PvPType.fromInt(Integer.parseInt(pd.getCustomDataKey("pvp_type")));
-				
-				if (mode == PvPMode.DUELS) {
-					if (type == PvPType.FIST) {						
-						pd.setQueuingStatus(true);
-						GameBase gameToJoin = findGame(mode,type);
-						
-						//If no games are found, create one
-						if (gameToJoin == null) {
-							int id = getAvailablePosition();
-							gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,2,2,PvPMode.DUELS,PvPType.FIST);
-							addGameToList(gameToJoin);
-							
-							ply.sendMessage(ChatColor.YELLOW + "No " + mode.toString() + " \u00BB " + type.toString() + " worlds found! Creating a new one for you...");
-							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
-						} else {
-							ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
-						}
-					}
-				} else if (mode == PvPMode.TWOVTWO) {
-					if (type == PvPType.FIST) {
-						pd.setQueuingStatus(true);
-						GameBase gameToJoin = findGame(mode,type);
-						
-						//If no games are found, create one
-						if (gameToJoin == null) {
-							int id = getAvailablePosition();
-							gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,4,4,PvPMode.TWOVTWO,PvPType.FIST);
-							addGameToList(gameToJoin);
-							
-							ply.sendMessage(ChatColor.YELLOW + "No " + mode.toString() + " \u00BB " + type.toString() + " worlds found! Creating a new one for you...");
-							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
-						} else {
-							ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
-						}
-					}
-				}
 			} else if (realm == Realm.KITPVP) {
 				pd.setQueuingStatus(true);
 				GameBase gameToJoin = findGame(realm);
@@ -256,6 +163,38 @@ public class GameHandling {
 				if (gameToJoin == null) {
 					int id = getAvailablePosition();
 					gameToJoin = new SkyWars(mainInstance,id,"gameWorld_" + (id+1),900,4,8);
+					addGameToList(gameToJoin);
+					
+					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+				}
+			} else if (realm == Realm.PVP_DUELS_FISTS) {					
+				pd.setQueuingStatus(true);
+				GameBase gameToJoin = findGame(realm);
+				
+				//If no games are found, create one
+				if (gameToJoin == null) {
+					int id = getAvailablePosition();
+					gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,2,2,Realm.PVP_DUELS_FISTS,PvPMode.DUELS,PvPType.FIST);
+					addGameToList(gameToJoin);
+					
+					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+				} else {
+					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+				}
+			} else if (realm == Realm.PVP_2V2_FISTS) {					
+				pd.setQueuingStatus(true);
+				GameBase gameToJoin = findGame(realm);
+				
+				//If no games are found, create one
+				if (gameToJoin == null) {
+					int id = getAvailablePosition();
+					gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,2,2,Realm.PVP_2V2_FISTS,PvPMode.TWOVTWO,PvPType.FIST);
 					addGameToList(gameToJoin);
 					
 					ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");

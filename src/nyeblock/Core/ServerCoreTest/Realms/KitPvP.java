@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -55,24 +56,6 @@ public class KitPvP extends GameBase {
 	// CONSTRUCTORS
 	//
 	
-	/**
-    * Default game making constructor
-    */
-	public KitPvP(Main mainInstance, int id, String worldName) {
-		super(mainInstance,worldName);
-		
-		this.mainInstance = mainInstance;
-		playerHandling = mainInstance.getPlayerHandlingInstance();
-		this.id = id;
-		this.worldName = worldName;
-		realm = Realm.KITPVP;
-		duration = 900;
-		maxPlayers = 20;
-		startTime = System.currentTimeMillis() / 1000L;
-	}
-	/**
-    * Custom game constructor
-    */
 	public KitPvP(Main mainInstance, int id, String worldName, int duration, int maxPlayers) {
 		super(mainInstance,worldName);
 		
@@ -202,12 +185,18 @@ public class KitPvP extends GameBase {
 			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));			
-			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "KITPVP");
+			if (shouldRainbowTitleText) {
+				pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "KITPVP");				
+			} else {				
+				pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "KITPVP");
+			}
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
 		if (world != null) {        			
-			world.setTime(1000);
+			if (!setWorldTime) {				
+				world.setTime(1000);
+			}
 			if (world.hasStorm()) {
 				world.setStorm(false);
     		}
@@ -276,23 +265,7 @@ public class KitPvP extends GameBase {
 						Player ply = Bukkit.getServer().getPlayer(entry.getKey());
 						
 						if (entry.getValue() == top) {
-							mainInstance.getTimerInstance().createRunnableTimer(worldName + "_fireworks", .7, 0, new Runnable() {
-								@Override
-								public void run() {
-									List<Color> c = new ArrayList<Color>();
-					                c.add(Color.GREEN);
-					                c.add(Color.RED);
-					                c.add(Color.BLUE);
-					                c.add(Color.ORANGE);
-					                c.add(Color.YELLOW);
-					                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();		                		
-			                		Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
-			                		FireworkMeta fireworkMeta = firework.getFireworkMeta();
-			                		fireworkMeta.addEffect(effect);
-			                		fireworkMeta.setPower(2);
-			                		firework.setFireworkMeta(fireworkMeta);
-								}
-							});
+							playWinAction(ply);
 							messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + entry.getKey() + " has won!");
 							giveXP(ply,"Placing #1",200);
 							playerHandling.getPlayerData(ply).addGamePlayed(realm, true);

@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
@@ -60,21 +61,6 @@ public class SkyWars extends GameBase {
 	//
 	
 	/**
-    * Default game making constructor
-    */
-	public SkyWars(Main mainInstance, int id, String worldName) {
-		super(mainInstance,worldName);
-		
-		this.mainInstance = mainInstance;
-		playerHandling = mainInstance.getPlayerHandlingInstance();
-		this.id = id;
-		this.worldName = worldName;
-		realm = Realm.SKYWARS;
-		duration = 900;
-		minPlayers = 4;
-		maxPlayers = 8;
-	}
-	/**
     * Custom game constructor
     */
 	public SkyWars(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
@@ -98,8 +84,6 @@ public class SkyWars extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
-		mainInstance.getTimerInstance().deleteTimer(worldName + "_fireworks");
-		mainInstance.getTimerInstance().deleteTimer(worldName + "_timeWarp");
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
@@ -274,22 +258,11 @@ public class SkyWars extends GameBase {
 				if (!endStarted) {
 					endStarted = true;
 					canUsersJoin = false;
-					setWorldTime = false;
-					
-					mainInstance.getTimerInstance().createRunnableTimer(worldName + "_timeWarp", .1, 0, new Runnable() {
-						@Override
-						public void run() {
-							if (world.getTime() < 23000L) {
-								world.setTime(world.getTime() + 1000L);
-							} else {
-								world.setTime(0);
-							}
-						}
-					});
 					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 					giveXP(ply,"Placing #1",200);
+					playWinAction(ply);
 					playerHandling.getPlayerData(ply).addGamePlayed(realm, true);
 					for (Player player : players) {
 						//Print the players xp summary
@@ -316,12 +289,17 @@ public class SkyWars extends GameBase {
 			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");
+			if (shouldRainbowTitleText) {
+				pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "SKY WARS");				
+			} else {				
+				pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");
+			}
+			
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
 		if (world != null) {   
-			if (setWorldTime) {				
+			if (!setWorldTime) {				
 				world.setTime(1000);
 			}
 			if (world.hasStorm()) {

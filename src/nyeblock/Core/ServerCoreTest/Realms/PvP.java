@@ -53,12 +53,12 @@ public class PvP extends GameBase {
 	// CONSTRUCTOR
 	//
 	
-	public PvP(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers, PvPMode pvpMode, PvPType pvpType) {
+	public PvP(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers, Realm realm, PvPMode pvpMode, PvPType pvpType) {
 		super(mainInstance,worldName);
 		
 		this.id = id;
 		this.worldName = worldName;
-		realm = Realm.PVP;
+		this.realm = realm;
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
@@ -74,7 +74,6 @@ public class PvP extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
-		mainInstance.getTimerInstance().deleteTimer(worldName + "_fireworks");
 		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
 		for (Player ply : tempPlayers) {			
@@ -192,7 +191,7 @@ public class PvP extends GameBase {
 								}
 								ply.setHealth(20);
 								ply.setVelocity(new Vector(0,0,0));
-								pd.addGamePlayed(pvpMode, pvpType, false);
+								pd.addGamePlayed(realm, false);
 							}
 						}
 					}
@@ -244,7 +243,6 @@ public class PvP extends GameBase {
 					canUsersJoin = false;
 					String namesString = "";
 					ArrayList<Player> teamPlayers = new ArrayList<>();
-					ArrayList<UUID> playersWon = new ArrayList<>();
 					
 					for (Map.Entry<Location,Player> entry : teamsSetup.get(team == 0 ? 1 : 0).entrySet()) {
 						if (entry.getValue() != null) {
@@ -254,34 +252,11 @@ public class PvP extends GameBase {
 								namesString += " and " + entry.getValue().getName();
 							}
 							teamPlayers.add(entry.getValue());
-							playersWon.add(entry.getValue().getUniqueId());
+							playWinAction(entry.getValue());
 							giveXP(entry.getValue(),"Winning",150);
-							playerHandling.getPlayerData(entry.getValue()).addGamePlayed(pvpMode, pvpType, true);
+							playerHandling.getPlayerData(entry.getValue()).addGamePlayed(realm, true);
 						}
 					}
-					
-					mainInstance.getTimerInstance().createRunnableTimer(worldName + "_fireworks", .7, 0, new Runnable() {
-						@Override
-						public void run() {
-							List<Color> c = new ArrayList<Color>();
-			                c.add(Color.GREEN);
-			                c.add(Color.RED);
-			                c.add(Color.BLUE);
-			                c.add(Color.ORANGE);
-			                c.add(Color.YELLOW);
-			                FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c).withFade(c).with(Type.STAR).trail(true).build();
-							
-			                for (Player ply : teamPlayers) {
-			                	if (!playerHandling.getPlayerData(ply).getSpectatingStatus()) {			                		
-			                		Firework firework = ply.getWorld().spawn(ply.getLocation(), Firework.class);
-			                		FireworkMeta fireworkMeta = firework.getFireworkMeta();
-			                		fireworkMeta.addEffect(effect);
-			                		fireworkMeta.setPower(2);
-			                		firework.setFireworkMeta(fireworkMeta);
-			                	}
-			                }
-						}
-					});
 					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + namesString + " won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
@@ -309,16 +284,18 @@ public class PvP extends GameBase {
 			scores.put(pos++, ChatColor.YELLOW + "Mode: " + ChatColor.GREEN + pvpType.toString());
 			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			if (!endStarted) {				
+			if (shouldRainbowTitleText) {
+				pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + pvpMode.toString());				
+			} else {				
 				pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + pvpMode.toString());
-			} else {
-				pd.setScoreboardTitle(colorList.get(new Random().nextInt(colorList.size())) + ChatColor.BOLD.toString() + pvpMode.toString());
 			}
 			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
-		if (world != null) {        			
-			world.setTime(1000);
+		if (world != null) {
+			if (!setWorldTime) {				
+				world.setTime(1000);
+			}
 			if (world.hasStorm()) {
 				world.setStorm(false);
     		}

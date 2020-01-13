@@ -1,15 +1,19 @@
 package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
+import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -39,13 +43,15 @@ public class HubMenu extends MenuBase {
 			add(ChatColor.YELLOW + "highest kills wins. Select up to 4 kits.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to find a game");
-		}}, new Runnable() {
-			@Override
-			public void run() {
-				player.closeInventory();
-				mainInstance.getGameInstance().joinGame(player, Realm.KITPVP);
-			}
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						player.closeInventory();
+						mainInstance.getGameInstance().joinGame(player, Realm.KITPVP);
+					}
+				});
+		}});
 		
 		//Sky wars
 		subMenu.createOption(13, Material.GRASS_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Sky Wars (Beta)", new ArrayList<String>() {{
@@ -58,13 +64,15 @@ public class HubMenu extends MenuBase {
 			add(ChatColor.YELLOW + "last player left wins!");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to find a game");
-		}}, new Runnable() {
-            @Override
-            public void run() {       
-            	player.closeInventory();
-            	mainInstance.getGameInstance().joinGame(player, Realm.SKYWARS);
-            }
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {       
+		            	player.closeInventory();
+		            	mainInstance.getGameInstance().joinGame(player, Realm.SKYWARS);
+		            }
+				});
+		}});
 		
 		//Step Spleef
 		subMenu.createOption(15, Material.IRON_BOOTS, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Step Spleef (Beta)", new ArrayList<String>() {{
@@ -76,13 +84,15 @@ public class HubMenu extends MenuBase {
 			add(ChatColor.YELLOW + "The last player left wins!");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to find a game");
-		}}, new Runnable() {
-            @Override
-            public void run() {       
-            	player.closeInventory();
-            	mainInstance.getGameInstance().joinGame(player, Realm.STEPSPLEEF);
-            }
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {       
+		            	player.closeInventory();
+		            	mainInstance.getGameInstance().joinGame(player, Realm.STEPSPLEEF);
+		            }
+				});
+		}});
 		
 		//PvP
 		subMenu.createOption(21, Material.FISHING_ROD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "PvP", new ArrayList<String>() {{
@@ -91,12 +101,14 @@ public class HubMenu extends MenuBase {
 			add(ChatColor.YELLOW + "choose provides.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to view the game modes");
-		}}, new Runnable() {
-            @Override
-            public void run() {       
-            	playerHandling.getPlayerData(player).getMenu().openMenu("PvP Games");
-            }
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {       
+		            	playerHandling.getPlayerData(player).getMenu().openMenu("PvP Games");
+		            }
+				});
+		}});
 		
 		//
 		// PvP games
@@ -109,13 +121,14 @@ public class HubMenu extends MenuBase {
 			add(ChatColor.YELLOW + "Fight one other player.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to view the modes");
-		}}, new Runnable() {
-			@Override
-			public void run() {
-				playerHandling.getPlayerData(player).setCustomDataKey("pvp_mode", "1");
-				playerHandling.getPlayerData(player).getMenu().openMenu("Duels Modes");
-			}
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						playerHandling.getPlayerData(player).getMenu().openMenu("Duels Modes");
+					}
+				});
+		}});
 		
 		//2v2
 		subMenu.createOption(14, Material.IRON_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "2v2", new ArrayList<String>() {{
@@ -123,21 +136,24 @@ public class HubMenu extends MenuBase {
 			add(ChatColor.YELLOW + "Fight 2 other players with a teammate.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to view the modes");
-		}}, new Runnable() {
-			@Override
-			public void run() {
-				playerHandling.getPlayerData(player).setCustomDataKey("pvp_mode", "2");
-				playerHandling.getPlayerData(player).getMenu().openMenu("2v2 Modes");
-			}
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						playerHandling.getPlayerData(player).getMenu().openMenu("2v2 Modes");
+					}
+				});
+		}});
 		
 		//Back
-		subMenu.createOption(27, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new Runnable() {
-			@Override
-			public void run() {
-				playerHandling.getPlayerData(player).getMenu().openMenu("Game Menu");
-			}
-		});
+		subMenu.createOption(27, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						playerHandling.getPlayerData(player).getMenu().openMenu("Game Menu");
+					}
+				});
+		}});
 		
 		//
 		// Duels modes
@@ -146,42 +162,47 @@ public class HubMenu extends MenuBase {
 		
 		//Fist
 		subMenu.createOption(12, Material.RABBIT, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fist Fighting", new ArrayList<String>() {{
-			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(PvPMode.DUELS,PvPType.FIST) + ChatColor.YELLOW + " games active");
+			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(Realm.PVP_DUELS_FISTS) + ChatColor.YELLOW + " games active");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "Use your fists to fight the other player.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to find a game");
-		}}, new Runnable() {
-			@Override
-			public void run() {
-				player.closeInventory();
-				playerHandling.getPlayerData(player).setCustomDataKey("pvp_type", "1");
-				mainInstance.getGameInstance().joinGame(player, Realm.PVP);
-			}
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						player.closeInventory();
+						mainInstance.getGameInstance().joinGame(player, Realm.PVP_DUELS_FISTS);
+					}
+				});
+		}});
 		
 		//Sword/Armor
 		subMenu.createOption(14, Material.IRON_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Weapon/Armor Fighting", new ArrayList<String>() {{
-			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(PvPMode.DUELS,PvPType.WEPSARMOR) + ChatColor.YELLOW + " games active");
+			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(Realm.PVP_DEULS_WEPSARMOR) + ChatColor.YELLOW + " games active");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "Use your weps to fight the other player.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.RED.toString() + ChatColor.BOLD + "\u2716 Game mode currently closed \u2716");
-		}}, new Runnable() {
-			@Override
-			public void run() {
-				player.closeInventory();
-				player.sendMessage(ChatColor.RED + "This mode is currently closed and cannot be played.");
-			}
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						player.closeInventory();
+						player.sendMessage(ChatColor.RED + "This mode is currently closed and cannot be played.");
+					}
+				});
+		}});
 		
 		//Back
-		subMenu.createOption(27, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new Runnable() {
-			@Override
-			public void run() {
-				playerHandling.getPlayerData(player).getMenu().openMenu("PvP Games");
-			}
-		});
+		subMenu.createOption(27, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						playerHandling.getPlayerData(player).getMenu().openMenu("PvP Games");
+					}
+				});
+		}});
 		
 		//
 		// 2v2 modes
@@ -190,42 +211,47 @@ public class HubMenu extends MenuBase {
 		
 		//Fist
 		subMenu.createOption(12, Material.RABBIT, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fist Fighting", new ArrayList<String>() {{
-			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(PvPMode.TWOVTWO,PvPType.FIST) + ChatColor.YELLOW + " games active");
+			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(Realm.PVP_2V2_FISTS) + ChatColor.YELLOW + " games active");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "Use your fists to fight the other players.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to find a game");
-		}}, new Runnable() {
-			@Override
-			public void run() {
-				player.closeInventory();
-				playerHandling.getPlayerData(player).setCustomDataKey("pvp_type", "1");
-				mainInstance.getGameInstance().joinGame(player, Realm.PVP);
-			}
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						player.closeInventory();
+						mainInstance.getGameInstance().joinGame(player, Realm.PVP_2V2_FISTS);
+					}
+				});
+		}});
 		
 		//Sword/Armor
 		subMenu.createOption(14, Material.IRON_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Weapon/Armor Fighting", new ArrayList<String>() {{
-			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(PvPMode.TWOVTWO,PvPType.WEPSARMOR) + ChatColor.YELLOW + " games active");
+			add(ChatColor.GREEN.toString() + mainInstance.getGameInstance().getGamesCount(Realm.PVP_2V2_WEPSARMOR) + ChatColor.YELLOW + " games active");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.YELLOW + "Use your weapons/armor to fight the other players.");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.RED.toString() + ChatColor.BOLD + "\u2716 Game mode currently closed \u2716");
-		}}, new Runnable() {
-			@Override
-			public void run() {
-				player.closeInventory();
-				player.sendMessage(ChatColor.RED + "This mode is currently closed and cannot be played.");
-			}
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						player.closeInventory();
+						player.sendMessage(ChatColor.RED + "This mode is currently closed and cannot be played.");
+					}
+				});
+		}});
 		
 		//Back
-		subMenu.createOption(27, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new Runnable() {
-			@Override
-			public void run() {
-				playerHandling.getPlayerData(player).getMenu().openMenu("PvP Games");
-			}
-		});
+		subMenu.createOption(27, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Go back", null, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						playerHandling.getPlayerData(player).getMenu().openMenu("PvP Games");
+					}
+				});
+		}});
 		
 	}
 	//Give the player this item
@@ -254,6 +280,8 @@ public class HubMenu extends MenuBase {
 //	}
 	//Use the item
 	public void use(ItemStack item) {
-		open();
+		if (mainInstance.getPlayerHandlingInstance().getPlayerData(player).getLoadedDBInfoStatus()) {			
+			open();
+		}
 	}
 }

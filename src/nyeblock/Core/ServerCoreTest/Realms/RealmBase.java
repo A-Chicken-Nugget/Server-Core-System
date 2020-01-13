@@ -1,8 +1,10 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -22,7 +24,7 @@ public abstract class RealmBase {
 	protected Realm realm;
 	protected int minPlayers = 0;
 	protected int maxPlayers = 0;
-	protected ArrayList<ChatColor> colorList = new ArrayList<ChatColor>() {{
+	protected ArrayList<ChatColor> chatColorList = new ArrayList<ChatColor>() {{
 		add(ChatColor.BLUE);
 		add(ChatColor.GREEN);
 		add(ChatColor.YELLOW);
@@ -33,6 +35,13 @@ public abstract class RealmBase {
 		add(ChatColor.DARK_RED);
 		add(ChatColor.RED);
 		add(ChatColor.AQUA);
+	}};
+	protected ArrayList<Color> colorList = new ArrayList<Color>() {{		
+		add(Color.GREEN);
+		add(Color.RED);
+		add(Color.BLUE);
+		add(Color.ORANGE);
+		add(Color.YELLOW);
 	}};
 	
 	public RealmBase(Main mainInstance) {

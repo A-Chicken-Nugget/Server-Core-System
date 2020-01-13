@@ -26,7 +26,7 @@ public class Send extends CommandBase {
 				Player player = Bukkit.getPlayerExact(args[0]);
 				
 				if (player != null) {
-					Realm realm = Realm.fromName(args[1]);
+					Realm realm = Realm.fromDBName(args[1]);
 					
 					if (realm != null) {					
 						playerHandling.getPlayerData(player).getCurrentRealm().leave(player, true, realm);
@@ -37,7 +37,7 @@ public class Send extends CommandBase {
 					ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 				}
 			} else {
-				Realm realm = Realm.fromName(args[1]);
+				Realm realm = Realm.fromDBName(args[1]);
 				
 				if (realm != null) {
 					for (Player player : ply.getWorld().getPlayers()) {

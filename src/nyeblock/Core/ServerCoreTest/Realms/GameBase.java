@@ -1,18 +1,24 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.FireworkEffect.Type;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.meta.FireworkMeta;
 
 import com.boydti.fawe.object.clipboard.DiskOptimizedClipboard;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
@@ -21,12 +27,15 @@ import com.sk89q.worldedit.math.BlockVector3;
 import net.coreprotect.CoreProtectAPI;
 import net.coreprotect.CoreProtectAPI.ParseResult;
 import net.md_5.bungee.api.ChatColor;
+import net.minecraft.server.v1_15_R1.DataWatcher.Item;
 import nyeblock.Core.ServerCoreTest.Main;
+import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
-import nyeblock.Core.ServerCoreTest.SchematicHandling;
 import nyeblock.Core.ServerCoreTest.Maps.MapBase;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
+@SuppressWarnings("serial")
 public abstract class GameBase extends RealmBase {
 	//Instances
 	protected Main mainInstance;
@@ -45,6 +54,8 @@ public abstract class GameBase extends RealmBase {
 	//Game points
 	protected ArrayList<Location> spawns = new ArrayList<>();
 	//Etc
+	protected boolean shouldRainbowTitleText = false;
+	protected boolean setWorldTime = false;
 	protected int duration;
 	protected long startTime;
 	protected boolean active = false;
@@ -84,6 +95,55 @@ public abstract class GameBase extends RealmBase {
 		});
 	}
 	
+	/**
+    * Cleans up the world and deletes the game
+    */
+	public void playWinAction(Player player) {
+		PlayerData playerData = playerHandling.getPlayerData(player);
+		RealmBase game = playerData.getCurrentRealm();
+		
+		for (ShopItem item : playerData.getShopItems()) {
+			if (item.isEquipped()) {
+				if (item.getUniqueId().equalsIgnoreCase("rainbow_scoreboard_winAction::" + realm.getDBName())) {
+					shouldRainbowTitleText = true;
+				} else if (item.getUniqueId().equalsIgnoreCase("fireworks_winAction::" + realm.getDBName())) {
+					mainInstance.getTimerInstance().createRunnableTimer(player.getUniqueId() + "_fireworks", .7, 0, new Runnable() {						
+						public void run() {
+							if (game.isInServer(player)) {
+								FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(colorList).withFade(colorList).with(Type.STAR).trail(true).build();
+								
+								if (!playerData.getSpectatingStatus()) {
+									Firework firework = player.getWorld().spawn(player.getLocation(), Firework.class);
+									FireworkMeta fireworkMeta = firework.getFireworkMeta();
+									fireworkMeta.addEffect(effect);
+									fireworkMeta.setPower(2);
+									firework.setFireworkMeta(fireworkMeta);
+								}
+							} else {
+								mainInstance.getTimerInstance().deleteTimer(player.getUniqueId() + "_fireworks");
+							}
+						}
+					});
+				} else if (item.getUniqueId().equalsIgnoreCase("time_speed_up_winAction::" + realm.getDBName())) {
+					setWorldTime = true;
+					mainInstance.getTimerInstance().createRunnableTimer(player.getUniqueId() + "_timeWarp", .1, 0, new Runnable() {
+						@Override
+						public void run() {
+							if (game.isInServer(player)) {
+								if (world.getTime() < 23000L) {
+									world.setTime(world.getTime() + 1000L);
+								} else {
+									world.setTime(0);
+								}
+							} else {
+								mainInstance.getTimerInstance().deleteTimer(player.getUniqueId() + "_timeWarp");
+							}
+						}
+					});
+				}
+			}
+		}
+	}
 	public void onCreate() {}
 	public void onDelete() {}
 	/**
@@ -200,14 +260,8 @@ public abstract class GameBase extends RealmBase {
 			"Total XP Received: " + totalXP + "\n" +
 			ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A"
 		);
-		if (saveXP) {
-			if (realm == Realm.PVP) {
-				PvP game = (PvP)this;
-				
-				playerHandling.getPlayerData(ply).giveXP(game.getPvPMode(), game.getPvPType(), totalXP);
-			} else {				
-				playerHandling.getPlayerData(ply).giveXP(realm, totalXP);
-			}
+		if (saveXP) {			
+			playerHandling.getPlayerData(ply).giveXP(realm, totalXP);
 		}
 	}
 	/**

@@ -1,10 +1,12 @@
 package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -12,6 +14,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 
 @SuppressWarnings("serial")
 public class ParkourMenu extends MenuBase {
@@ -39,22 +42,24 @@ public class ParkourMenu extends MenuBase {
 			add(ChatColor.YELLOW + "If normal then you will not be timed");
 			add(ChatColor.YELLOW + "and if you fail will be teleported");
 			add(ChatColor.YELLOW + "to your last checkpoint.");
-		}}, new Runnable() {
-            @Override
-            public void run() {
-    			if (isParkourMode) {
-    				pd.setCustomDataKey("parkour_mode", "false");
-    				player.sendMessage(ChatColor.YELLOW + "Parkour mode set to " + ChatColor.RED.toString() + ChatColor.BOLD + "normal");
-    			} else {
-    				pd.setCustomDataKey("parkour_mode", "true");
-    				player.sendMessage(ChatColor.YELLOW + "Parkour mode set to " + ChatColor.GREEN.toString() + ChatColor.BOLD + "competitive");
-    			}
-    			player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-    			
-    			mainInstance.getHubParkourInstance().goToStart(player);
-            	player.closeInventory();
-            }
-		});
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+		    			if (isParkourMode) {
+		    				pd.setCustomDataKey("parkour_mode", "false");
+		    				player.sendMessage(ChatColor.YELLOW + "Parkour mode set to " + ChatColor.RED.toString() + ChatColor.BOLD + "normal");
+		    			} else {
+		    				pd.setCustomDataKey("parkour_mode", "true");
+		    				player.sendMessage(ChatColor.YELLOW + "Parkour mode set to " + ChatColor.GREEN.toString() + ChatColor.BOLD + "competitive");
+		    			}
+		    			player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+		    			
+		    			mainInstance.getHubParkourInstance().goToStart(player);
+		            	player.closeInventory();
+		            }
+				});
+		}});
 	}
 	//Give the player this item
 	public ItemStack give() {

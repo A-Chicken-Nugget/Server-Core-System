@@ -2,6 +2,7 @@ package nyeblock.Core.ServerCoreTest.Misc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.bukkit.ChatColor;
 
@@ -15,23 +16,24 @@ import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 public class Enums {
 	//Realm enums
 	public enum Realm {
-		HUB(1,"hub",Hub.class,"Hub"),
-		KITPVP(2,"kitpvp",KitPvP.class,"Kit Pvp"),
-		STEPSPLEEF(3,"stepspleef",StepSpleef.class,"Step Spleef"),
-		SKYWARS(4,"skywars",SkyWars.class,"Sky Wars"),
-		PVP(5,"pvp",PvP.class,"PvP"),
-		PARKOUR(6,"parkour",HubParkour.class,"Parkour");
+		HUB("hub","Hub",false),
+		PARKOUR("parkour","Parkour",false),
+		KITPVP("kitpvp","Kit Pvp",true),
+		SKYWARS("skywars","Sky Wars",true),
+		STEPSPLEEF("stepspleef","Step Spleef",true),
+		PVP_DUELS_FISTS("pvp_duels_fists","PvP \u00BB Duels \u00BB Fists",true),
+		PVP_DEULS_WEPSARMOR("pvp_deuls_wepsarmor","PvP \u00BB Duels \u00BB Weapons/Armor",true),
+		PVP_2V2_FISTS("pvp_2v2_fists","PvP \u00BB 2v2 \u00BB Fists",true),
+		PVP_2V2_WEPSARMOR("pvp_2v2_wepsarmor","PvP \u00BB 2v2 \u00BB Weapons/Armor",true);
 
-		private int value; 
 		private String dbname;
-		private Class<?> classType;
 		private String name;
+		private boolean isGame;
 
-		private Realm(int value, String dbname, Class<?> classType, String name) {
-			this.value = value;
+		private Realm(String dbname, String name, boolean isGame) {
 			this.dbname = dbname;
-			this.classType = classType;
 			this.name = name;
+			this.isGame = isGame;
 		}
 
 		public static ArrayList<String> listRealms() {
@@ -46,23 +48,30 @@ public class Enums {
 			Realm rel = null;
 			
 			for (Realm group : Realm.values()) {
+				if (group.toString().equalsIgnoreCase(relm)) {
+					rel = group;
+				}
+			}
+			return rel;
+		}
+		public static Realm fromDBName(String relm) {
+			Realm rel = null;
+			
+			for (Realm group : Realm.values()) {
 				if (group.getDBName().equalsIgnoreCase(relm)) {
 					rel = group;
 				}
 			}
 			return rel;
 		}
-		public int getValue() {
-			return value;
-		}
 		public String getDBName() {
 			return dbname;
 		}
-		public Class<?> getClassType() {
-			return classType;
-		}
 		public String toString() {
 			return name;
+		}
+		public boolean isGame() {
+			return isGame;
 		}
 	} 
 	//User group enums
@@ -241,6 +250,11 @@ public class Enums {
 		PLAYER_SPAWN(),
 		GRACE_BOUND(),
 		CHEST_SPAWN();
+	}
+	//Shop menu requirement type
+	public enum RequirementType {
+		LEVEL(),
+		ACHIEVEMENT;
 	}
 	//Achievement enums
 	public enum Achievement {

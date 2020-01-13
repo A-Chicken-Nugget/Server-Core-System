@@ -1,19 +1,23 @@
 package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 
 import org.bukkit.Material;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 
 public class MenuOption {
 	protected String name;
 	protected int position;
 	protected SubMenu subMenu;
 	protected ItemStack item;
-	protected Runnable action;
+	protected HashMap<ClickType,Runnable> clickActions;
 	
 	public MenuOption(int position,SubMenu subMenu) {
 		this.position = position;
@@ -21,7 +25,9 @@ public class MenuOption {
 		name = UUID.randomUUID().toString();
 	}
 	
-	public void runAction() {
+	public void runAction(ClickType clickType) {
+		Runnable action = clickActions.get(clickType);
+		
 		if (action != null) {		
 			action.run();
 		}
@@ -45,8 +51,8 @@ public class MenuOption {
 	// SETTERS
 	//
 	
-	public void setAction(Runnable action) {
-		this.action = action;
+	public void setClickActions(HashMap<ClickType,Runnable> clickActions) {
+		this.clickActions = clickActions;
 	}
 	public void setItem(Material material, String itemName, ArrayList<String> desc) {
 		ItemStack item = new ItemStack(material);

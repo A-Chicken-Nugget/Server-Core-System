@@ -1,4 +1,4 @@
-package nyeblock.Core.ServerCoreTest.Menus;
+package nyeblock.Core.ServerCoreTest.Menus.Shop;
 
 public class ShopItem {
 	private String uniqueId;

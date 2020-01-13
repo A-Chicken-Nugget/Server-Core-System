@@ -45,7 +45,7 @@ import nyeblock.Core.ServerCoreTest.Menus.NyeBlockMenu;
 import nyeblock.Core.ServerCoreTest.Menus.ParkourMenu;
 import nyeblock.Core.ServerCoreTest.Menus.ProfileStatsMenu;
 import nyeblock.Core.ServerCoreTest.Menus.ShopMenu;
-import nyeblock.Core.ServerCoreTest.Menus.ShopItem;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
@@ -71,6 +71,7 @@ public class PlayerData {
 	private UserGroup userGroup = UserGroup.USER;
 	private PermissionAttachment permissions;
 	private Realm realm = Realm.HUB;
+	private ChatColor chatTextColor = null;
 	private HashMap<String,String> customData = new HashMap<>();
 	private HashMap<String,ItemBase> customItems = new HashMap<>();
 	private ArrayList<ShopItem> shopItems = new ArrayList<>();
@@ -79,6 +80,7 @@ public class PlayerData {
 	private boolean isSpectating = false;
 	private boolean isHidden = false;
 	private boolean queuingGame = false;
+	private boolean loadedDBInfo = false;
 	//Stats
 	private HashMap<String,Integer> realmXp = new HashMap<>();
 	private HashMap<String,Integer> totalGamesPlayed = new HashMap<>();
@@ -158,19 +160,6 @@ public class PlayerData {
 		}
 	}
 	/**
-    * Add game played
-    * @param mode - The PvP mode
-	* @param type - The PvP type
-	* @param set - what to set
-    */
-	public void addGamePlayed(PvPMode mode, PvPType type, boolean set) {
-		if (!set) {
-			totalGamesPlayed.put(mode.getDBName() + "_" + type.getDBName(), totalGamesPlayed.get(mode.getDBName() + "_" + type.getDBName()) + 1);
-		} else {
-			totalGamesWon.put(mode.getDBName() + "_" + type.getDBName(), totalGamesWon.get(mode.getDBName() + "_" + type.getDBName()) + 1);			
-		}
-	}
-	/**
     * Give the player xp
     * @param realm - realm to give the xp should be added to
     * @param amount - amount of xp added to the specified realm
@@ -187,25 +176,6 @@ public class PlayerData {
 		int newLevel = getLevel(realm);
 		if (currentLevel < newLevel) {
 			player.sendMessage(ChatColor.YELLOW + "You have leveled up! You are now level " + ChatColor.GREEN + newLevel + ChatColor.YELLOW + "!");
-		}
-	}
-	/**
-    * Give the player xp
-    * @param realm - realm to give the xp should be added to
-    * @param amount - amount of xp added to the specified realm
-    */
-	public void giveXP(PvPMode mode, PvPType type, int amount) {
-		int currentLevel = getLevel(mode,type);
-		
-		if (realmXp.get(mode.getDBName() + "_" + type.getDBName()) != null) {			
-			realmXp.put(mode.getDBName() + "_" + type.getDBName(), realmXp.get(mode.getDBName() + "_" + type.getDBName()) + amount);
-		} else {
-			realmXp.put(mode.getDBName() + "_" + type.getDBName(), amount);
-		}
-		
-		int newLevel = getLevel(mode,type);
-		if (currentLevel < newLevel) {
-			player.sendMessage(ChatColor.YELLOW + "You have leveled up! Your PvP \u00BB " + mode.toString() + " level is now " + ChatColor.GREEN + newLevel + ChatColor.YELLOW + "!");
 		}
 	}
 	/**
@@ -331,87 +301,117 @@ public class PlayerData {
 		DatabaseHandling db = mainInstance.getDatabaseInstance();
     	
     	//Get the players realm xp
-    	ArrayList<HashMap<String, String>> realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    	ArrayList<HashMap<String, String>> realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
     	
     	//If the player exists in the userXP table
     	if (realmXPQuery.size() > 0) {
     		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
     		
     		//Set the players realm xp
-    		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
-    		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
-    		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
-    		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
-    		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
+    		for (Realm realm : Realm.values()) {
+    			if (realm.isGame()) {
+    				realmXp.put(realm.getDBName(),Integer.parseInt(realmXPQueryData.get(realm.getDBName())));
+    			}
+    		}
+//    		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
+//    		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
+//    		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
+//    		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
+//    		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
     	} else {
     		//Insert the user in the userXP table
     		db.query("INSERT INTO userXP (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
     		
-    		realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    		realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
     		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
     		
     		//Set the players realm xp
-    		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
-    		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
-    		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
-    		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
-    		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
+    		for (Realm realm : Realm.values()) {
+    			if (realm.isGame()) {
+    				realmXp.put(realm.getDBName(),Integer.parseInt(realmXPQueryData.get(realm.getDBName())));
+    			}
+    		}
+//    		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
+//    		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
+//    		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
+//    		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
+//    		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
     	}
     	
     	//Get the players total games played
-    	ArrayList<HashMap<String, String>> totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    	ArrayList<HashMap<String, String>> totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
     	
     	//If the player exists in the table
     	if (totalGamesQuery.size() > 0) {
     		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
     		
     		//Set the players total games played
-    		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
-    		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
-    		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
-    		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
-    		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
+    		for (Realm realm : Realm.values()) {
+    			if (realm.isGame()) {
+    				totalGamesPlayed.put(realm.getDBName(),Integer.parseInt(totalGamesQueryData.get(realm.getDBName())));
+    			}
+    		}
+//    		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
+//    		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
+//    		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
+//    		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
+//    		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
     	} else {
     		//Insert the user in the table
     		db.query("INSERT INTO userTotalGames (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
     		
-    		totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    		totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
     		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
     		
     		//Set the players total games played
-    		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
-    		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
-    		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
-    		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
-    		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
+    		for (Realm realm : Realm.values()) {
+    			if (realm.isGame()) {
+    				totalGamesPlayed.put(realm.getDBName(),Integer.parseInt(totalGamesQueryData.get(realm.getDBName())));
+    			}
+    		}
+//    		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
+//    		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
+//    		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
+//    		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
+//    		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
     	}
     	
     	//Get the players game wins
-    	ArrayList<HashMap<String, String>> gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    	ArrayList<HashMap<String, String>> gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
     	
     	//If the player exists in the table
     	if (gamesWonQuery.size() > 0) {
     		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
     		
     		//Set the players games won
-    		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
-    		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
-    		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
-    		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
-    		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
+    		for (Realm realm : Realm.values()) {
+    			if (realm.isGame()) {
+    				totalGamesWon.put(realm.getDBName(),Integer.parseInt(gamesWonQueryData.get(realm.getDBName())));
+    			}
+    		}
+//    		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
+//    		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
+//    		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
+//    		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
+//    		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
     	} else {
     		//Insert the user in the table
     		db.query("INSERT INTO userGamesWon (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
     		
-    		gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 7, false);
+    		gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
     		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
     		
     		//Set the players games won
-    		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
-    		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
-    		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
-    		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
-    		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
+    		for (Realm realm : Realm.values()) {
+    			if (realm.isGame()) {
+    				totalGamesWon.put(realm.getDBName(),Integer.parseInt(gamesWonQueryData.get(realm.getDBName())));
+    			}
+    		}
+//    		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
+//    		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
+//    		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
+//    		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
+//    		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
     	}
     	
     	//Get the players shop items
@@ -425,18 +425,29 @@ public class PlayerData {
     		//Insert the user in the table
     		db.query("INSERT INTO userShopItems (uniqueId,items) VALUES ('" + player.getUniqueId() + "','" + new Gson().toJson(new ArrayList<ShopItem>()) + "')", 0, true);
     	}
+    	
+    	loadedDBInfo = true;
 	}
 	
 	//
 	// GETTERS
 	//
 	
+	public Player getPlayer() {
+		return player;
+	}
+	public ChatColor getChatTextColor() {
+		return chatTextColor;
+	}
+ 	public boolean getLoadedDBInfoStatus() {
+		return loadedDBInfo;
+	}
 	/**
 	* Get a specific shop item
 	* @param uniqueId - uniqueId of the item
 	* @return the requested item or null if not found
 	*/
-	public ShopItem getShopItems(String uniqueId) {
+	public ShopItem getShopItem(String uniqueId) {
 		ShopItem returnItem = null;
 		
 		for (ShopItem item : shopItems) {
@@ -488,15 +499,6 @@ public class PlayerData {
 		return totalGamesWon.get(realm.getDBName());
 	}
 	/**
-	* Get total games won
-	* @param mode - pvp mode
-	* @param type - pvp type
-	* @return the players total amount of games won for specified pvp mode
-	*/
-	public int getTotalGamesWon(PvPMode mode, PvPType type) {
-		return totalGamesWon.get(mode.getDBName() + "_" + type.getDBName());
-	}
-	/**
 	* Get total games played
 	* @param realm - the realm
 	* @return the players total amount of games played for specified realm
@@ -505,30 +507,12 @@ public class PlayerData {
 		return totalGamesPlayed.get(realm.getDBName());
 	}
 	/**
-	* Get total games played
-	* @param mode - pvp mode
-	* @param type - pvp type
-	* @return the players total amount of games played for specified pvp mode
-	*/
-	public int getTotalGamesPlayed(PvPMode mode, PvPType type) {
-		return totalGamesPlayed.get(mode.getDBName() + "_" + type.getDBName());
-	}
-	/**
 	* Get the player level
 	* @param realm - The realm go get the players level from
 	* @return the players level in the provided realm
 	*/
 	public int getLevel(Realm realm) {
 		return (int)Math.floor(0.1*Math.sqrt(realmXp.get(realm.getDBName())));
-	}
-	/**
-	* Get the player level
-	* @param mode - The PvP mode
-	* @param type - The PvP type
-	* @return the players level in the specified pvp mode
-	*/
-	public int getLevel(PvPMode mode, PvPType type) {
-		return (int)Math.floor(0.1*Math.sqrt(realmXp.get(mode.getDBName() + "_" + type.getDBName())));
 	}
 	/**
 	* Get the player level
@@ -545,14 +529,6 @@ public class PlayerData {
 	*/
 	public int getXp(Realm realm) {
 		return realmXp.get(realm.getDBName());
-	}
-	/**
-	* Get the player xp
-	* @param realm - The realm go get the players xp from
-	* @return the players xp in the provided realm
-	*/
-	public int getXp(PvPMode mode, PvPType type) {
-		return realmXp.get(mode.getDBName() + "_" + type.getDBName());
 	}
 	/**
 	* Get a custom item by name
@@ -723,12 +699,13 @@ public class PlayerData {
     * @param ip - players ip
     * @param userGroup - players user group
     */
-	public void setData(int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
+	public void setData(int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup, ChatColor chatTextColor) {
 		this.id = id;
 		this.points = points;
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
+		this.chatTextColor = chatTextColor;
 		
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
@@ -794,7 +771,7 @@ public class PlayerData {
 			permissions.setPermission("nyeblock.canLoseHunger", false);
 			permissions.setPermission("nyeblock.canSwapItems", false);
 			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.PVP) {
+		} else if (realm == Realm.PVP_DUELS_FISTS || realm == Realm.PVP_2V2_FISTS) {
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canBreakBlocks", false);
 			permissions.setPermission("nyeblock.canUseInventory", false);
@@ -922,7 +899,7 @@ public class PlayerData {
 			//Return to hub
 			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 			player.getInventory().setItem(8, returnToHub.give());
-		} else if (realm == Realm.PVP) {
+		} else if (realm == Realm.PVP_DUELS_FISTS || realm == Realm.PVP_2V2_FISTS) {
 			if (currentRealm != null && ((GameBase)currentRealm).isGameActive()) {						
 				//Select player
 				PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
