@@ -69,7 +69,7 @@ public class HubMenu extends MenuBase {
 					@Override
 					public void run() {       
 		            	player.closeInventory();
-		            	mainInstance.getGameInstance().joinGame(player, Realm.SKYWARS);
+		            	mainInstance.getGameInstance().joinLobby(player, Realm.SKYWARS_LOBBY);
 		            }
 				});
 		}});

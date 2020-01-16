@@ -54,11 +54,10 @@ public class PvP extends GameBase {
 	//
 	
 	public PvP(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers, Realm realm, PvPMode pvpMode, PvPType pvpType) {
-		super(mainInstance,worldName);
+		super(mainInstance,realm,worldName);
 		
 		this.id = id;
 		this.worldName = worldName;
-		this.realm = realm;
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;

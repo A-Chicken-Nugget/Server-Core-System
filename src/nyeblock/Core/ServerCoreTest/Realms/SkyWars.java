@@ -64,13 +64,12 @@ public class SkyWars extends GameBase {
     * Custom game constructor
     */
 	public SkyWars(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
-		super(mainInstance,worldName);
+		super(mainInstance,Realm.SKYWARS,worldName);
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.id = id;
 		this.worldName = worldName;
-		realm = Realm.SKYWARS;
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;

@@ -57,13 +57,12 @@ public class KitPvP extends GameBase {
 	//
 	
 	public KitPvP(Main mainInstance, int id, String worldName, int duration, int maxPlayers) {
-		super(mainInstance,worldName);
+		super(mainInstance,Realm.KITPVP,worldName);
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.id = id;
 		this.worldName = worldName;
-		realm = Realm.KITPVP;
 		this.duration = duration;
 		this.maxPlayers = maxPlayers;
 		startTime = System.currentTimeMillis() / 1000L;

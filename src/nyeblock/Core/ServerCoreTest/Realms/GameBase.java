@@ -66,8 +66,8 @@ public abstract class GameBase extends RealmBase {
 	protected boolean isSchematicSet = false;
 	protected boolean endStarted = false;
 	
-	public GameBase(Main mainInstance, String worldName) {
-		super(mainInstance);
+	public GameBase(Main mainInstance, Realm realm, String worldName) {
+		super(mainInstance,realm);
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		
@@ -87,6 +87,7 @@ public abstract class GameBase extends RealmBase {
 						emptyCount++;
 						
 						if (emptyCount >= 10) {
+							mainInstance.getTimerInstance().deleteTimer("scoreboard_" + uuid);
 							delete();
 						}
 					}

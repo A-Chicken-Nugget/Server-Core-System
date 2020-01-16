@@ -20,6 +20,7 @@ public class Enums {
 		PARKOUR("parkour","Parkour",false),
 		KITPVP("kitpvp","Kit Pvp",true),
 		SKYWARS("skywars","Sky Wars",true),
+		SKYWARS_LOBBY("skywars_lobby","Sky Wars Lobby",false),
 		STEPSPLEEF("stepspleef","Step Spleef",true),
 		PVP_DUELS_FISTS("pvp_duels_fists","PvP \u00BB Duels \u00BB Fists",true),
 		PVP_DEULS_WEPSARMOR("pvp_deuls_wepsarmor","PvP \u00BB Duels \u00BB Weapons/Armor",true),

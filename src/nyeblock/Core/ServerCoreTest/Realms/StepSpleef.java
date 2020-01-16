@@ -55,13 +55,12 @@ public class StepSpleef extends GameBase {
     * Custom game constructor
     */
 	public StepSpleef(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
-		super(mainInstance,worldName);
+		super(mainInstance,Realm.STEPSPLEEF,worldName);
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		this.id = id;
 		this.worldName = worldName;
-		realm = Realm.STEPSPLEEF;
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;

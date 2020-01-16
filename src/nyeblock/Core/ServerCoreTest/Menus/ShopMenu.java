@@ -30,7 +30,7 @@ public class ShopMenu extends ShopBase {
 	private PlayerHandling playerHandling;
 	
 	public ShopMenu(Main mainInstance, Player player) {
-		super(mainInstance,player,"shop_menu");
+		super(mainInstance,player,"hub_shop");
 	}
 	
 	public void setContents() {
@@ -41,7 +41,7 @@ public class ShopMenu extends ShopBase {
 		//
 		// Shop menu
 		//
-		subMenu = new SubMenu("Shop Menu",36,this);
+		subMenu = new SubMenu("Hub Shops",36,this);
 		
 		//Realm win actions
 		subMenu.createOption(11, Material.FIREWORK_ROCKET, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Win Actions", new ArrayList<String>() {{
@@ -133,18 +133,6 @@ public class ShopMenu extends ShopBase {
 	}
 	//Give the player this item
 	public ItemStack give() {
-		
-		try {
-			Files.newDirectoryStream(Paths.get("."))
-			 .forEach(path -> {
-			   System.out.println(path);
-			   System.out.println(path.toFile().getAbsolutePath());
-			 });
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		ItemStack item = new ItemStack(Material.EMERALD);
 		ItemMeta shopMeta = item.getItemMeta();
 		shopMeta.setDisplayName(ChatColor.YELLOW + "Shop Menu" + ChatColor.GREEN + " (RIGHT-CLICK)");

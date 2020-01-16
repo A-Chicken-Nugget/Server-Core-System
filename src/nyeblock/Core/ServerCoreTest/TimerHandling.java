@@ -19,8 +19,8 @@ public class TimerHandling {
 	/**
 	* Creates a timer that calls a method
 	* @param name - unique name of the timer
-	* @param delay - how often does the timer run
-	* @param timesToRun - how many does should the timer run
+	* @param delay - how often does the timer run (seconds)
+	* @param timesToRun - how many times should the timer run
 	* @param methodToRun - name of the method to run
 	* @param isSuperMethod - is this a method defined in the super class
 	* @param args - array of parameters to send into the method
@@ -106,8 +106,8 @@ public class TimerHandling {
 	/**
 	* Create a runnable timer
 	* @param name - unique name of the timer
-	* @param delay - how often does the timer run
-	* @param timesToRun - how many does should the timer run
+	* @param delay - how often does the timer run (seconds)
+	* @param timesToRun - how many times should the timer run
 	* @param runnable - the runnable to run
 	*/
 	public void createRunnableTimer(String name, double delay, int timesToRun, Runnable runnable) {

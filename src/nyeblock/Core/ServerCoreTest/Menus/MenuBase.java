@@ -25,6 +25,7 @@ public abstract class MenuBase extends ItemBase {
 	public MenuBase(Main mainInstance, Player player, String name) {
 		super(mainInstance,player,name);
 	}
+	
 	/**
 	 * Method defined in sub class that gives the player the menu item
 	 */
@@ -69,7 +70,7 @@ public abstract class MenuBase extends ItemBase {
 			mainInstance.getTimerInstance().createRunnableTimer("invCheck_" + player.getUniqueId(), .5, 0, new Runnable() {
 				@Override
 				public void run() {
-					if (!currentMenu.getTitle().equalsIgnoreCase(player.getOpenInventory().getTitle()) && pd.getMenu() == instance) {
+					if (pd.getMenu() == null || !currentMenu.getTitle().equalsIgnoreCase(player.getOpenInventory().getTitle()) && pd.getMenu() == instance) {
 						pd.setMenu(null);
 						mainInstance.getTimerInstance().deleteTimer("invCheck_" + player.getUniqueId());
 					}

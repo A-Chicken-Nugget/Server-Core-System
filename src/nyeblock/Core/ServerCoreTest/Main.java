@@ -21,13 +21,16 @@ import net.coreprotect.CoreProtectAPI;
 
 import com.sk89q.worldedit.LocalConfiguration;
 
+import nyeblock.Core.ServerCoreTest.Menus.XMLToMenu;
 import nyeblock.Core.ServerCoreTest.Misc.VoidWorldGenerator;
 import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.Hub;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
+import nyeblock.Core.ServerCoreTest.Realms.SkyWarsLobby;
 
 public class Main extends JavaPlugin {
+	//Instances
 	private PlayerHandling playerHandling;
 	private CommandHandling commandHandling;
 	private GameHandling gameHandling;
@@ -36,6 +39,8 @@ public class Main extends JavaPlugin {
 	private Hub hub;
 	private HubParkour hubParkour;
 	private CoreProtectAPI coreProtectAPI;
+	//Lobby Instances
+	private SkyWarsLobby skyWarsLobby;
 	
 	//When this plugin is enabled, initialize important classes
 	public void onEnable() {
@@ -49,7 +54,7 @@ public class Main extends JavaPlugin {
 		for(World world : Bukkit.getWorlds()) {
 			String name = world.getName();
 			
-			if (!name.toString().matches("world")) {
+			if (name.contains("gameWorld")) {
 				Bukkit.getServer().unloadWorld(name,false);
 				WorldManager.deleteWorld(new File("./worlds/" + name));
 				new File("./plugins/Async-WorldManager/worldconfigs/" + name + ".yml").delete();
@@ -89,6 +94,23 @@ public class Main extends JavaPlugin {
 		//Set classes with event handlers
 		getServer().getPluginManager().registerEvents(playerHandling, this);
 		
+//		new XMLToMenu();
+		
+		//
+		// CREATE/LOAD WORLDS
+		//
+		
+		//SkyWars Lobby
+		WorldData skl = new WorldData();
+		skl.setWorldName("SkyWarsLobby");
+		skl.setEnviroment(Environment.NORMAL);
+		skl.setWorldType(WorldType.FLAT);
+		skl.setGenerator(new VoidWorldGenerator());
+		skl.setKeepSpawnInMemory(false);
+		skl.setAutoSave(false);
+		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(skl);
+		skyWarsLobby = new SkyWarsLobby(this);
+		
 		//Create/load game worlds
 		for (int i = 0; i < 10; i++) {			
 			WorldData wd = new WorldData();
@@ -115,7 +137,7 @@ public class Main extends JavaPlugin {
 		for(World world : Bukkit.getWorlds()) {
 			String name = world.getName();
 			
-			if (!name.toString().matches("world")) {
+			if (name.contains("gameWorld")) {
 				Bukkit.getServer().unloadWorld(name,false);
 				WorldManager.deleteWorld(new File("./worlds/" + name));
 				new File("./plugins/Async-WorldManager/worldconfigs/" + name + ".yml").delete();
@@ -126,6 +148,10 @@ public class Main extends JavaPlugin {
 			playerHandling.getPlayerData(ply).saveToDB();
 		}
 	}
+	
+	//
+	// GETTERS
+	//
 	
 	public GameHandling getGameInstance() {
 		return gameHandling;
@@ -150,5 +176,8 @@ public class Main extends JavaPlugin {
 	}
 	public CoreProtectAPI getCoreProtectAPI() {
 		return coreProtectAPI;
+	}
+	public SkyWarsLobby getSkyWarsLobby() {
+		return skyWarsLobby;
 	}
 }

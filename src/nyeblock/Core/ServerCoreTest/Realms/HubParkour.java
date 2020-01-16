@@ -63,11 +63,10 @@ public class HubParkour extends RealmBase {
 	private boolean displayCompTop5 = false;
 
 	public HubParkour(Main mainInstance) {
-		super(mainInstance);
+		super(mainInstance,Realm.PARKOUR);
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		databaseInstance = mainInstance.getDatabaseInstance();
-		realm = Realm.PARKOUR;
 		
 		//Floating text
 		top5Text = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),-9.5,116,42.5));

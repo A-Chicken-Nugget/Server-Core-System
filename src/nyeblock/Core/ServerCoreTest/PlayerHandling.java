@@ -151,6 +151,8 @@ public class PlayerHandling implements Listener {
 			}
 		}
 		if (canSend) {			
+			System.out.println("Beans: " + ply.getLocation());
+			
 			playerChatMessages.get(ply.getUniqueId()).removeAll(remove);
 			String playerWorld = ply.getWorld().getName();
 			ArrayList<Player> playersToRemove = new ArrayList<Player>();

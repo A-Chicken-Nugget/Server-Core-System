@@ -105,13 +105,23 @@ public class GameHandling {
 	}
 	
 	/**
-    * Sub class player leave method
-    * @param ply - Player joining the game
-    * @param showLeaveMessage - Should a leave message be shown
-    * @param runLeaveMethod - Should the leave method of the current realm be ran
-    * @param moveToHub - Should the player be moved to the hub
+    * Join a realm game lobby
+    * @param ply - Player joining the lobby
+    * @param realm - Realm lobby to join
     */
-	//Handles the player joining games
+	public void joinLobby(Player ply, Realm realm) {
+		PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+		pd.getCurrentRealm().leave(ply, false, null);
+		
+		if (realm == Realm.SKYWARS_LOBBY) {
+			mainInstance.getSkyWarsLobby().join(ply, false);
+		}
+	}
+	/**
+    * Join a realm game
+    * @param ply - Player joining the game
+    * @param realm - Realm to join
+    */
 	public void joinGame(Player ply, Realm realm) {
 		PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
 		PlayerData pd = ph.getPlayerData(ply);
@@ -215,7 +225,7 @@ public class GameHandling {
 			
 			if (game.getPlayerCount() < game.getMaxPlayers()) {						
 				playerData.clearScoreboard();
-				mainInstance.getHubInstance().leave(ply, true, null);
+				playerData.getCurrentRealm().leave(ply, true, null);
 				
 				//Join game
 				game.join(ply,true);

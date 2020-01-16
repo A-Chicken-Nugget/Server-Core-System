@@ -2,6 +2,7 @@ package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -18,9 +19,11 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings("serial")
 public abstract class RealmBase {
-	private Main mainInstance;
+	protected UUID uuid = UUID.randomUUID();
+	protected Main mainInstance;
 	protected PlayerHandling playerHandling;
 	protected ArrayList<Player> players = new ArrayList<>();
+	protected Runnable scoreboard;
 	protected Realm realm;
 	protected int minPlayers = 0;
 	protected int maxPlayers = 0;
@@ -44,9 +47,19 @@ public abstract class RealmBase {
 		add(Color.YELLOW);
 	}};
 	
-	public RealmBase(Main mainInstance) {
+	public RealmBase(Main mainInstance, Realm realm) {
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.realm = realm;
+		
+		mainInstance.getTimerInstance().createRunnableTimer("scoreboard_" + uuid, .3, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (scoreboard != null) {					
+					scoreboard.run();
+				}
+			}
+		});
 	}
 	
 	//
