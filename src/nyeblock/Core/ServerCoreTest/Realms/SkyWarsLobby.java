@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -18,6 +19,7 @@ import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
@@ -32,20 +34,21 @@ import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 public class SkyWarsLobby extends RealmBase {
 	private PlayerHandling playerHandlingInstance;
 	private World world = Bukkit.getWorld("SkyWarsLobby");
+	private HashMap<UUID,Hologram> playerHolograms = new HashMap<>();
 	private TextAnimation boardAnim = new TextAnimation("scoreboardTitle_" + uuid, new ArrayList<String>() {
 		{
-			add("§eSky Wars");
-			add("§6S§eky Wars");
-			add("§eS§6k§ey Wars");
-			add("§eSk§6y §eWars");
-			add("§eSky §6W§ears");
-			add("§eSky W§6a§ers");
-			add("§eSky Wa§6r§es");
-			add("§eSky War§6s");
-			add("§eSky Wars");
-			add("§6Sky Wars");
-			add("§eSky Wars");
-			add("§6Sky Wars");
+			add("§e§lSky Wars");
+			add("§6§lS§e§lky Wars");
+			add("§e§lS§6§lk§e§ly Wars");
+			add("§e§lSk§6§ly §e§lWars");
+			add("§e§lSky §6§lW§e§lars");
+			add("§e§lSky W§6§la§e§lrs");
+			add("§e§lSky Wa§6§lr§e§ls");
+			add("§e§lSky War§6§ls");
+			add("§e§lSky Wars");
+			add("§6§lSky Wars");
+			add("§e§lSky Wars");
+			add("§6§lSky Wars");
 		}
 	}, null);
 	
@@ -63,13 +66,12 @@ public class SkyWarsLobby extends RealmBase {
 //					int level = pd.getLevel(Realm.SKYWARS);
 					
 					//Scoreboard
-//					scores.put(8, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 					scores.put(5, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
 					scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
 					scores.put(3, ChatColor.YELLOW + "Level: " + ChatColor.GREEN + pd.getLevel(Realm.SKYWARS));
 					scores.put(2, ChatColor.RESET.toString());
 					scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
-					pd.setScoreboardTitle(ChatColor.BOLD + boardAnim.getMessage().toString());
+					pd.setScoreboardTitle(boardAnim.getMessage());
 					pd.updateObjectiveScores(scores);
 				}
 			}
@@ -127,12 +129,6 @@ public class SkyWarsLobby extends RealmBase {
 		//Return to hub
 		ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 		player.getInventory().setItem(8, returnToHub.give());
-		
-		//Sky Wars Shop
-//		HubMenu hubMenu = new HubMenu(mainInstance,player);
-//		ItemStack hm = hubMenu.give();
-//		player.getInventory().setItem(4, hm);
-//		player.getInventory().setHeldItemSlot(4);
 	}
 	/**
 	* When a player respawns
@@ -142,7 +138,7 @@ public class SkyWarsLobby extends RealmBase {
 	public Location playerRespawn(Player ply) {
 		setItems(ply);
 		
-		return new Location(world,-85.5,89,490.5);
+		return new Location(world,-85.5,91,490.5,90,0);
 	}
 	/**
 	* When a player joins the hub
@@ -150,7 +146,9 @@ public class SkyWarsLobby extends RealmBase {
 	public void playerJoin(Player ply) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
 		
-		ply.teleport(new Location(world,-85.5,89,490.5));
+		playerHolograms.put(ply.getUniqueId(),HologramsAPI.createHologram(mainInstance,new Location(world,-101.5,95,472.5)));
+		
+		ply.teleport(new Location(world,-85.5,91,490.5,90,0));
 		
 		setItems(ply);
 		

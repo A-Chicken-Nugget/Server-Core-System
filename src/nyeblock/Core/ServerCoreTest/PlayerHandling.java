@@ -150,9 +150,7 @@ public class PlayerHandling implements Listener {
 				remove.add(message);
 			}
 		}
-		if (canSend) {			
-			System.out.println("Beans: " + ply.getLocation());
-			
+		if (canSend) {
 			playerChatMessages.get(ply.getUniqueId()).removeAll(remove);
 			String playerWorld = ply.getWorld().getName();
 			ArrayList<Player> playersToRemove = new ArrayList<Player>();
