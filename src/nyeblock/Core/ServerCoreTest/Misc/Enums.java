@@ -18,14 +18,17 @@ public class Enums {
 	public enum Realm {
 		HUB("hub","Hub",false),
 		PARKOUR("parkour","Parkour",false),
-		KITPVP("kitpvp","Kit Pvp",true),
+		KITPVP("kitpvp","Kit PvP",true),
+		KITPVP_LOBBY("kitpvp_lobby","Kit PvP Lobby",false),
 		SKYWARS("skywars","Sky Wars",true),
 		SKYWARS_LOBBY("skywars_lobby","Sky Wars Lobby",false),
 		STEPSPLEEF("stepspleef","Step Spleef",true),
-		PVP_DUELS_FISTS("pvp_duels_fists","PvP \u00BB Duels \u00BB Fists",true),
-		PVP_DEULS_WEPSARMOR("pvp_deuls_wepsarmor","PvP \u00BB Duels \u00BB Weapons/Armor",true),
-		PVP_2V2_FISTS("pvp_2v2_fists","PvP \u00BB 2v2 \u00BB Fists",true),
-		PVP_2V2_WEPSARMOR("pvp_2v2_wepsarmor","PvP \u00BB 2v2 \u00BB Weapons/Armor",true);
+		STEPSPLEEF_LOBBY("stepspleef_lobby","Step Spleef Lobby",false),
+		PVP_DUELS_FISTS("pvp_duels_fists","Duels \u00BB Fists",true),
+		PVP_DEULS_WEPSARMOR("pvp_deuls_wepsarmor","Duels \u00BB Weapons/Armor",true),
+		PVP_2V2_FISTS("pvp_2v2_fists","2v2 \u00BB Fists",true),
+		PVP_2V2_WEPSARMOR("pvp_2v2_wepsarmor","2v2 \u00BB Weapons/Armor",true),
+		PVP_LOBBY("pvp_lobby","PvP Lobby",false);
 
 		private String dbname;
 		private String name;
@@ -37,11 +40,19 @@ public class Enums {
 			this.isGame = isGame;
 		}
 
-		public static ArrayList<String> listRealms() {
+		public static ArrayList<String> listRealms(boolean listOnlyGames) {
 			ArrayList<String> realms = new ArrayList<>();
 			
-			for (Realm rel : Realm.values()) {
-				realms.add(rel.getDBName());
+			if (listOnlyGames) {
+				for (Realm rel : Realm.values()) {
+					if (rel.isGame()) {						
+						realms.add(rel.getDBName());
+					}
+				}
+			} else {
+				for (Realm rel : Realm.values()) {			
+					realms.add(rel.getDBName());
+				}
 			}
 			return realms;
 		}
@@ -256,6 +267,18 @@ public class Enums {
 	public enum RequirementType {
 		LEVEL(),
 		ACHIEVEMENT;
+	}
+	//Custom npc type
+	public enum CustomNPCType {
+		NORMAL(),
+		JOIN_REALM(),
+		TO_HUB();
+	}
+	//Summary Stat type
+	public enum SummaryStatType {
+		XP(),
+		INTEGER(),
+		LEVEL_BAR();
 	}
 	//Achievement enums
 	public enum Achievement {

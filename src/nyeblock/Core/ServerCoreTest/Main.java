@@ -1,7 +1,9 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -10,6 +12,7 @@ import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldType;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -19,36 +22,53 @@ import de.xxschrandxx.awm.api.config.WorldData;
 import net.coreprotect.CoreProtect;
 import net.coreprotect.CoreProtectAPI;
 
+import com.comphenix.protocol.ProtocolLib;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import com.sk89q.worldedit.LocalConfiguration;
 
 import nyeblock.Core.ServerCoreTest.Menus.XMLToMenu;
+import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
 import nyeblock.Core.ServerCoreTest.Misc.VoidWorldGenerator;
 import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.Hub;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
+import nyeblock.Core.ServerCoreTest.Realms.KitPvPLobby;
+import nyeblock.Core.ServerCoreTest.Realms.PvPLobby;
 import nyeblock.Core.ServerCoreTest.Realms.SkyWarsLobby;
+import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
+import nyeblock.Core.ServerCoreTest.Realms.StepSpleefLobby;
 
 public class Main extends JavaPlugin {
 	//Instances
 	private PlayerHandling playerHandling;
 	private CommandHandling commandHandling;
-	private GameHandling gameHandling;
+	private RealmHandling realmHandling;
 	private DatabaseHandling databaseHandling;
 	private TimerHandling timerHandling;
 	private Hub hub;
 	private HubParkour hubParkour;
 	private CoreProtectAPI coreProtectAPI;
+	private CustomNPCManager customNPCManager;
+	private ProtocolManager protocolManager;
 	//Lobby Instances
+	private KitPvPLobby kitPvPLobby;
 	private SkyWarsLobby skyWarsLobby;
+	private StepSpleefLobby stepSpleefLobby;
+	private PvPLobby pvPLobby;
 	
-	//When this plugin is enabled, initialize important classes
+	//When this plugin is enabled
 	public void onEnable() {
+		protocolManager = ProtocolLibrary.getProtocolManager();
+		commandHandling = new CommandHandling(this);
 		playerHandling = new PlayerHandling(this);
-		gameHandling = new GameHandling(this);
+		commandHandling.setCommands();
+		realmHandling = new RealmHandling(this);
 		timerHandling = new TimerHandling();
 		CoreProtect coreProtect = (CoreProtect) getServer().getPluginManager().getPlugin("CoreProtect");
 		coreProtectAPI = coreProtect.getAPI();
+		customNPCManager = new CustomNPCManager(this);
 		
 		//Delete left over game worlds
 		for(World world : Bukkit.getWorlds()) {
@@ -81,7 +101,6 @@ public class Main extends JavaPlugin {
 			this.saveConfig();
 		}
 		databaseHandling = new DatabaseHandling(this,config.getString("mysql.host"),config.getString("mysql.database"),config.getInt("mysql.port"),config.getString("mysql.username"),config.getString("mysql.password"));
-		commandHandling = new CommandHandling(this);
 		
 		//Disable compass teleporting for ops
 		LocalConfiguration worldEditConfig = WorldEdit.getInstance().getConfiguration();
@@ -93,8 +112,6 @@ public class Main extends JavaPlugin {
 		
 		//Set classes with event handlers
 		getServer().getPluginManager().registerEvents(playerHandling, this);
-		
-//		new XMLToMenu();
 		
 		//
 		// CREATE/LOAD WORLDS
@@ -111,6 +128,39 @@ public class Main extends JavaPlugin {
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(skl);
 		skyWarsLobby = new SkyWarsLobby(this);
 		
+		//StepSpleef Lobby
+		WorldData ssl = new WorldData();
+		ssl.setWorldName("StepSpleefLobby");
+		ssl.setEnviroment(Environment.NORMAL);
+		ssl.setWorldType(WorldType.FLAT);
+		ssl.setGenerator(new VoidWorldGenerator());
+		ssl.setKeepSpawnInMemory(false);
+		ssl.setAutoSave(false);
+		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(ssl);
+		stepSpleefLobby = new StepSpleefLobby(this);
+		
+		//KitPvP Lobby
+		WorldData kpl = new WorldData();
+		kpl.setWorldName("KitPvPLobby");
+		kpl.setEnviroment(Environment.NORMAL);
+		kpl.setWorldType(WorldType.FLAT);
+		kpl.setGenerator(new VoidWorldGenerator());
+		kpl.setKeepSpawnInMemory(false);
+		kpl.setAutoSave(false);
+		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(kpl);
+		kitPvPLobby = new KitPvPLobby(this);
+		
+		//PvP Lobby
+		WorldData ppl = new WorldData();
+		ppl.setWorldName("PvPLobby");
+		ppl.setEnviroment(Environment.NORMAL);
+		ppl.setWorldType(WorldType.FLAT);
+		ppl.setGenerator(new VoidWorldGenerator());
+		ppl.setKeepSpawnInMemory(false);
+		ppl.setAutoSave(false);
+		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(ppl);
+		pvPLobby = new PvPLobby(this);
+		
 		//Create/load game worlds
 		for (int i = 0; i < 10; i++) {			
 			WorldData wd = new WorldData();
@@ -123,16 +173,8 @@ public class Main extends JavaPlugin {
 			de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(wd);
 		}
 	}
+	//When this plugin is disabled
 	public void onDisable() {
-		//Force people to leave in active games
-		for (GameBase game : getGameInstance().getGames()) {
-			if (game != null && game.getPlayersInRealm().size() > 0) {
-				for (Player ply : game.getPlayersInRealm()) {
-					game.leave(ply, false, null);
-				}
-				game.delete();
-			}
-		}
 		//Delete created game worlds
 		for(World world : Bukkit.getWorlds()) {
 			String name = world.getName();
@@ -143,6 +185,7 @@ public class Main extends JavaPlugin {
 				new File("./plugins/Async-WorldManager/worldconfigs/" + name + ".yml").delete();
 			}
 		}
+		
 		//Save every players play time and xp
 		for (Player ply : Bukkit.getWorld("world").getPlayers()) {
 			playerHandling.getPlayerData(ply).saveToDB();
@@ -153,8 +196,8 @@ public class Main extends JavaPlugin {
 	// GETTERS
 	//
 	
-	public GameHandling getGameInstance() {
-		return gameHandling;
+	public RealmHandling getRealmHandlingInstance() {
+		return realmHandling;
 	}
 	public PlayerHandling getPlayerHandlingInstance() {
 		return playerHandling;
@@ -177,7 +220,22 @@ public class Main extends JavaPlugin {
 	public CoreProtectAPI getCoreProtectAPI() {
 		return coreProtectAPI;
 	}
+	public CustomNPCManager getCustomNPCManagerInstance() {
+		return customNPCManager;
+	}
+	public ProtocolManager getProtocolManagerInstance() {
+		return protocolManager;
+	}
 	public SkyWarsLobby getSkyWarsLobby() {
 		return skyWarsLobby;
+	}
+	public StepSpleefLobby getStepSpleefLobby() {
+		return stepSpleefLobby;
+	}
+	public KitPvPLobby getKitPvPLobby() {
+		return kitPvPLobby;
+	}
+	public PvPLobby getPvPLobby() {
+		return pvPLobby;
 	}
 }

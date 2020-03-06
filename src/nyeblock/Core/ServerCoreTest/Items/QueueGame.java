@@ -22,13 +22,13 @@ public class QueueGame extends ItemBase {
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.GHAST_TEAR);
 		ItemMeta itemMeta = item.getItemMeta();		
-		itemMeta.setDisplayName(ChatColor.YELLOW + "Queue for a " + Realm.fromDBName(playerData.getRealm().getDBName().split("_")[0]) + " game" + ChatColor.GREEN + " (RIGHT-CLICK)");
+		itemMeta.setDisplayName(ChatColor.YELLOW + "Join a " + Realm.fromDBName(playerData.getRealm().getDBName().split("_")[0]) + " game" + ChatColor.GREEN + " (RIGHT-CLICK)");
 		itemMeta.setLocalizedName("queue_game");
 		item.setItemMeta(itemMeta);
 		
 		return item;
 	}
-	public void use(ItemStack item) {
-		mainInstance.getGameInstance().joinGame(player, Realm.fromDBName(playerData.getRealm().getDBName().split("_")[0]));
+	public void use(ItemStack item) {		
+		mainInstance.getRealmHandlingInstance().joinRealm(player, Realm.fromDBName(playerData.getRealm().getDBName().split("_")[0]));
 	}
 }

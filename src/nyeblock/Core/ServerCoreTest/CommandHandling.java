@@ -1,108 +1,59 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
-import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.Commands.Ban;
-import nyeblock.Core.ServerCoreTest.Commands.BanIp;
 import nyeblock.Core.ServerCoreTest.Commands.CommandBase;
+import nyeblock.Core.ServerCoreTest.Commands.Find;
 import nyeblock.Core.ServerCoreTest.Commands.ForceStart;
+import nyeblock.Core.ServerCoreTest.Commands.GiveXP;
 import nyeblock.Core.ServerCoreTest.Commands.Hide;
+import nyeblock.Core.ServerCoreTest.Commands.Hub;
 import nyeblock.Core.ServerCoreTest.Commands.Leave;
+import nyeblock.Core.ServerCoreTest.Commands.Lobby;
+import nyeblock.Core.ServerCoreTest.Commands.ManagePoints;
+import nyeblock.Core.ServerCoreTest.Commands.ResetData;
 import nyeblock.Core.ServerCoreTest.Commands.Send;
 import nyeblock.Core.ServerCoreTest.Commands.SetPermission;
 import nyeblock.Core.ServerCoreTest.Commands.SetUserGroup;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-public class CommandHandling implements CommandExecutor, TabCompleter {
+@SuppressWarnings("serial")
+public class CommandHandling {
 	private Main mainInstance;
-	private HashMap<CommandBase,String> commands = new HashMap<>();
-	private HashMap<String,List<UserGroup>> commandPermissions = new HashMap<>();
+	private ArrayList<CommandBase> commands;
 	
 	public CommandHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
-		
-		//
-		// COMMANDS
-		//
-		
-		commands.put(new SetPermission(mainInstance).getInstance(),"setPermission");
-		commandPermissions.put("setPermission", Arrays.asList(UserGroup.ADMIN));
-		commands.put(new Ban(mainInstance).getInstance(),"ban");
-		commandPermissions.put("ban", Arrays.asList(UserGroup.ADMIN));
-		commands.put(new BanIp(mainInstance).getInstance(),"banIp");
-		commandPermissions.put("banIp", Arrays.asList(UserGroup.ADMIN));
-		commands.put(new ForceStart(mainInstance).getInstance(),"force-start");
-		commandPermissions.put("force-start", Arrays.asList(UserGroup.ADMIN));
-		commands.put(new Leave(mainInstance).getInstance(),"leave");
-		commandPermissions.put("leave", null);
-		commands.put(new Send(mainInstance).getInstance(),"send");
-		commandPermissions.put("send", null);
-		commands.put(new SetUserGroup(mainInstance).getInstance(),"setUserGroup");
-		commandPermissions.put("setUserGroup", Arrays.asList(UserGroup.ADMIN));
-		commands.put(new Hide(mainInstance).getInstance(),"hide");
-		commandPermissions.put("hide", Arrays.asList(UserGroup.ADMIN));
-		
-		//
-		// END COMMANDS
-		//
-		
-		for (Map.Entry<CommandBase,String> entry : commands.entrySet()) {
-			String command = entry.getValue();
-			
-			mainInstance.getCommand(command).setExecutor((CommandExecutor)this);
-			mainInstance.getCommand(command).setTabCompleter((TabCompleter)this);
-		}
 	}
 	
-	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {		
-		if (sender instanceof Player) {
-			Player ply = (Player) sender;
-			PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
-			
-			for (Map.Entry<CommandBase,String> entry : commands.entrySet()) {
-				if (label.equalsIgnoreCase(entry.getValue())) {
-					if (commandPermissions.get(entry.getValue()) == null || commandPermissions.get(entry.getValue()).contains(playerData.getUserGroup())) {
-						entry.getKey().execute(ply,args);
-					} else {
-						ply.sendMessage(ChatColor.RED + "I'm sorry, but you do not have permission to perform this command. Please contact the server administrators if you believe that this is a mistake.");
-					}
-				}
+	public CommandBase getCommand(String commandName) {
+		CommandBase cmd = null;
+		
+		for (CommandBase command : commands) {
+			if (command.getName().equalsIgnoreCase(commandName)) {
+				cmd = command;
 			}
-			return true;
-		} else {
-			return false;
 		}
+		return cmd;
 	}
 	
-	@Override
-	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-		List<String> autoCompletes = new ArrayList<>();
-		PlayerData playerData = mainInstance.getPlayerHandlingInstance().getPlayerData((Player)sender);
-		
-		for (Map.Entry<CommandBase,String> entry : commands.entrySet()) {
-			if (command.getLabel().equalsIgnoreCase(entry.getValue())) {
-				if (commandPermissions.get(entry.getValue()) != null) {					
-					if (commandPermissions.get(entry.getValue()).contains(playerData.getUserGroup())) {
-						autoCompletes = entry.getKey().autoCompletes((Player)sender,args);
-					}
-				} else {
-					autoCompletes = entry.getKey().autoCompletes((Player)sender,args);
-				}
-			}
-		}
-		
-		return autoCompletes;
+	public void setCommands() {
+		commands = new ArrayList<CommandBase>() {{
+			add(new Ban(mainInstance));
+//			add(new BanIp(mainInstance));
+//			add(new BanPlayerIps(mainInstance));
+			add(new ForceStart(mainInstance));
+			add(new GiveXP(mainInstance));
+			add(new Hide(mainInstance));
+			add(new Leave(mainInstance));
+			add(new ManagePoints(mainInstance));
+			add(new ResetData(mainInstance));
+			add(new Send(mainInstance));
+			add(new SetPermission(mainInstance));
+			add(new SetUserGroup(mainInstance));
+			add(new Lobby(mainInstance));
+			add(new Hub(mainInstance));
+			add(new Find(mainInstance));
+		}};		
 	}
 }

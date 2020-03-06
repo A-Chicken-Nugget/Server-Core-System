@@ -44,7 +44,7 @@ public abstract class ShopMenuOptionBase extends MenuOption {
 	public boolean isEquipped() {
 		return isEquipped;
 	}
-	public void purchase() {}
+	public void use() {}
 	public void runAction(ClickType clickType) {}
 	
 	//
@@ -65,6 +65,9 @@ public abstract class ShopMenuOptionBase extends MenuOption {
 	}
 	public int getQuantity() {
 		return quantity;
+	}
+	public SubMenu getSubMenu() {
+		return subMenu;
 	}
 	
 	//

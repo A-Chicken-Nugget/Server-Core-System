@@ -29,7 +29,7 @@ public class ShopSubMenu extends SubMenu {
 		this.maxItemsEquiped = maxItemsEquiped;
 	}
 	
-	public void createOption(int position, Material material, String itemName, ArrayList<String> desc, HashMap<ClickType,Runnable> clickActions, ArrayList<RequirementBase> requirements, String uniqueId, int cost, boolean multiPurchasable) {
+	public void createShopOption(int position, Material material, String itemName, ArrayList<String> desc, HashMap<ClickType,Runnable> clickActions, ArrayList<RequirementBase> requirements, String uniqueId, int cost, boolean multiPurchasable) {
 		if (canEquipItems && multiPurchasable) {
 			System.out.println("[Core] Unable to add item " + uniqueId + " to " + title + ". The sub menu does not allow multipurchasable items!");
 		} else {			
@@ -39,11 +39,13 @@ public class ShopSubMenu extends SubMenu {
 			options.add(option);
 			
 			for (MenuOption optionn : options) {
-				((ShopMenuOptionBase)optionn).updateItemInfo();
+				if (optionn instanceof ShopMenuOptionBase) {					
+					((ShopMenuOptionBase)optionn).updateItemInfo();
+				}
 			}
 		}
 	}
-	public void createTypeOption(int position, Material material, String itemName, ArrayList<String> desc, ArrayList<ShopMenuTypeOptionItem> optionItems, HashMap<ClickType,Runnable> clickActions, String displayText, String uniqueId, boolean multiPurchasable) {
+	public void createShopTypeOption(int position, Material material, String itemName, ArrayList<String> desc, ArrayList<ShopMenuTypeOptionItem> optionItems, HashMap<ClickType,Runnable> clickActions, String displayText, String uniqueId, boolean multiPurchasable) {
 		if (canEquipItems && multiPurchasable) {
 			System.out.println("[Core] Unable to add item " + uniqueId + " to " + title + ". The sub menu does not allow multipurchasable items!");
 		} else {			
@@ -52,19 +54,24 @@ public class ShopSubMenu extends SubMenu {
 			option.setClickActions(clickActions);
 			options.add(option);
 			
-			for (MenuOption optionn : options) {
-				((ShopMenuOptionBase)optionn).updateItemInfo();
-			}
-		}
-	}
-	public void purchaseItem(String uniqueId) {
-		for (MenuOption option : options) {
-			if (option instanceof ShopMenuOptionBase) {				
-				if (((ShopMenuOptionBase)option).getUniqueId().equalsIgnoreCase(uniqueId)) {
-					((ShopMenuOptionBase)option).purchase();
+			for (MenuOption optionn : options) {	
+				if (optionn instanceof ShopMenuOptionBase) {					
+					((ShopMenuOptionBase)optionn).updateItemInfo();
 				}
 			}
 		}
+	}
+	public void useItem(String uniqueId) {
+		for (MenuOption option : options) {
+			if (option instanceof ShopMenuOptionBase) {				
+				if (((ShopMenuOptionBase)option).getUniqueId().equalsIgnoreCase(uniqueId)) {
+					((ShopMenuOptionBase)option).use();
+				}
+			}
+		}
+	}
+	public boolean canEquipItem() {
+		return !(getEquippedItems().size() >= maxItemsEquiped);
 	}
 	
 	//
@@ -82,5 +89,17 @@ public class ShopSubMenu extends SubMenu {
 	}
 	public ArrayList<MenuOption> getOptions() {
 		return options;
+	}
+	public ArrayList<ShopMenuOptionBase> getEquippedItems() {
+		ArrayList<ShopMenuOptionBase> equippedItems = new ArrayList<>();
+		
+		for (MenuOption option : options) {
+			if (option instanceof ShopMenuOptionBase) {	
+				if (((ShopMenuOptionBase)option).isEquipped()) {
+					equippedItems.add(((ShopMenuOptionBase)option));
+				}
+			}
+		}
+		return equippedItems;
 	}
 }

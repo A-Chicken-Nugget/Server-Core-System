@@ -27,13 +27,19 @@ import com.sk89q.worldedit.math.BlockVector3;
 import net.coreprotect.CoreProtectAPI;
 import net.coreprotect.CoreProtectAPI.ParseResult;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.minecraft.server.v1_15_R1.DataWatcher.Item;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Maps.MapBase;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
+import nyeblock.Core.ServerCoreTest.Misc.DamagePlayer;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
+import nyeblock.Core.ServerCoreTest.Misc.PlayerSummary;
+import nyeblock.Core.ServerCoreTest.Misc.SummaryStat;
 
 @SuppressWarnings("serial")
 public abstract class GameBase extends RealmBase {
@@ -47,10 +53,12 @@ public abstract class GameBase extends RealmBase {
 	protected boolean gameBegun = false;
 	protected long created = System.currentTimeMillis();
 	protected World world;
+	protected Realm lobbyRealm;
 	//Player data
 	protected ArrayList<HashMap<Location,Player>> teamsSetup = new ArrayList<>();
-	protected HashMap<Player,HashMap<String,Integer>> playerXP = new HashMap<>();
-	protected ArrayList<String> totalUsers = new ArrayList<>();
+	private HashMap<Player,PlayerSummary> playerSummary = new HashMap<>();
+	private ArrayList<String> totalUsers = new ArrayList<>();
+	private HashMap<Player,Integer> playerTimePlayed = new HashMap<>();
 	//Game points
 	protected ArrayList<Location> spawns = new ArrayList<>();
 	//Etc
@@ -65,19 +73,49 @@ public abstract class GameBase extends RealmBase {
 	protected int playTimeCount = 0;
 	protected boolean isSchematicSet = false;
 	protected boolean endStarted = false;
+	private HashMap<String,Color> colorStrings = new HashMap<String,Color>() {{
+		put("red",Color.RED);
+		put("blue",Color.BLUE);
+		put("green",Color.GREEN);
+	}};
 	
-	public GameBase(Main mainInstance, Realm realm, String worldName) {
+	public GameBase(Main mainInstance, Realm realm, String worldName, Realm lobbyRealm) {
 		super(mainInstance,realm);
 		this.mainInstance = mainInstance;
+		this.lobbyRealm = lobbyRealm;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
 		
 		//Create timer to check when the game world is created
 		mainInstance.getTimerInstance().createMethodTimer("worldCheck_" + worldName, 1, 0, "checkWorld", true, null, this);
 		
-		//Create timer to delete world when empty
+		//Create timer to manage game functions
+		mainInstance.getTimerInstance().createRunnableTimer("gameFunctions_" + worldName, 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				//Manage each players play time if the game has started
+				if (gameBegun) {		
+					for (Player player : players) {
+						Integer timePlayed = playerTimePlayed.get(player);
+						
+						if (timePlayed == null) {
+							playerTimePlayed.put(player,1);
+						} else {
+							if (timePlayed % 120 == 0 && !endStarted) {
+								addStat(player,"Play time",5,SummaryStatType.XP);
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
+							}
+							playerTimePlayed.put(player,timePlayed + 1);
+						}
+					}
+				}
+			}
+		});
+		
+		//Create timer to delete world if empty
 		mainInstance.getTimerInstance().createRunnableTimer("deleteCheck_" + worldName, 1, 0, new Runnable() {
 			@Override
 			public void run() {
+				//Check if the server is empty and if so delete
 				if (players.size() > 0) {        			
 					if (emptyCount != 0) {
 						emptyCount = 0;
@@ -96,6 +134,14 @@ public abstract class GameBase extends RealmBase {
 		});
 	}
 	
+	public Color colorFromChatColor(String colorName) {
+		Color color = Color.WHITE;
+		
+		if (colorStrings.get(colorName) != null) {
+			color = colorStrings.get(colorName);
+		}
+		return color;
+	}
 	/**
     * Cleans up the world and deletes the game
     */
@@ -105,13 +151,15 @@ public abstract class GameBase extends RealmBase {
 		
 		for (ShopItem item : playerData.getShopItems()) {
 			if (item.isEquipped()) {
-				if (item.getUniqueId().equalsIgnoreCase("rainbow_scoreboard_winAction::" + realm.getDBName())) {
+				if (item.getUniqueId().contains("rainbow_scoreboard_winAction")) {
 					shouldRainbowTitleText = true;
-				} else if (item.getUniqueId().equalsIgnoreCase("fireworks_winAction::" + realm.getDBName())) {
+				} else if (item.getUniqueId().contains("fireworks_winAction")) {
+					Color color = colorFromChatColor(item.getUniqueId().split("::")[1]);
+					
 					mainInstance.getTimerInstance().createRunnableTimer(player.getUniqueId() + "_fireworks", .7, 0, new Runnable() {						
 						public void run() {
 							if (game.isInServer(player)) {
-								FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(colorList).withFade(colorList).with(Type.STAR).trail(true).build();
+								FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(color).withFade(color).with(Type.STAR).trail(true).build();
 								
 								if (!playerData.getSpectatingStatus()) {
 									Firework firework = player.getWorld().spawn(player.getLocation(), Firework.class);
@@ -125,7 +173,7 @@ public abstract class GameBase extends RealmBase {
 							}
 						}
 					});
-				} else if (item.getUniqueId().equalsIgnoreCase("time_speed_up_winAction::" + realm.getDBName())) {
+				} else if (item.getUniqueId().contains("time_speed_up_winAction")) {
 					setWorldTime = true;
 					mainInstance.getTimerInstance().createRunnableTimer(player.getUniqueId() + "_timeWarp", .1, 0, new Runnable() {
 						@Override
@@ -192,7 +240,7 @@ public abstract class GameBase extends RealmBase {
 			}
 		});
 		
-		mainInstance.getGameInstance().removeGameFromList(id);
+		mainInstance.getRealmHandlingInstance().removeGameFromList(id);
 		System.out.println("[" + worldName + "] Finished.");
 	}
 	/**
@@ -241,15 +289,34 @@ public abstract class GameBase extends RealmBase {
 	* @param boolean - Should the players xp be saved
 	*/
 	public void printSummary(Player ply, boolean saveXP) {
-		String xp = "";
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		HashMap<String,SummaryStat> stats = new HashMap<>();
 		int totalXP = 0;
-		for (Map.Entry<String,Integer> entry2 : playerXP.get(ply).entrySet()) {
-			if (!xp.equals("")) {
-				xp += "\n" + entry2.getKey() + ": " + entry2.getValue();
-				totalXP += entry2.getValue();
-			} else {
-				xp = entry2.getKey() + ": " + entry2.getValue();
-				totalXP += entry2.getValue();
+		String statsString = "";
+		
+		if (playerSummary.get(ply) != null) {
+			stats = playerSummary.get(ply).getStats();
+		}
+		
+		if (stats.size() > 0) {			
+			for (Map.Entry<String,SummaryStat> stat : stats.entrySet()) {
+				SummaryStatType type = stat.getValue().getType();
+				
+				if (!statsString.equals("")) {
+					if (type == SummaryStatType.XP) {
+						statsString += "\n" + stat.getKey() + ": " + stat.getValue().getValue() + "xp";						
+						totalXP += stat.getValue().getValue();
+					} else if (type == SummaryStatType.INTEGER) {
+						statsString += "\n" + stat.getKey() + ": " + stat.getValue().getValue();	
+					}
+				} else {
+					if (type == SummaryStatType.XP) {
+						statsString = stat.getKey() + ": " + stat.getValue().getValue() + "xp";
+						totalXP += stat.getValue().getValue();
+					} else if (type == SummaryStatType.INTEGER) {
+						statsString = stat.getKey() + ": " + stat.getValue().getValue();
+					}
+				}
 			}
 		}
 		
@@ -257,12 +324,12 @@ public abstract class GameBase extends RealmBase {
 			ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\n" +
 			ChatColor.BOLD + "GAME SUMMARY" +
 			ChatColor.RESET + ChatColor.YELLOW + "\n \n" +
-			(totalXP == 0 ? "No XP received" : xp) + "\n \n" +
-			"Total XP Received: " + totalXP + "\n" +
+			(stats.size() > 0 ? statsString : "No stats received") + "\n \n" +
+			(totalXP == 0 ? "" : "Total XP Received: " + totalXP + "\n") +
 			ChatColor.YELLOW + "\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A\u268A"
 		);
 		if (saveXP) {			
-			playerHandling.getPlayerData(ply).giveXP(realm, totalXP);
+			pd.giveXP(realm, totalXP);
 		}
 	}
 	/**
@@ -286,8 +353,6 @@ public abstract class GameBase extends RealmBase {
     * @param ply - Player joining the game
     */
 	public void gameJoin(Player ply) {
-		playerXP.put(ply, new HashMap<String,Integer>());
-		
 		if (!totalUsers.contains(ply.getName())) {
 			totalUsers.add(ply.getName());
 		}
@@ -304,12 +369,19 @@ public abstract class GameBase extends RealmBase {
     * @param showLeaveMessage - should a leave message be printed
     */
 	public void gameLeave(Player ply, boolean showLeaveMessage) {
-		playerXP.remove(ply);
+		DamagePlayer lastDamage = mainInstance.getPlayerHandlingInstance().getLastPlayerDamage(ply);
 		
-		playerLeave(ply);
-		
-		if (showLeaveMessage) {			
-			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " left");
+		if (players.contains(ply)) {			
+			playerLeave(ply);
+			if (playerSummary.get(ply) != null) {			
+				playerSummary.remove(ply);
+			}
+			if (lastDamage != null && ((System.currentTimeMillis()-lastDamage.getTime())/1000L) < 1) {
+				playerDeath(ply,lastDamage.getPlayer());
+			}
+			if (showLeaveMessage) {			
+				messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " left");
+			}
 		}
 	}
 	public Location playerRespawn(Player ply) { return null; }
@@ -319,11 +391,21 @@ public abstract class GameBase extends RealmBase {
 	public boolean isGameClosed() {
 		return endStarted;
 	}
+	public void addStat(Player ply, String name, int value, SummaryStatType type) {
+		if (playerSummary.get(ply) == null) {
+			playerSummary.put(ply, new PlayerSummary());
+		}
+		
+		playerSummary.get(ply).addStat(name, value, type);
+	}
 	
 	//
 	// GETTERS
 	//
 	
+	public Realm getLobbyRealm() {
+		return lobbyRealm;
+	}
 	public int getId() {
 		return id;
 	}
@@ -332,15 +414,6 @@ public abstract class GameBase extends RealmBase {
 	}
 	public boolean getActiveStatus() {
 		return active;
-	}
-	public void giveXP(Player ply, String type, int amount) {
-		HashMap<String,Integer> xpStats = playerXP.get(ply);
-		
-		if (xpStats.get(type) != null) {
-			xpStats.put(type,xpStats.get(type)+amount);
-		} else {
-			xpStats.put(type,amount);
-		}
 	}
 	/**
     * Gets the given players spawn

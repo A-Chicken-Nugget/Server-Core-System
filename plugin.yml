@@ -2,29 +2,4 @@ name: ServerCoreTest
 version: 1.0
 api-version: 1.13
 main: nyeblock.Core.ServerCoreTest.Main
-depend: [WorldEdit,CoreProtect]
-commands:
-  setpermission:
-    description: Set the permission for a player
-    usage: /setpermission <player> <permission> <value>
-  force-start:
-    description: Force start the game you are in
-    usage: /forcestart
-  ban:
-    description: Ban the specific player for the specified amount of time
-    usage: /ban <player> <length in minutes> <reason>
-  banIp:
-    description: Ban the specified ip
-    usage: /banIp <ip> <length in minutes> <reason>
-  leave:
-    description: Leave the current game you are in
-    usage: /leave
-  send:
-    description: Sends the specificed player to the specified realm
-    usage: /send <player> <realm>
-  setUserGroup:
-    description: Sets the usergroup of the specified player
-    usage: /setUserGroup <player> <group>
-  hide:
-    description: Sets the players hidden status
-    usage: /hide
+depend: [HolographicDisplays,WorldEdit,CoreProtect,ProtocolLib]

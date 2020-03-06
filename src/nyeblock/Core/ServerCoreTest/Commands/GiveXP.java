@@ -10,16 +10,17 @@ import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-public class SetPermission extends CommandBase {
-	private PlayerHandling playerHandling;
+public class GiveXP extends CommandBase {
+private PlayerHandling playerHandling;
 	
-	public SetPermission(Main mainInstance) {
+	public GiveXP(Main mainInstance) {
 		super(mainInstance,
-			"setPermission",
-			"Sets the specified permission for the specified player",
-			"/setPermission <player> <permission> <value>",
+			"giveXP",
+			"Give XP to the specified player",
+			"/giveXP <player> <realm> <amount>",
 			new ArrayList<String>(),
 			Arrays.asList(UserGroup.ADMIN)
 		);
@@ -29,18 +30,23 @@ public class SetPermission extends CommandBase {
 	
 	public void execute(Player ply, String[] args) {
 		if (args.length >= 3) {
-			if (!args[0].equalsIgnoreCase("<<_All_players_in_world_>>")) {
-				Player player = Bukkit.getPlayerExact(args[0]);
+			Player player = Bukkit.getPlayerExact(args[0]);
+			
+			if (player != null) {
+				Realm realm = Realm.fromDBName(args[1]);
 				
-				if (player != null) {
-					mainInstance.getPlayerHandlingInstance().getPlayerData(player).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
+				if (realm != null) {					
+					try {					
+						Integer amount = Integer.parseInt(args[2]);
+						playerHandling.getPlayerData(player).giveXP(realm, amount);
+					} catch (Exception ex) {
+						ply.sendMessage(ChatColor.RED + "Please enter a valid amount!");
+					}
 				} else {
-					ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
+					ply.sendMessage(ChatColor.YELLOW + "Please enter a valid realm!");
 				}
 			} else {
-				for (Player player : ply.getWorld().getPlayers()) {
-					playerHandling.getPlayerData(player).setPermission("nyeblock." + args[1],Boolean.parseBoolean(args[2]));
-				}
+				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}
 		} else {
 			ply.sendMessage(ChatColor.RED + "Please enter the proper arguements for this command!");
@@ -53,7 +59,7 @@ public class SetPermission extends CommandBase {
 			boolean foundPlayer = false;
 			
 			for (Player ply : player.getWorld().getPlayers()) {
-				if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {	
+				if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {
 					foundPlayer = true;
 					autoCompletes.add(ply.getName());
 				}
@@ -65,23 +71,13 @@ public class SetPermission extends CommandBase {
 					}
 				}
 			}
-			if ("<<_all_players_in_world_>>".contains(args[0].toLowerCase())) {	
-				autoCompletes.add("<<_All_players_in_world_>>");
-			}
 		} else if (args.length == 2) {
-			for (String permission : Arrays.asList("canBreakBlocks","canUseInventory","canPlaceBlocks","canBeDamaged","canDropItems","shouldDropItemsOnDeath","canLoseHunger","canMove")) {
+			for (String permission : Realm.listRealms(true)) {
 				if (permission.toLowerCase().contains(args[1].toLowerCase())) {
 					autoCompletes.add(permission);
 				}
 			}
-		} else if (args.length == 3) {
-			for (String permission : Arrays.asList("true","false")) {
-				if (permission.toLowerCase().contains(args[2].toLowerCase())) {
-					autoCompletes.add(permission);
-				}
-			}
 		}
-		
 		return autoCompletes;
 	}
 }

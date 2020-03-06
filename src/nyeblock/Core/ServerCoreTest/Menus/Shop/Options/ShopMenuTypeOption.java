@@ -35,37 +35,23 @@ public class ShopMenuTypeOption extends ShopMenuOptionBase {
 		setCost(selectedOption.getCost());
 	}
 	
-	public boolean canEquip() {
-		int equippedCount = 0;
-		
-		for (MenuOption option : subMenu.getOptions()) {
-			if (option instanceof ShopMenuTypeOption) {
-				ShopItem itemm = playerData.getShopItem(((ShopMenuTypeOption)option).getUniqueId() + "::" + selectedOption.getUniqueId());
-				
-				if (itemm != null && itemm.isEquipped()) {
-					equippedCount += 1;
-				}
-			}
-		}
-		return equippedCount < subMenu.getMaxEquippedItems();
-	}
-	public void purchase() {
+	public void use() {
 		String uniqueId = this.uniqueId + "::" + selectedOption.getUniqueId();
 		ShopItem item = playerData.getShopItem(uniqueId);
 		
 		if (item != null) {
 			if (multiPurchasable) {	
 				playerData.removePoints(cost);
-				playerData.addShopItem(uniqueId);
-				playerData.getMenu().openMenu(subMenu.getTitle());
+				playerData.addShopItem(uniqueId,subMenu.getTitle());
+				getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 				player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 				player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + " for " + selectedOption.getDisplayText() + ChatColor.YELLOW + "!");
 			} else {
 				if (subMenu.getCanEquipItems()) {					
 					if (!isEquipped) {
-						if (canEquip()) {								
+						if (subMenu.canEquipItem()) {								
 							playerData.getShopItem(uniqueId).setEquipped(true);
-							playerData.getMenu().openMenu(subMenu.getTitle());
+							getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 							player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 							player.sendMessage(ChatColor.YELLOW + "You have equipped " + ChatColor.GREEN + displayName + " for " + selectedOption.getDisplayText() + ChatColor.YELLOW + "!");
 						} else {
@@ -73,7 +59,7 @@ public class ShopMenuTypeOption extends ShopMenuOptionBase {
 						}
 					} else {
 						playerData.getShopItem(uniqueId).setEquipped(false);
-						playerData.getMenu().openMenu(subMenu.getTitle());
+						getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 						player.sendMessage(ChatColor.YELLOW + "You have unequipped " + ChatColor.GREEN + displayName + " for " + selectedOption.getDisplayText() + ChatColor.YELLOW + "!");
 					}
@@ -81,8 +67,8 @@ public class ShopMenuTypeOption extends ShopMenuOptionBase {
 			}
 		} else {
 			playerData.removePoints(cost);
-			playerData.addShopItem(uniqueId);
-			playerData.getMenu().openMenu(subMenu.getTitle());
+			playerData.addShopItem(uniqueId,subMenu.getTitle());
+			getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 			player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 			player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + " for " + selectedOption.getDisplayText() + ChatColor.YELLOW + "!");
 		}
@@ -119,10 +105,10 @@ public class ShopMenuTypeOption extends ShopMenuOptionBase {
 				
 				if (items.size() > nextIndex) {
 					playerData.setCustomDataKey(uniqueId + "::current_index",String.valueOf(nextIndex));
-					playerData.getMenu().openMenu(subMenu.getTitle());
+					getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 				} else {
 					playerData.setCustomDataKey(uniqueId + "::current_index","0");
-					playerData.getMenu().openMenu(subMenu.getTitle());
+					getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 				}
 			}
 		}
@@ -174,7 +160,7 @@ public class ShopMenuTypeOption extends ShopMenuOptionBase {
 					if (isEquipped) {						
 						itemMetaLore.add(ChatColor.GREEN + "\u2714 Equiped. Left-Click to unequip");
 					} else {
-						if (canEquip()) {
+						if (!subMenu.canEquipItem()) {
 							itemMetaLore.add(ChatColor.GREEN + "\u279D Left-Click to equip");
 						} else {
 							itemMetaLore.add(ChatColor.RED + "\u2716 Cannot Equip");

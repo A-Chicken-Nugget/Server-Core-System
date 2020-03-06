@@ -23,6 +23,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
@@ -31,8 +32,12 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({"deprecation","serial"})
@@ -49,13 +54,12 @@ public class StepSpleef extends GameBase {
 	private int readyCount = 0;
 	private int messageCount = 0;
 	private long lastNumber = 0;
-	private int playTimeCount = 0;
 	
 	/**
     * Custom game constructor
     */
 	public StepSpleef(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
-		super(mainInstance,Realm.STEPSPLEEF,worldName);
+		super(mainInstance,Realm.STEPSPLEEF,worldName,Realm.STEPSPLEEF_LOBBY);
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
@@ -64,32 +68,35 @@ public class StepSpleef extends GameBase {
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
-	}
-	
-	/**
-    * Checks/gives players snowballs
-    */
-	public void giveSnowballs() { 
-		for (Player ply : players) {
-			PlayerInventory inv = ply.getInventory();
-			
-			if (inv.getItem(0) != null) {
-				if (inv.getItem(0).getAmount() < 16) {
-					inv.setItem(0, new ItemStack(Material.SNOWBALL,16));
-				}				
-			} else { 
-				inv.setItem(0, new ItemStack(Material.SNOWBALL,16));
+		
+		scoreboard = new Runnable() {
+			@Override
+			public void run() {
+				for(Player ply : players)
+				{       				
+					int pos = 1;
+					int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
+					PlayerData pd = playerHandling.getPlayerData(ply);
+					HashMap<Integer,String> scores = new HashMap<Integer,String>();
+					
+					scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
+					scores.put(pos++, ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+					if (shouldRainbowTitleText) {
+						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "STEP SPLEEF");				
+					} else {				
+						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
+					}
+					pd.updateObjectiveScores(scores);
+				}
 			}
-		}
+		};
 	}
-	/**
-    * Remove snowballs from players inventories
-    */
-	public void clearSnowballs() {
-		for (Player ply : players) {
-			ply.getInventory().clear(0);
-		}
-	}
+
 	/**
     * Kick everyone in the game
     */
@@ -104,7 +111,7 @@ public class StepSpleef extends GameBase {
 				}
 			}
 			
-			leave(ply,false,nyeblock.Core.ServerCoreTest.Misc.Enums.Realm.HUB);
+			mainInstance.getRealmHandlingInstance().joinLobby(ply, lobbyRealm);
 		}
 	}
 	/**
@@ -139,7 +146,7 @@ public class StepSpleef extends GameBase {
 				Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 					@Override
 					public void run() {
-						Location loc = ply.getLocation().subtract(0,.1,0);
+						Location loc = ply.getLocation().subtract(0,.5,0);
 						ArrayList<Block> locs = Toolkit.getBlocksBelowPlayer(ply);
 						Location closestLoc = null;
 						
@@ -173,7 +180,6 @@ public class StepSpleef extends GameBase {
 			if (System.currentTimeMillis() - entry.getValue() >= 300L) {
 				entry.getKey().toLocation(world).getBlock().setType(Material.AIR);
 				
-//				world.getBlockAt(new Location(world,vec.getX(),vec.getY(),vec.getZ())).setType(Material.AIR);
 				itr.remove();
 			}
 		}
@@ -187,38 +193,40 @@ public class StepSpleef extends GameBase {
 			spawns.add(point.getLocation());
 		}
 		
-		//Scoreboard timer
-		mainInstance.getTimerInstance().createMethodTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
 		//Main functions timer
 		mainInstance.getTimerInstance().createMethodTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 		//Block deletion timer
 		mainInstance.getTimerInstance().createMethodTimer("blocks_" + worldName, .1, 0, "manageBlocks", false, null, this);
 		//Snow ball timer
-		mainInstance.getTimerInstance().createMethodTimer("snowballs_" + worldName, 1, 0, "giveSnowballs", false, null, this);
+		mainInstance.getTimerInstance().createRunnableTimer("snowballs_" + worldName, 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				for (Player ply : players) {
+					PlayerInventory inv = ply.getInventory();
+					
+					if (inv.getItem(0) != null) {
+						if (inv.getItem(0).getAmount() < 16) {
+							inv.setItem(0, new ItemStack(Material.SNOWBALL,16));
+						}				
+					} else { 
+						inv.setItem(0, new ItemStack(Material.SNOWBALL,16));
+					}
+				}
+			}
+		});
 	}
 	/**
 	* What needs to be ran when the world is deleted
 	*/
 	public void onDelete() {
-		mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
 		mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
 		mainInstance.getTimerInstance().deleteTimer("blocks_" + worldName);
+		mainInstance.getTimerInstance().deleteTimer("snowballs_" + worldName);
 	}
 	/**
     * Run main checks for the game
     */
 	public void mainFunctions() {
-		//Give players xp for play time
-		if (gameBegun) {			
-			playTimeCount++;
-			if (playTimeCount >= 90 && !endStarted) {
-				playTimeCount = 0;
-				for (Player ply : players) {
-					giveXP(ply,"Play time",5);
-					ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
-				}
-			}
-		}
 		//Check if the server is empty
 		if (players.size() > 0) {
 			if (!active) {
@@ -248,7 +256,11 @@ public class StepSpleef extends GameBase {
 							}
 							mainInstance.getTimerInstance().createMethodTimer("countdown_" + worldName, 1, 7, "countDown", false, null, this);
 							mainInstance.getTimerInstance().deleteTimer("snowballs_" + worldName);
-							clearSnowballs();
+							
+							//Remove snowballs
+							for (Player ply : players) {
+								ply.getInventory().clear(0);
+							}
 						}
 					}
 					readyCount++;
@@ -265,21 +277,6 @@ public class StepSpleef extends GameBase {
 				}
 			}
 		}
-	}
-	/**
-    * Set the players scoreboard
-    */
-	public void setScoreboard() {
-		//Give players xp for play time
-		playTimeCount++;
-		if (playTimeCount >= 180 && !endStarted) {
-			playTimeCount = 0;
-			for (Player ply : players) {
-				giveXP(ply,"Play time",5);
-				ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
-			}
-		}
-		
 		//Check if player has won
 		if (playersInGame.size() == 1 && !endStarted) {
 			endStarted = true;
@@ -289,7 +286,7 @@ public class StepSpleef extends GameBase {
 			messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 			soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 			playWinAction(ply);
-			giveXP(ply,"Winning",150);
+			addStat(ply,"Winning",150,SummaryStatType.XP);
 			playerHandling.getPlayerData(ply).addGamePlayed(realm, true);
 			
 			//Print players xp summary
@@ -297,28 +294,6 @@ public class StepSpleef extends GameBase {
 				printSummary(ply2,true);
 			}
 			mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
-		}
-		//Update players scoreboard
-		for(Player ply : players)
-		{       				
-			int pos = 1;
-			int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
-			PlayerData pd = playerHandling.getPlayerData(ply);
-			HashMap<Integer,String> scores = new HashMap<Integer,String>();
-			
-			scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
-			scores.put(pos++, ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
-			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
-			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			if (shouldRainbowTitleText) {
-				pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "STEP SPLEEF");				
-			} else {				
-				pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
-			}
-			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
 		if (world != null) {        			
@@ -341,6 +316,39 @@ public class StepSpleef extends GameBase {
 				mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
+	}
+	/**
+    * Set the players permissions
+    */
+	public void setDefaultPermissions(Player player) {
+		PermissionAttachment permissions = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getPermissionAttachment();
+		
+		permissions.setPermission("nyeblock.canBreakBlocks", false);
+		permissions.setPermission("nyeblock.canBreakBlocks", false);
+		permissions.setPermission("nyeblock.canUseInventory", false);
+		permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
+		permissions.setPermission("nyeblock.canDamage", true);
+		permissions.setPermission("nyeblock.canBeDamaged", true);
+		permissions.setPermission("nyeblock.canTakeFallDamage", false);
+		permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
+		permissions.setPermission("nyeblock.canDropItems", false);
+		permissions.setPermission("nyeblock.canLoseHunger", false);
+		permissions.setPermission("nyeblock.canSwapItems", false);
+		permissions.setPermission("nyeblock.canMove", true);
+	}
+	/**
+    * Set the players items
+    */
+	public void setItems(Player player) {
+		if (isGameActive()) {
+			//Select player
+			PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
+			player.getInventory().setItem(4, selectPlayer.give());
+		}
+		
+		//Return to lobby
+		ReturnToLobby returnToLobby = new ReturnToLobby(mainInstance,lobbyRealm,player);
+		player.getInventory().setItem(8, returnToLobby.give());
 	}
 	/**
     * Check if a player is in the game
@@ -373,9 +381,9 @@ public class StepSpleef extends GameBase {
 	* @return location to respawn the player
 	*/
 	public Location playerRespawn(Player ply) {
-		PlayerData pd = playerHandling.getPlayerData(ply);
+		ply.getInventory().clear();
+		setItems(ply);
 		
-		pd.setItems();
 		return getRandomSpawnPoint();
 	}
 	/**

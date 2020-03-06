@@ -21,9 +21,9 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
 
 @SuppressWarnings({"deprecation","serial"})
-public class ProfileStatsMenu extends MenuBase {
-	public ProfileStatsMenu(Main mainInstance, Player player) {
-		super(mainInstance,player,"profile_stats_menu");
+public class StatsMenu extends MenuBase {
+	public StatsMenu(Main mainInstance, Player player) {
+		super(mainInstance,player,"stats_menu");
 	}
 	
 	public void setContents() {
@@ -34,30 +34,34 @@ public class ProfileStatsMenu extends MenuBase {
 		//
 		// Profile/Stats menu
 		//
-		subMenu = new SubMenu("Profile/Stats Menu",27,this);
+		subMenu = new SubMenu("Stats Menu",27,this);
 		
-		//My Stats
-		subMenu.createOption(12, Material.COMMAND_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "My Stats", new ArrayList<String>() {{
-			add(ChatColor.GREEN + "\u279D \u279D Click to view your stats");
+		//Realm Stats
+		subMenu.createOption(12, Material.COMMAND_BLOCK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Realm Stats", new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "Your stats in each game realm on");
+			add(ChatColor.YELLOW + "the server. This includes your level");
+			add(ChatColor.YELLOW + "stats, games played and games won.");
+			add(ChatColor.RESET.toString());
+			add(ChatColor.GREEN + "\u279D \u279D Click to view your realm stats");
 		}}, new HashMap<ClickType,Runnable>() {{
 				put(ClickType.LEFT,new Runnable() {
 					@Override
 					public void run() {
-		            	playerData.getMenu().openMenu("My Stats");
+		            	openMenu("Realm Stats",false);
 		            }
 				});
 		}});
 		
 		//My Profile
-		subMenu.createOption(14, Material.SPONGE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "My Profile", new ArrayList<String>() {{
-//			add(ChatColor.GREEN + "\u279D \u279D Click to view your profile");
-			add(ChatColor.RED + "\u2716 Currently not available \u2716");
-		}}, null);
+//		subMenu.createOption(14, Material.SPONGE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Placeholder", new ArrayList<String>() {{
+////			add(ChatColor.GREEN + "\u279D \u279D Click to view your profile");
+//			add(ChatColor.RED + "\u2716 Currently not available \u2716");
+//		}}, null);
 		
 		//
-		// My Stats menu
+		// Realm Stats menu
 		//
-		subMenu = new SubMenu("My Stats",45,this);
+		subMenu = new SubMenu("Realm Stats",45,this);
 		
 		//Kitpvp
 		int kitpvpLevel = playerData.getLevel(Realm.KITPVP);
@@ -105,7 +109,7 @@ public class ProfileStatsMenu extends MenuBase {
 				put(ClickType.LEFT,new Runnable() {
 					@Override
 					public void run() {
-		            	playerData.getMenu().openMenu("PvP Stats");
+		            	openMenu("PvP Stats",false);
 		            }
 				});
 		}});
@@ -115,7 +119,7 @@ public class ProfileStatsMenu extends MenuBase {
 				put(ClickType.LEFT,new Runnable() {
 					@Override
 					public void run() {
-						playerHandling.getPlayerData(player).getMenu().openMenu("Profile/Stats Menu");
+						openMenu("Stats Menu",false);
 					}
 				});
 		}});
@@ -156,7 +160,7 @@ public class ProfileStatsMenu extends MenuBase {
 				put(ClickType.LEFT,new Runnable() {
 					@Override
 					public void run() {
-						playerHandling.getPlayerData(player).getMenu().openMenu("My Stats");
+						openMenu("Realm Stats",false);
 					}
 				});
 		}});
@@ -165,8 +169,8 @@ public class ProfileStatsMenu extends MenuBase {
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.PLAYER_HEAD);
 		SkullMeta shopMeta = (SkullMeta)item.getItemMeta();
-		shopMeta.setDisplayName(ChatColor.YELLOW + "My Profile/Stats" + ChatColor.GREEN + " (RIGHT-CLICK)");
-		shopMeta.setLocalizedName("profile_stats_menu");
+		shopMeta.setDisplayName(ChatColor.YELLOW + "My Stats" + ChatColor.GREEN + " (RIGHT-CLICK)");
+		shopMeta.setLocalizedName("stats_menu");
 		shopMeta.setOwner(player.getName());
 		item.setItemMeta(shopMeta);
 		

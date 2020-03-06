@@ -32,21 +32,21 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 		this.requirements = requirements;
 	}
 	
-	public void purchase() {
+	public void use() {
 		ShopItem item = playerData.getShopItem(uniqueId);
 		
 		if (item != null) {
 			if (multiPurchasable) {	
 				playerData.removePoints(cost);
-				playerData.addShopItem(uniqueId);
-				playerData.getMenu().openMenu(subMenu.getTitle());
+				playerData.addShopItem(uniqueId,subMenu.getTitle());
+				getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 				player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 				player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
 			} else {
 				if (!isEquipped) {
-					if (getEquippedItems().size() < subMenu.getMaxEquippedItems()) {								
+					if (subMenu.canEquipItem()) {								
 						playerData.getShopItem(uniqueId).setEquipped(true);
-						playerData.getMenu().openMenu(subMenu.getTitle());
+						getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 						player.sendMessage(ChatColor.YELLOW + "You have equipped " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
 					} else {
@@ -54,15 +54,15 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 					}
 				} else {
 					playerData.getShopItem(uniqueId).setEquipped(false);
-					playerData.getMenu().openMenu(subMenu.getTitle());
+					getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 					player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 					player.sendMessage(ChatColor.YELLOW + "You have unequipped " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
 				}
 			}
 		} else {
 			playerData.removePoints(cost);
-			playerData.addShopItem(uniqueId);
-			playerData.getMenu().openMenu(subMenu.getTitle());
+			playerData.addShopItem(uniqueId,subMenu.getTitle());
+			getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 			player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 			player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
 		}
@@ -75,11 +75,13 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 				if (playerData.getPoints() >= cost) {
 					boolean canDo = true;
 					
-					for (RequirementBase requirement : requirements) {
-						if (requirement.meetsRequirement(playerData)) {
-							canDo = false;
-							player.sendMessage(ChatColor.RED + requirement.getFailMessage());
-							break;
+					if (requirements != null) {						
+						for (RequirementBase requirement : requirements) {
+							if (!requirement.meetsRequirement(playerData)) {
+								canDo = false;
+								player.sendMessage(ChatColor.RED + requirement.getFailMessage());
+								break;
+							}
 						}
 					}
 					if (canDo) {						
@@ -116,13 +118,11 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 		//Purchase requirement
 		itemMetaLore.add(ChatColor.RESET.toString());
 		itemMetaLore.add(ChatColor.YELLOW + ChatColor.ITALIC.toString() + "Requirement(s) to purchase");		
+		itemMetaLore.add(ChatColor.GREEN.toString() + cost + ChatColor.YELLOW + " points");
 		if (requirements != null) {	
-			itemMetaLore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + cost);
 			for (RequirementBase requirement : requirements) {				
 				itemMetaLore.add(requirement.getDisplayText());
 			}
-		} else {
-			itemMetaLore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + cost);
 		}
 		itemMetaLore.add(ChatColor.RESET.toString());
 		//Purchase text
@@ -138,7 +138,7 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 					if (isEquipped) {						
 						itemMetaLore.add(ChatColor.GREEN + "\u2714 Equipped. Left-Click to unequip");
 					} else {
-						if (getEquippedItems().size() >= subMenu.getMaxEquippedItems()) {
+						if (!subMenu.canEquipItem()) {
 							itemMetaLore.add(ChatColor.RED + "\u2716 Cannot Equip");
 						} else {
 							itemMetaLore.add(ChatColor.GREEN + "\u279D Left-Click to equip");
@@ -163,17 +163,6 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 	//
 	// GETTERS
 	//
-	
-	public ArrayList<ShopMenuOptionBase> getEquippedItems() {
-		ArrayList<ShopMenuOptionBase> equippedItems = new ArrayList<>();
-		
-		for (MenuOption option : subMenu.getOptions()) {
-			if (((ShopMenuOptionBase)option).isEquipped()) {
-				equippedItems.add(((ShopMenuOptionBase)option));
-			}
-		}
-		return equippedItems;
-	}
 	
 	//
 	// SETTERS

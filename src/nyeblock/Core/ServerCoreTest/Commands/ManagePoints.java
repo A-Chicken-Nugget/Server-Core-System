@@ -9,17 +9,18 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.Main;
+import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-public class SetUserGroup extends CommandBase {
-	private PlayerHandling playerHandling;
+public class ManagePoints extends CommandBase {
+private PlayerHandling playerHandling;
 	
-	public SetUserGroup(Main mainInstance) {
+	public ManagePoints(Main mainInstance) {
 		super(mainInstance,
-			"setUserGroup",
-			"Sets the user group for the specified player",
-			"/setUserGroup <player> <userGroup>",
+			"managePoints",
+			"Give/take points from the specified player",
+			"/managePoints",
 			new ArrayList<String>(),
 			Arrays.asList(UserGroup.ADMIN)
 		);
@@ -28,16 +29,23 @@ public class SetUserGroup extends CommandBase {
 	}
 	
 	public void execute(Player ply, String[] args) {
-		if (args.length >= 2) {			
+		if (args.length >= 3) {
 			Player player = Bukkit.getPlayerExact(args[0]);
 			
 			if (player != null) {
-				UserGroup group = UserGroup.fromName(args[1]);
-				
-				if (group != null) {
-					playerHandling.getPlayerData(player).setUserGroup(group);
-				} else {
-					ply.sendMessage(ChatColor.YELLOW + "Please enter a valid usergroup!");
+				try {					
+					Integer amount = Integer.parseInt(args[2]);
+					PlayerData pd = playerHandling.getPlayerData(player);	
+					
+					if (args[1].equalsIgnoreCase("give")) {
+						pd.addPoints(amount);
+					} else if (args[1].equalsIgnoreCase("take")) {
+						pd.removePoints(amount);
+					} else {
+						ply.sendMessage(ChatColor.RED + "Please enter a valid action!");
+					}
+				} catch (Exception ex) {
+					ply.sendMessage(ChatColor.RED + "Please enter a valid amount!");
 				}
 			} else {
 				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
@@ -56,13 +64,12 @@ public class SetUserGroup extends CommandBase {
 				}
 			}
 		} else if (args.length == 2) {
-			for (UserGroup group : UserGroup.values()) {
-				if (group.toString().toLowerCase().contains(args[1].toLowerCase())) {
-					autoCompletes.add(group.toString());
+			for (String permission : Arrays.asList("give","take")) {
+				if (permission.toLowerCase().contains(args[1].toLowerCase())) {
+					autoCompletes.add(permission);
 				}
 			}
 		}
-		
 		return autoCompletes;
 	}
 }

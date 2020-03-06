@@ -1,6 +1,7 @@
 package nyeblock.Core.ServerCoreTest.Commands;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.Bukkit;
@@ -10,13 +11,21 @@ import org.bukkit.entity.Player;
 import nyeblock.Core.ServerCoreTest.DatabaseHandling;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BanIp extends CommandBase {
 	private DatabaseHandling databaseHandling;
 	
 	public BanIp(Main mainInstance) {
-		super(mainInstance);
+		super(mainInstance,
+				"banIp",
+				"Ban the specified ip for the specified amount of time",
+				"/banIp <ip> <length> <reason>",
+				new ArrayList<String>(),
+				Arrays.asList(UserGroup.ADMIN)
+			);
+		
 		databaseHandling = mainInstance.getDatabaseInstance();
 	}
 	
@@ -35,7 +44,7 @@ public class BanIp extends CommandBase {
             					reason += " " + args[i];
             				}
             				
-            				databaseHandling.query("INSERT INTO ipBans (ip,length,added,reason) VALUES ('" + ip + "'," + length + "," + System.currentTimeMillis()/1000L + ",'" + reason + "')", 0, true);									
+            				databaseHandling.query("INSERT INTO ipBans (ip,length,added,reason) VALUES ('" + ip + "'," + length + "," + System.currentTimeMillis()/1000L + ",'" + reason + "')", true);									
             				ply.sendMessage(ChatColor.YELLOW.toString() + "Ip banned " + ip + " for " + length + " minutes!");
             				
             				for (Player player : Bukkit.getOnlinePlayers()) {

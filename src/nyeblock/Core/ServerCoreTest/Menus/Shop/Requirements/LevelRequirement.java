@@ -14,6 +14,7 @@ public class LevelRequirement extends RequirementBase {
 		this.level = level;
 		this.realm = realm;
 	}
+	
 	public boolean meetsRequirement(PlayerData playerData) { 
 		boolean doesMeet = false;
 		

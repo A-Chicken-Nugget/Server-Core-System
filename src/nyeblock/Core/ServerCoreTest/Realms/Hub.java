@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
 
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
@@ -21,6 +22,12 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
+import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
+import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
+import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
+import nyeblock.Core.ServerCoreTest.Menus.NyeBlockMenu;
+import nyeblock.Core.ServerCoreTest.Menus.StatsMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 
@@ -28,8 +35,12 @@ import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 public class Hub extends RealmBase {
 	private PlayerHandling playerHandlingInstance;
 	private World world = Bukkit.getWorld("world");
-	private TextAnimation boardAnim = new TextAnimation("Hub board animation", new ArrayList<String>() {
-		{
+	private TextAnimation boardAnimation;
+	
+	public Hub(Main mainInstance) {
+		super(mainInstance,Realm.HUB);
+		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
+		boardAnimation = new TextAnimation(mainInstance,new ArrayList<String>() {{
 			add("§7NyeBlock");
 			add("§bN§7yeBlock");
 			add("§bNy§7eBlock");
@@ -46,12 +57,7 @@ public class Hub extends RealmBase {
 			add("§7NyeBl§bock");
 			add("§7NyeBlo§bck");
 			add("§7NyeBloc§bk");
-		}
-	}, null);
-	
-	public Hub(Main mainInstance) {
-		super(mainInstance,Realm.HUB);
-		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
+		}},.25);
 		
 		//Scoreboard
 		scoreboard = new Runnable() {
@@ -66,18 +72,21 @@ public class Hub extends RealmBase {
 				}
 				for (Player ply : players) {
 					PlayerData pd = playerHandlingInstance.getPlayerData(ply);
-					HashMap<Integer, String> scores = new HashMap<>();
 					
-					//Scoreboard
-					scores.put(7, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-					scores.put(6, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-					scores.put(5, ChatColor.YELLOW + "Players online: " + ChatColor.GREEN + playersOnline);
-					scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-					scores.put(3, ChatColor.YELLOW + "Points: " + ChatColor.GREEN + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()));
-					scores.put(2, ChatColor.RESET.toString());
-					scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
-					pd.setScoreboardTitle(boardAnim.getMessage());
-					pd.updateObjectiveScores(scores);
+					if (pd != null) {						
+						HashMap<Integer, String> scores = new HashMap<>();
+						
+						//Scoreboard
+						scores.put(7, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+						scores.put(6, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+						scores.put(5, ChatColor.YELLOW + "Players online: " + ChatColor.GREEN + playersOnline);
+						scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
+						scores.put(3, ChatColor.YELLOW + "Points: " + ChatColor.GREEN + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()));
+						scores.put(2, ChatColor.RESET.toString());
+						scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
+						pd.setScoreboardTitle(boardAnimation.getMessage());
+						pd.updateObjectiveScores(scores);
+					}
 				}
 			}
 		};
@@ -125,14 +134,57 @@ public class Hub extends RealmBase {
 		}
 	}
 	/**
+    * Set the players permissions
+    */
+	public void setDefaultPermissions(Player player) {
+		PermissionAttachment permissions = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getPermissionAttachment();
+		
+		permissions.setPermission("nyeblock.canPlaceBlocks", false);
+		permissions.setPermission("nyeblock.canBreakBlocks", false);
+		permissions.setPermission("nyeblock.canUseInventory", false);
+		permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
+		permissions.setPermission("nyeblock.canDamage", false);
+		permissions.setPermission("nyeblock.canBeDamaged", false);
+		permissions.setPermission("nyeblock.canTakeFallDamage", false);
+		permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
+		permissions.setPermission("nyeblock.canDropItems", false);
+		permissions.setPermission("nyeblock.canLoseHunger", false);
+		permissions.setPermission("nyeblock.canSwapItems", false);
+		permissions.setPermission("nyeblock.canMove", true);
+	}
+	/**
+    * Set the players items
+    */
+	public void setItems(Player player) {
+		//Profile/Stats menu
+		StatsMenu profileStatsMenu = new StatsMenu(mainInstance,player);
+		ItemStack ssm = profileStatsMenu.give();
+		player.getInventory().setItem(2, ssm);
+		
+		//Game Menu
+		GameMenu hubMenu = new GameMenu(mainInstance,player);
+		ItemStack hm = hubMenu.give();
+		player.getInventory().setItem(4, hm);
+		player.getInventory().setHeldItemSlot(4);
+		
+		//Hide players
+		HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
+		ItemStack hp = hidePlayers.give();
+		player.getInventory().setItem(6, hp);
+		
+		//NyeBlock
+		NyeBlockMenu nyeBlockMenu = new NyeBlockMenu(mainInstance,player);
+		ItemStack nbm = nyeBlockMenu.give();
+		player.getInventory().setItem(8, nbm);
+	}
+	/**
 	* When a player respawns
 	* @param ply - Player that is being respawned
 	* @return location to respawn the player
 	*/
 	public Location playerRespawn(Player ply) {
-		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
+		setItems(ply);
 		
-		pd.setItems();
 		return Bukkit.getWorld("world").getSpawnLocation();
 	}
 	/**

@@ -1,13 +1,23 @@
 package nyeblock.Core.ServerCoreTest.Commands;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import nyeblock.Core.ServerCoreTest.Main;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 public class BanPlayerIps extends CommandBase {
 //	private Main mainInstance;
 //	private DatabaseHandling databaseHandling;
 //	
 	public BanPlayerIps(Main mainInstance) {
-		super(mainInstance);
+		super(mainInstance,
+			"banPlayerIps",
+			"Ban all the specified player's ips",
+			"/banPlayerIps <player> <length> <reason>",
+			new ArrayList<String>(),
+			Arrays.asList(UserGroup.ADMIN)
+		);
 //		this.mainInstance = mainInstance;
 //		databaseHandling = mainInstance.getDatabaseInstance();
 	}

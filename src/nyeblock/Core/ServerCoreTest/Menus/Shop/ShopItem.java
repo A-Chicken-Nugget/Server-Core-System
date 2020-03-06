@@ -3,12 +3,14 @@ package nyeblock.Core.ServerCoreTest.Menus.Shop;
 public class ShopItem {
 	private String uniqueId;
 	private int quantity;
-	private boolean isEquiped;
+	private boolean isEquipped;
+	private String menuName;
 	
-	public ShopItem(String uniqueId, int quantity, boolean isEquiped) {
+	public ShopItem(String uniqueId, int quantity, boolean isEquipped, String menuName) {
 		this.uniqueId = uniqueId;
 		this.quantity = quantity;
-		this.isEquiped = isEquiped;
+		this.isEquipped = isEquipped;
+		this.menuName = menuName;
 	}
 	
 	public boolean updateQuantity(boolean add) {
@@ -37,7 +39,10 @@ public class ShopItem {
 		return quantity;
 	}
 	public boolean isEquipped() {
-		return isEquiped;
+		return isEquipped;
+	}
+	public String getMenuName() {
+		return menuName;
 	}
 	
 	//
@@ -45,6 +50,6 @@ public class ShopItem {
 	//
 	
 	public void setEquipped(boolean isEquiped) {
-		this.isEquiped = isEquiped;
+		this.isEquipped = isEquiped;
 	}
 }

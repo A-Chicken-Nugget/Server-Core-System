@@ -1,16 +1,28 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.UUID;
 
 import org.apache.commons.lang.math.IntRange;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.libs.org.apache.commons.io.IOUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.util.Vector;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Toolkit 
 {
@@ -67,7 +79,7 @@ public class Toolkit
 		double x = location.getX();
 		double z = location.getZ();
 		World world = player.getWorld();
-		double yBelow = player.getLocation().getY() - 0.0001;
+		double yBelow = player.getLocation().getY() - .5;
 		
 		blocks.add(new Location(world, location.getX() + 0.3, yBelow, z - 0.3).getBlock());
 		blocks.add(new Location(world, x - 0.3, yBelow, z - 0.3).getBlock());
@@ -112,4 +124,38 @@ public class Toolkit
 		}
 		return returnColor;
 	}
+	//Get UUID from players name
+	public static String getUUIDFromName(String name) {
+        String url = "https://api.mojang.com/users/profiles/minecraft/"+name;
+        
+        try {
+            @SuppressWarnings("deprecation")
+            String UUIDJson = IOUtils.toString(new URL(url));           
+            if(UUIDJson.isEmpty()) return null;                       
+            JSONObject UUIDObject = (JSONObject) JSONValue.parseWithException(UUIDJson);
+            String uuid = UUIDObject.get("id").toString();
+            return uuid.substring(0,8) + "-" + uuid.substring(8,12) + "-" + uuid.substring(12,16) + "-" + uuid.substring(16,20) + "-" + uuid.substring(20);
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+	}
+	//Get base64 player skin
+	public static String[] getSkinFromName(String name) {
+        try {
+            URL url_0 = new URL("https://api.mojang.com/users/profiles/minecraft/" + name);
+            InputStreamReader reader_0 = new InputStreamReader(url_0.openStream());
+            String uuid = new JsonParser().parse(reader_0).getAsJsonObject().get("id").getAsString();
+     
+            URL url_1 = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false");  	
+        	InputStreamReader reader_1 = new InputStreamReader(url_1.openStream());
+        	JsonObject textureProperty = new JsonParser().parse(reader_1).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
+        	String texture = textureProperty.get("value").getAsString();
+        	String signature = textureProperty.get("signature").getAsString();
+        	
+        	return new String[] {texture, signature};
+        } catch (IOException e) {
+            return null;
+        }
+    }
 }

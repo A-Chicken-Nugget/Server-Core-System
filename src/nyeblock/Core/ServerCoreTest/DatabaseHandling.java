@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 public class DatabaseHandling {
 	private String host;
 	private int port;
@@ -16,7 +18,7 @@ public class DatabaseHandling {
 	private String username;
 	private String password;
 	private Connection connection;
-	private long lastConnected = System.currentTimeMillis() / 1000L;
+	private long lastQuery;
 	
 	public DatabaseHandling(Main mainInstance, String host, String database, int port, String username, String password) {
 		this.host = host;
@@ -29,7 +31,7 @@ public class DatabaseHandling {
 	}
 	
 	public void checkConnectionStatus() {
-		if ((System.currentTimeMillis() / 1000L) - lastConnected > 15) {
+		if ((System.currentTimeMillis() / 1000L) - lastQuery > 15) {
 			try {
 				if (connection != null && !connection.isClosed()) {
 					connection.close();
@@ -40,7 +42,7 @@ public class DatabaseHandling {
 			}
 		}
 	}
-	public synchronized ArrayList<HashMap<String,String>> query(String query, int columns, boolean changeData) {
+	public ArrayList<HashMap<String,String>> query(String query, boolean changeData) {
 		String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false";
 		ArrayList<HashMap<String,String>> returnData = new ArrayList<HashMap<String,String>>();
  
@@ -49,43 +51,35 @@ public class DatabaseHandling {
 			//Connection succeeded
 			if (connection == null || connection.isClosed()) {				
 				connection = DriverManager.getConnection(url, username, password);
-				lastConnected = System.currentTimeMillis() / 1000L;
 			}
 			PreparedStatement statement = connection.prepareStatement(query);
+			lastQuery = System.currentTimeMillis() / 1000L;
 			
 			if (changeData) {
 				statement.executeUpdate();
 			} else {				
 				ResultSet data = statement.executeQuery();
-				while (data.next()) {
-					ResultSetMetaData dataMetaData = data.getMetaData();
-					HashMap<String,String> currentData = new HashMap<String,String>();
-					
-					for (int i = 1; i < columns+1; i++) {
-						currentData.put(dataMetaData.getColumnName(i),data.getString(i));
+				
+				if (data != null) {					
+					while (data.next()) {
+						ResultSetMetaData dataMetaData = data.getMetaData();
+						
+						if (data != null && dataMetaData != null && !data.isClosed()) {
+							HashMap<String,String> currentData = new HashMap<String,String>();
+							
+							for (int i = 1; i < dataMetaData.getColumnCount()+1; i++) {							
+								currentData.put(dataMetaData.getColumnName(i),data.getString(i));
+							}
+							returnData.add(currentData);
+						}
 					}
-					returnData.add(currentData);
 				}
 			}
 		} catch(Exception e) {
-			System.out.println("Error: " + e.getMessage());
-			//Couldn't connect to the database
+			System.out.println("[Core] Database error:");
+			e.printStackTrace();
+			System.out.println("[Core] Error occurred with query: " + query);
 		}
 		return returnData;
 	}
-//	public void updateQuery(String query) {
-//		Connection conn;
-//		String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false";
-// 
-//		//Attempt to connect
-//		try {
-//			//Connection succeeded
-//			conn = DriverManager.getConnection(url, username, password);
-//			PreparedStatement statement = conn.prepareStatement(query);
-//			statement.execute(query);
-//		} catch(Exception e) {
-//			System.out.println("Error: " + e.getMessage());
-//			//Couldn't connect to the database
-//		}
-//	}
 }

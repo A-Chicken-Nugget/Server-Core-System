@@ -12,6 +12,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
@@ -23,6 +24,12 @@ import nyeblock.Core.ServerCoreTest.DatabaseHandling;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToStart;
+import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
+import nyeblock.Core.ServerCoreTest.Menus.NyeBlockMenu;
+import nyeblock.Core.ServerCoreTest.Menus.ParkourMenu;
+import nyeblock.Core.ServerCoreTest.Menus.StatsMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
@@ -85,8 +92,8 @@ public class HubParkour extends RealmBase {
 				Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 		            @Override
 		            public void run() {       
-		            	top5CompetitiveList = mainInstance.getDatabaseInstance().query("SELECT name,time FROM parkourTimes WHERE type = 0 ORDER BY time LIMIT 5", 2, false);
-		            	top5NormalList = mainInstance.getDatabaseInstance().query("SELECT name,time FROM parkourTimes WHERE type = 1 ORDER BY time LIMIT 5", 2, false);
+		            	top5CompetitiveList = mainInstance.getDatabaseInstance().query("SELECT name,time FROM parkourTimes WHERE type = 0 ORDER BY time LIMIT 5", false);
+		            	top5NormalList = mainInstance.getDatabaseInstance().query("SELECT name,time FROM parkourTimes WHERE type = 1 ORDER BY time LIMIT 5", false);
 		            }
 				});
 			}
@@ -268,16 +275,16 @@ public class HubParkour extends RealmBase {
 								 ply.sendMessage(ChatColor.YELLOW + "You finished the Competitive parkour! Your time was " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
 								 playerBestCompetitiveTimes.put(ply.getName(),time);
 							 }
-							 ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+							 ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", false);
 							 
 							 if (query.size() > 0) {
 								 HashMap<String, String> queryData = query.get(0);
 								 
 								 if (time < Long.parseLong(queryData.get("time"))) {
-									 databaseInstance.query("UPDATE parkourTimes SET time = " + time + " WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+									 databaseInstance.query("UPDATE parkourTimes SET time = " + time + " WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", true);
 								 }
 							 } else {
-								 databaseInstance.query("INSERT INTO parkourTimes (type,uniqueId,name,time) VALUES (0,'" + ply.getUniqueId() + "','" + ply.getName() + "'," + time + ")", 0, true);
+								 databaseInstance.query("INSERT INTO parkourTimes (type,uniqueId,name,time) VALUES (0,'" + ply.getUniqueId() + "','" + ply.getName() + "'," + time + ")", true);
 							 }
 						 } else {
 							 if (playerBestNormalTimes.get(ply.getName()) != 0L && time < playerBestNormalTimes.get(ply.getName())) {
@@ -290,16 +297,16 @@ public class HubParkour extends RealmBase {
 								 ply.sendMessage(ChatColor.YELLOW + "You finished the Normal parkour! Your time was " + ChatColor.GREEN + new SimpleDateFormat("mm:ss.SSS").format(time));
 								 playerBestNormalTimes.put(ply.getName(),time);
 							 }
-							 ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+							 ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", false);
 							 
 							 if (query.size() > 0) {
 								 HashMap<String, String> queryData = query.get(0);
 								 
 								 if (time < Long.parseLong(queryData.get("time"))) {
-									 databaseInstance.query("UPDATE parkourTimes SET time = " + time + " WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+									 databaseInstance.query("UPDATE parkourTimes SET time = " + time + " WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", true);
 								 }
 							 } else {
-								 databaseInstance.query("INSERT INTO parkourTimes (type,uniqueId,name,time) VALUES (1,'" + ply.getUniqueId() + "','" + ply.getName() + "'," + time + ")", 0, true);
+								 databaseInstance.query("INSERT INTO parkourTimes (type,uniqueId,name,time) VALUES (1,'" + ply.getUniqueId() + "','" + ply.getName() + "'," + time + ")", true);
 							 }
 						 }
 					}
@@ -310,6 +317,22 @@ public class HubParkour extends RealmBase {
 				}
 			}
 		}
+	}
+	public void setItems(Player player) {
+		//Parkour menu
+		ParkourMenu parkourMenu = new ParkourMenu(mainInstance,player);
+		ItemStack pm = parkourMenu.give();
+		player.getInventory().setItem(4, pm);
+		
+		//Hide players
+		HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
+		ItemStack hp = hidePlayers.give();
+		player.getInventory().setItem(6, hp);
+		
+		//Go to start
+		ReturnToStart startItem = new ReturnToStart(mainInstance,player);
+		ItemStack si = startItem.give();
+		player.getInventory().setItem(2, si);
 	}
 	/**
     * When a player clicks the return to start item
@@ -326,12 +349,11 @@ public class HubParkour extends RealmBase {
 	* @return location to respawn the player
 	*/
 	public Location playerRespawn(Player ply) {
-		PlayerData pd = playerHandling.getPlayerData(ply);
-		
-		pd.setItems();
+		setItems(ply);
 		Location tempPos = checkPointLocations.get(0);
 		Float[] tempDirection = checkPointDirections.get(0);
 		playerCheckPoints.put(ply.getName(), 0);
+		
 		return new Location(world,tempPos.getX()+.5,tempPos.getY()+1,tempPos.getZ()+.5,tempDirection[0],tempDirection[1]);
 	}
 	/**
@@ -355,6 +377,8 @@ public class HubParkour extends RealmBase {
 		
 		pd.setCurrentRealm(this);
 		
+		setItems(ply);
+		
 		//Add players to teams
 		for (Player player : players) {
 			PlayerData pd2 = playerHandling.getPlayerData(player);
@@ -373,13 +397,13 @@ public class HubParkour extends RealmBase {
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
             public void run() {             	
-            	ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+            	ArrayList<HashMap<String, String>> query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 0 AND uniqueId = '" + ply.getUniqueId() + "'", false);
             	if (query.size() > 0) {
             		HashMap<String, String> queryData = query.get(0);
             		
             		playerBestCompetitiveTimes.put(ply.getName(), Long.parseLong(queryData.get("time")));
             	}
-            	query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+            	query = databaseInstance.query("SELECT time FROM parkourTimes WHERE type = 1 AND uniqueId = '" + ply.getUniqueId() + "'", false);
             	if (query.size() > 0) {
             		HashMap<String, String> queryData = query.get(0);
             		

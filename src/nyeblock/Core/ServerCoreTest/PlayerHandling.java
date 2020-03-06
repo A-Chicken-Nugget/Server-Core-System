@@ -1,19 +1,25 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Egg;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
@@ -21,6 +27,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -54,14 +61,17 @@ import org.bukkit.event.world.WorldInitEvent;
 import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.EnchantingInventory;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.util.Vector;
 
-import com.google.gson.Gson;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
 
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
@@ -108,6 +118,24 @@ public class PlayerHandling implements Listener {
 				}
 			}
 		}, 0, 20*180);
+		
+		//Remove hit sound
+		mainInstance.getProtocolManagerInstance().addPacketListener(new PacketAdapter(mainInstance, ListenerPriority.NORMAL, PacketType.Play.Server.NAMED_SOUND_EFFECT){
+			@Override
+            public void onPacketSending(PacketEvent event) {
+                if (event.getPacketType() == PacketType.Play.Server.NAMED_SOUND_EFFECT) {
+                	PlayerData pd = getPlayerData(event.getPlayer());
+                	
+                	if (!pd.getCurrentRealm().getRealm().isGame()) {
+                		event.setCancelled(true);
+                	} else {
+                		if (pd.getSpectatingStatus() || pd.getHiddenStatus()) {
+                			event.setCancelled(true);
+                		}
+                	}
+                }
+			}
+		});
 	}
 	
 	//
@@ -118,13 +146,45 @@ public class PlayerHandling implements Listener {
 	public PlayerData getPlayerData(Player ply) {
 		return playersData.get(ply.getUniqueId());
 	}
+	// Remove a specific players player data
+	public void removePlayerData(Player ply) {
+		playersData.remove(ply.getUniqueId());
+		playerChatMessages.remove(ply.getUniqueId());
+		playerActions.remove(ply.getUniqueId());
+	}
+	// Get a specific players last damage info
+	public DamagePlayer getLastPlayerDamage(Player ply) {
+		return lastPlayerDamage.get(ply.getUniqueId());
+	}
 	
 	//
 	// EVENT HANDLERS
 	//
 
+	//Hide commands from players who do not have access
+//	@EventHandler
+//	public void onPlayerCommandSend(PlayerCommandSendEvent event) {
+//		Player ply = event.getPlayer();
+//		Collection<String> suggestions = event.getCommands();
+//		ArrayList<String> removeSuggestions = new ArrayList<String>();
+//		
+//		for (String commandSuggestion : suggestions) {
+//			CommandBase command = commandHandling.getCommand(commandSuggestion);
+//			
+//			if (command != null) {
+//				PlayerData pd = getPlayerData(ply);
+//				
+//				if (pd != null) {					
+//					if (!command.canExecute(pd.getUserGroup())) {
+//						removeSuggestions.add(commandSuggestion);
+//					}
+//				}
+//			}
+//		}
+//		suggestions.removeAll(removeSuggestions);
+//	}
 	// Prevent mob spawn
-	@EventHandler()
+	@EventHandler
 	public void onCreatureSpawn(CreatureSpawnEvent event) {
 		if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CUSTOM) {
 			event.setCancelled(true);
@@ -155,9 +215,13 @@ public class PlayerHandling implements Listener {
 			String playerWorld = ply.getWorld().getName();
 			ArrayList<Player> playersToRemove = new ArrayList<Player>();
 			PlayerData playerData = playersData.get(ply.getUniqueId());
-			org.bukkit.ChatColor chatTextColor = playerData.getChatTextColor();
+			ChatColor chatTextColor = playerData.getChatTextColor();
+			ChatColor nameTextColor = playerData.getNameTextColor();
 			
-			event.setFormat(playerData.getUserGroup().getTag() + " " + ply.getName() + ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET + (chatTextColor != null ? chatTextColor : ChatColor.WHITE) + event.getMessage());
+			event.setFormat(playerData.getUserGroup().getTag() + " "
+				+ (nameTextColor != null ? nameTextColor : ChatColor.WHITE)+ ply.getName()
+				+ ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET
+				+ (chatTextColor != null ? chatTextColor : ChatColor.WHITE) + event.getMessage());
 			
 			for (Player player : event.getRecipients()) {
 				if (!playerWorld.equalsIgnoreCase(player.getWorld().getName())) {
@@ -194,7 +258,7 @@ public class PlayerHandling implements Listener {
 	public void playerPreLogin(AsyncPlayerPreLoginEvent event) {
 		UUID uniqueId = event.getUniqueId();
 		
-		ArrayList<HashMap<String, String>> banQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM bans WHERE uniqueId = '" + uniqueId + "' AND isExpired != 1", 5, false);
+		ArrayList<HashMap<String, String>> banQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM bans WHERE uniqueId = '" + uniqueId + "' AND isExpired != 1", false);
 		
 		//If the user has an active ban
 		if (banQuery.size() > 0) {
@@ -202,14 +266,14 @@ public class PlayerHandling implements Listener {
 			long difference = ((Integer.parseInt(banQueryData.get("length"))*60) + Integer.parseInt(banQueryData.get("added")) - (System.currentTimeMillis()/1000L));
 			
 			if (difference <= 0) {
-				mainInstance.getDatabaseInstance().query("UPDATE bans SET isExpired = 1 WHERE id = " + banQueryData.get("id"), 0, true);
+				mainInstance.getDatabaseInstance().query("UPDATE bans SET isExpired = 1 WHERE id = " + banQueryData.get("id"), true);
 			} else {
 				event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + (difference/60) + " minute(s).\n\nReason:" + banQueryData.get("reason"));
 			}
 		}
 		
 		String playerIp = event.getAddress().toString().split(":")[0].replace("/","");
-		ArrayList<HashMap<String, String>> ipBanQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM ipBans WHERE ip = '" + playerIp + "' AND isExpired != 1", 5, false);
+		ArrayList<HashMap<String, String>> ipBanQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM ipBans WHERE ip = '" + playerIp + "' AND isExpired != 1", false);
 		
 		//If the user has an active ban
 		if (ipBanQuery.size() > 0) {
@@ -217,7 +281,7 @@ public class PlayerHandling implements Listener {
 			long difference = ((Integer.parseInt(ipBanQueryData.get("length"))*60) + Integer.parseInt(ipBanQueryData.get("added")) - (System.currentTimeMillis()/1000L));
 			
 			if (difference <= 0) {
-				mainInstance.getDatabaseInstance().query("UPDATE bans SET isExpired = 1 WHERE id = " + ipBanQueryData.get("id"), 0, true);
+				mainInstance.getDatabaseInstance().query("UPDATE bans SET isExpired = 1 WHERE id = " + ipBanQueryData.get("id"), true);
 			} else {
 				event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + (difference/60) + " minute(s).\n\nReason:" + ipBanQueryData.get("reason"));
 			}
@@ -243,7 +307,7 @@ public class PlayerHandling implements Listener {
 			Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 				@Override
 				public void run() {            	
-					ArrayList<HashMap<String, String>> userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 7, false);
+					ArrayList<HashMap<String, String>> userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", false);
 					String ip = ply.getAddress().toString().split(":")[0].replace("/","");
 					
 					//If the player exists in the users table
@@ -253,27 +317,28 @@ public class PlayerHandling implements Listener {
 						playerData.setData(Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
 								Double.parseDouble(userQueryData.get("timePlayed")), ip,
 								UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))), 
-								Toolkit.getColorFromString(userQueryData.get("chatTextColor")));
+								Toolkit.getColorFromString(userQueryData.get("chatTextColor")),
+								Toolkit.getColorFromString(userQueryData.get("nameTextColor")));
 						
 						//If the players ip has changed from whats in the DB
 						if (!userQueryData.get("ip").equals(ip)) {
 							//Insert ip into the ipLogs table
-							mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", 0, true);
-							mainInstance.getDatabaseInstance().query("UPDATE users SET ip = '" + ip + "' WHERE uniqueId = '" + ply.getUniqueId() + "'", 0, true);
+							mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", true);
+							mainInstance.getDatabaseInstance().query("UPDATE users SET ip = '" + ip + "' WHERE uniqueId = '" + ply.getUniqueId() + "'", true);
 						}
 						
 						//If the player does not exists in the users table
 					} else {
 						//Insert the user into the users table
-						mainInstance.getDatabaseInstance().query("INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ip + "')", 0, true);
+						mainInstance.getDatabaseInstance().query("INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ip + "')", true);
 						
 						//Insert ip into the ipLogs table
-						mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", 0, true);
+						mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", true);
 						
 						//Get the users data from the users table. This is done to get their db id
-						userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", 1, false);
+						userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", false);
 						HashMap<String, String> userQueryData = userQuery.get(0);
-						playerData.setData(Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER, null);
+						playerData.setData(Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER, null, null);
 						
 						// Let everyone know this is a new player
 						for (Player player : world.getPlayers()) {
@@ -304,7 +369,7 @@ public class PlayerHandling implements Listener {
 						realm.join(ply, true);
 					} else {
 						ply.sendMessage(ChatColor.YELLOW + "Unable to rejoin " + realm.getRealm().toString() + " game. It is no longer active.");
-						mainInstance.getGameInstance().joinGame(ply, Realm.HUB);
+						mainInstance.getRealmHandlingInstance().joinRealm(ply, Realm.HUB);
 					}
 				} else {
 					realm.join(ply, false);
@@ -376,16 +441,14 @@ public class PlayerHandling implements Listener {
 		// Remove default quit message
 		event.setQuitMessage("");
 		
+		pd.saveToDB();
+		
 		mainInstance.getTimerInstance().createRunnableTimer("leave_" + ply.getUniqueId(), 60, 1, new Runnable() {
 			@Override
 			public void run() {
 				if (!ply.isOnline()) {
-					pd.saveToDB();
-					
 					//Remove player data
-					playersData.remove(ply.getUniqueId());
-					playerChatMessages.remove(ply.getUniqueId());
-					playerActions.remove(ply.getUniqueId());
+					removePlayerData(ply);
 				}
 			}
 		});
@@ -401,6 +464,7 @@ public class PlayerHandling implements Listener {
 		if (!world.getName().equals("world")) {			
 			world.setAutoSave(false);
 			world.setKeepSpawnInMemory(false);
+			world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
 		}
 	}
 	// Handle when a player respawns
@@ -482,6 +546,7 @@ public class PlayerHandling implements Listener {
 			} else if (damaged.getHealth() <= 0) {
 				event.setCancelled(true);
 			} else {
+				//Manage damage logs
 				DamagePlayer dp = lastPlayerDamage.get(damaged.getUniqueId());
 				
 				if (dp != null) {
@@ -491,7 +556,15 @@ public class PlayerHandling implements Listener {
 					lastPlayerDamage.put(damaged.getUniqueId(), new DamagePlayer(damager,System.currentTimeMillis()));
 				}
 			}
-		} else if (event.getDamager() instanceof Firework && event.getEntity() instanceof Player) {
+		} else if (event.getDamager() instanceof Snowball) {
+			event.setDamage(1.0E-4D);
+		} else if (event.getDamager() instanceof Egg) {
+			event.setDamage(1.0E-4D);
+		} else if (event.getDamager() instanceof EnderPearl) {
+			event.setDamage(1.0E-4D);
+		} else if (event.getDamager() instanceof Firework) {
+			event.setCancelled(true);
+		} else if (event.getEntity().getType().equals(EntityType.ITEM_FRAME)) {
 			event.setCancelled(true);
 		}
 	}
@@ -534,13 +607,7 @@ public class PlayerHandling implements Listener {
 			Player attacked = (Player)event.getHitEntity();
 			Player attacker = (Player)event.getEntity().getShooter();
 			
-			if (projectile instanceof Snowball) {
-				attacked.damage(0.0001);
-				attacked.setVelocity(attacked.getVelocity().add(attacked.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(1)));
-			} else if (projectile instanceof Egg) {
-				attacked.damage(0.0001);
-				attacked.setVelocity(attacked.getVelocity().add(attacked.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(1)));
-			} else if (projectile instanceof Fireball) {
+			if (projectile instanceof Fireball) {
 				Vector knockback = attacked.getVelocity();
 				knockback.add(new Vector(0,.3,0));
 				knockback.add(attacker.getLocation().getDirection().multiply(1.5));
@@ -597,10 +664,10 @@ public class PlayerHandling implements Listener {
 	// Handle when a player shoots a bow
 	@EventHandler
 	public void onPlayerShootBow(EntityShootBowEvent event) {
-		Player ply = (Player) event.getEntity();
-		GameBase game = (GameBase)getPlayerData(ply).getCurrentRealm();
-
-		if (ply instanceof Player) {
+		if (event.getEntity() instanceof Player) {			
+			Player ply = (Player) event.getEntity();
+			GameBase game = (GameBase)getPlayerData(ply).getCurrentRealm();
+			
 			if (game instanceof KitPvP && ((KitPvP)game).isInGraceBounds(ply)) {
 				event.setCancelled(true);
 			}
@@ -616,6 +683,7 @@ public class PlayerHandling implements Listener {
 
 			for (Player player :  event.getLocation().getWorld().getPlayers()) {
                 player.spawnParticle(Particle.SMOKE_LARGE, loc, 100, 0, new Random().nextInt(50)*.01, 0, 0.1);
+                player.playSound(loc, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 10, 1);
             }
 			event.setCancelled(true);
 		}
@@ -624,13 +692,13 @@ public class PlayerHandling implements Listener {
 	@EventHandler
 	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
 		Player ply = event.getPlayer();
-		
-		mainInstance.getTimerInstance().createRunnableTimer("beans", .5, 1, new Runnable() {
-			@Override
-			public void run() {
-				ply.getOpenInventory().close();
-			}
-		});
+//		
+//		mainInstance.getTimerInstance().createRunnableTimer("clearInventory_" + ply.getUniqueId(), .75, 1, new Runnable() {
+//			@Override
+//			public void run() {
+//				ply.getOpenInventory().close();
+//			}
+//		});
 	}
 	// Handle potion splashes
 	@EventHandler
@@ -760,62 +828,79 @@ public class PlayerHandling implements Listener {
 	@EventHandler
 	public void onPlayerUse(PlayerInteractEvent event) {
 		Player ply = event.getPlayer();
-
-		if (event.getAction().toString().matches("RIGHT_CLICK_AIR|RIGHT_CLICK_BLOCK|LEFT_CLICK_AIR|LEFT_CLICK_BLOCK")) {
-			ItemStack item = ply.getItemInHand();
-			ItemMeta itemMeta = item.getItemMeta();
-
-			if (item != null && itemMeta != null) {
-				PlayerData pd = getPlayerData(ply);
-				String itemName = itemMeta.getLocalizedName();
+		EquipmentSlot hand = event.getHand();
+		
+		//If action is done in the players main hand
+		if (hand != null) {
+			if (hand.equals(EquipmentSlot.HAND)) {
+				List<Action> itemClickActions = Arrays.asList(Action.RIGHT_CLICK_AIR,Action.RIGHT_CLICK_BLOCK);
 				
-				ItemBase itemm = pd.getCustomItem(itemName);
-		        
-				if (itemm != null) {
-					ArrayList<Long> remove = new ArrayList<>();
-					boolean canDo = true;
-					int i = 0;
+				if (itemClickActions.contains(event.getAction())) {
+					ItemStack item = ply.getItemInHand();
+					ItemMeta itemMeta = item.getItemMeta();
 					
-					for (Long message : playerActions.get(ply.getUniqueId())) {
-						if (System.currentTimeMillis()-message < 5000) {
-							i++;
+					if (item != null && itemMeta != null) {
+						PlayerData pd = getPlayerData(ply);
+						String itemName = itemMeta.getLocalizedName();
+						ItemBase itemm = pd.getCustomItem(itemName);
+						
+						if (itemm != null) {
+							ArrayList<Long> remove = new ArrayList<>();
+							boolean canDo = true;
+							int i = 0;
 							
-							if (i >= 5) {
-								canDo = false;
+							for (Long message : playerActions.get(ply.getUniqueId())) {
+								if (System.currentTimeMillis()-message < 5000) {
+									i++;
+									
+									if (i >= 5) {
+										canDo = false;
+									}
+								} else {
+									remove.add(message);
+								}
 							}
-						} else {
-							remove.add(message);
+							
+							if (canDo) {			
+								playerActions.get(ply.getUniqueId()).removeAll(remove);
+								Bukkit.getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
+									@Override
+									public void run() {
+										pd.getCustomItem(itemName).use(item);
+									}
+								});
+							} else {
+								ply.sendMessage(ChatColor.YELLOW + "Please wait a few seconds before doing this action!");
+							}									
+							playerActions.get(ply.getUniqueId()).add(System.currentTimeMillis());
+							event.setCancelled(true);
 						}
 					}
-					
-					if (canDo) {			
-						playerActions.get(ply.getUniqueId()).removeAll(remove);
-						pd.getCustomItem(itemName).use(item);
-						event.setCancelled(true);
-					} else {
-						ply.sendMessage(ChatColor.YELLOW + "Please wait a few seconds before doing this action!");
-						event.setCancelled(true);
-					}									
-					playerActions.get(ply.getUniqueId()).add(System.currentTimeMillis());
 				}
+			}
+		} else {
+			if (!ply.hasPermission("nyeblock.canBreakBlocks")) {
+				event.setCancelled(true);
 			}
 		}
 	}
 	//Handle when a player interacts
-	@EventHandler
-	public void onPlayerInteract(PlayerInteractEvent event) {
-		Player ply = event.getPlayer();
-		PlayerData pd = getPlayerData(ply);
-		
-		if (pd.getSpectatingStatus()) {
-			event.setCancelled(true);
-		}
-	}
+//	@EventHandler
+//	public void onPlayerInteract(PlayerInteractEvent event) {
+//		Player ply = event.getPlayer();
+//		PlayerData pd = getPlayerData(ply);
+//		
+////		if (pd.getSpectatingStatus()) {
+////			event.setCancelled(true);
+////		}
+//	}
 	//Handle when a player interacts with an entity
 	@EventHandler
 	public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
-//		if (event.getRightClicked().getType().toString().equals("ITEM_FRAME")) {
-//			event.setCancelled(true);
-//		}
+		Entity entity = event.getRightClicked();
+		
+		if (entity.getType().equals(EntityType.ITEM_FRAME)) {
+			event.setCancelled(true);
+		}
 	}
 }

@@ -19,6 +19,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
@@ -31,16 +32,19 @@ import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
+import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
+import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.MapPointType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({"deprecation","serial"})
 public class SkyWars extends GameBase {
-	//Game info
-	private boolean gameBegun = false;
 	//Player data
 	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private HashMap<String,String> playerKits = new HashMap<>();
@@ -64,7 +68,7 @@ public class SkyWars extends GameBase {
     * Custom game constructor
     */
 	public SkyWars(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
-		super(mainInstance,Realm.SKYWARS,worldName);
+		super(mainInstance,Realm.SKYWARS,worldName,Realm.SKYWARS_LOBBY);
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
@@ -73,6 +77,36 @@ public class SkyWars extends GameBase {
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
+		
+		scoreboard = new Runnable() {
+			@Override
+			public void run() {
+				for(Player ply : players)
+				{       				
+					int pos = 1;
+					int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
+					PlayerData pd = playerHandling.getPlayerData(ply);
+					HashMap<Integer,String> scores = new HashMap<Integer,String>();
+					
+					scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
+					scores.put(pos++, ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.YELLOW + "Kills: " + ChatColor.GREEN + playerKills.get(ply.getName()));
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+					if (shouldRainbowTitleText) {
+						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "SKY WARS");				
+					} else {				
+						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");
+					}
+					
+					pd.updateObjectiveScores(scores);
+				}
+			}
+		};
 	}
 	
 	//
@@ -93,7 +127,7 @@ public class SkyWars extends GameBase {
 				}
 			}
 			
-			leave(ply,false,Realm.HUB);
+			mainInstance.getRealmHandlingInstance().joinLobby(ply, lobbyRealm);
 		}
 	}
 	/**
@@ -165,9 +199,6 @@ public class SkyWars extends GameBase {
 			}
 	    }.runTask(mainInstance);
 	    
-	    //Scoreboard timer
-	    mainInstance.getTimerInstance().createMethodTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
-	    
 	    //Main functions timer
 	    mainInstance.getTimerInstance().createMethodTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 	}
@@ -193,7 +224,6 @@ public class SkyWars extends GameBase {
     		}
     	}
 		
-		mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
 		mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
 	}
 	/**
@@ -234,23 +264,6 @@ public class SkyWars extends GameBase {
 				}
 			}
 		}
-	}
-	/**
-    * Set the players scoreboard
-    */
-	public void setScoreboard() {
-		//Give players xp for play time
-		if (gameBegun) {			
-			playTimeCount++;
-			if (playTimeCount >= 90 && !endStarted) {
-				playTimeCount = 0;
-				for (Player ply : players) {
-					giveXP(ply,"Play time",5);
-					ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
-				}
-			}
-		}
-		
 		//Check if player has won
 		if (playersInGame.size() == 1 && active) {
 			for (Player ply : playersInGame) {				
@@ -260,7 +273,7 @@ public class SkyWars extends GameBase {
 					
 					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + ply.getName() + " has won!");
 					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
-					giveXP(ply,"Placing #1",200);
+					addStat(ply,"Placing #1",200,SummaryStatType.XP);
 					playWinAction(ply);
 					playerHandling.getPlayerData(ply).addGamePlayed(realm, true);
 					for (Player player : players) {
@@ -270,31 +283,6 @@ public class SkyWars extends GameBase {
 					mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
 			}
-		}
-		//Update players scoreboard
-		for(Player ply : players)
-		{       				
-			int pos = 1;
-			int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
-			PlayerData pd = playerHandling.getPlayerData(ply);
-			HashMap<Integer,String> scores = new HashMap<Integer,String>();
-			
-			scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
-			scores.put(pos++, ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Kills: " + ChatColor.GREEN + playerKills.get(ply.getName()));
-			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
-			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
-			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			if (shouldRainbowTitleText) {
-				pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "SKY WARS");				
-			} else {				
-				pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");
-			}
-			
-			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
 		if (world != null) {   
@@ -319,6 +307,47 @@ public class SkyWars extends GameBase {
 		}
 	}
 	/**
+    * Set the players permissions
+    */
+	public void setDefaultPermissions(Player player) {
+		PermissionAttachment permissions = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getPermissionAttachment();
+		
+		permissions.setPermission("nyeblock.canBreakBlocks", false);
+		permissions.setPermission("nyeblock.canBreakBlocks", false);
+		permissions.setPermission("nyeblock.canUseInventory", false);
+		permissions.setPermission("nyeblock.shouldDropItemsOnDeath", true);
+		permissions.setPermission("nyeblock.canDamage", true);
+		permissions.setPermission("nyeblock.canBeDamaged", true);
+		permissions.setPermission("nyeblock.canTakeFallDamage", true);
+		permissions.setPermission("nyeblock.tempNoDamageOnFall", true);
+		permissions.setPermission("nyeblock.canDropItems", false);
+		permissions.setPermission("nyeblock.canLoseHunger", false);
+		permissions.setPermission("nyeblock.canSwapItems", false);
+		permissions.setPermission("nyeblock.canMove", true);
+	}
+	/**
+    * Set the players items
+    */
+	public void setItems(Player player) {
+		if (gameBegun) {						
+			//Select player
+			PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
+			player.getInventory().setItem(4, selectPlayer.give());
+			
+			//Return to hub
+			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
+			player.getInventory().setItem(8, returnToHub.give());
+		} else {						
+			//Select kit
+			KitSelectorMenu selectKit = new KitSelectorMenu(mainInstance,player);
+			player.getInventory().setItem(4, selectKit.give());
+			
+			//Return to lobby
+			ReturnToLobby returnToLobby = new ReturnToLobby(mainInstance,lobbyRealm,player);
+			player.getInventory().setItem(8, returnToLobby.give());
+		}
+	}
+	/**
     * Check if a player is in the game
     */
 	public boolean isInRound(Player ply) {
@@ -333,12 +362,6 @@ public class SkyWars extends GameBase {
 	}
 	public void addHologram(Hologram hologram) {
 		holograms.add(hologram);
-	}
-	/**
-    * Get the status of the game
-    */
-	public boolean isGameActive() {
-		return gameBegun;
 	}
 	/**
     * Get a specific players kit
@@ -358,8 +381,6 @@ public class SkyWars extends GameBase {
     * @param player - the player to set the kit for.
     */
 	public void setPlayerKit(Player ply, String kit) {
-		ply.getInventory().clear();
-		
 		if (kit.equalsIgnoreCase("default")) {
 			//Sword
 			ItemStack sword = new ItemStack(Material.WOODEN_SWORD);
@@ -371,86 +392,7 @@ public class SkyWars extends GameBase {
 			//Concrete
 			ItemStack concrete = new ItemStack(Material.GRAY_CONCRETE,15);
 			ply.getInventory().setItem(7, concrete);
-		} 
-//		else if (kit.equalsIgnoreCase("brawler")) {
-//			//Axe
-//			ItemStack axe = new ItemStack(Material.IRON_AXE);
-//			axe.addEnchantment(Enchantment.DAMAGE_ALL, 2);
-//			ply.getInventory().setItem(0, axe);
-//			ply.getInventory().setHeldItemSlot(0);
-//			//Golden Apples
-//			ItemStack goldenApples = new ItemStack(Material.ENCHANTED_GOLDEN_APPLE,5);
-//			ply.getInventory().setItem(1, goldenApples);
-//			//Armor
-//			ItemStack[] armor = {
-//				new ItemStack(Material.LEATHER_BOOTS),
-//				new ItemStack(Material.LEATHER_LEGGINGS),
-//				new ItemStack(Material.LEATHER_CHESTPLATE),
-//				new ItemStack(Material.LEATHER_HELMET)
-//			};
-//			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 2);
-//			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 2);
-//			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 2);
-//			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 2);
-//			ply.getInventory().setArmorContents(armor);
-//		} else if (kit.equalsIgnoreCase("archer")) {
-//			//Sword
-//			ItemStack sword = new ItemStack(Material.STONE_AXE);
-//			sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
-//			ply.getInventory().setItem(0, sword);
-//			ply.getInventory().setHeldItemSlot(0);
-//			//Armor
-//			ItemStack[] armor = {
-//				new ItemStack(Material.CHAINMAIL_BOOTS),
-//				new ItemStack(Material.CHAINMAIL_LEGGINGS),
-//				new ItemStack(Material.CHAINMAIL_CHESTPLATE),
-//				new ItemStack(Material.CHAINMAIL_HELMET)
-//			};
-//			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-//			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-//			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-//			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-//			ply.getInventory().setArmorContents(armor);
-//			//Bow
-//			ItemStack bow = new ItemStack(Material.BOW);
-//			bow.addEnchantment(Enchantment.ARROW_DAMAGE, 1);
-//			ply.getInventory().setItem(1, bow);
-//			//Arrows
-//			ItemStack arrows = new ItemStack(Material.ARROW,40);
-//			ply.getInventory().setItem(2, arrows);
-//		} else if (kit.equalsIgnoreCase("wizard")) {
-//			//Sword
-//			ItemStack sword = new ItemStack(Material.IRON_SWORD);
-//			ply.getInventory().setItem(0, sword);
-//			ply.getInventory().setHeldItemSlot(0);
-//			//Armor
-//			ItemStack[] armor = {
-//				new ItemStack(Material.LEATHER_BOOTS),
-//				new ItemStack(Material.LEATHER_LEGGINGS),
-//				new ItemStack(Material.LEATHER_CHESTPLATE),
-//				new ItemStack(Material.LEATHER_HELMET)
-//			};
-//			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-//			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-//			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-//			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-//			ply.getInventory().setArmorContents(armor);
-//			//5 Fire ball
-//			ItemStack fireBall = new ItemStack(Material.FIRE_CHARGE,5);
-//			ItemMeta fireBallMeta = fireBall.getItemMeta();
-//			fireBallMeta.setLocalizedName("kitpvp_wizard_fireball");
-//			fireBallMeta.setDisplayName(ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fire Ball");
-//			fireBall.setItemMeta(fireBallMeta);
-//			ply.getInventory().setItem(1,fireBall);
-//			//2 Potion of harm
-//			Potion damage = new Potion(PotionType.INSTANT_DAMAGE, 1);
-//			damage.setSplash(true);
-//			ply.getInventory().setItem(2, damage.toItemStack(2));
-//			//1 Potion of regeneration
-//			Potion regen = new Potion(PotionType.REGEN, 1);
-//			regen.setSplash(true);
-//			ply.getInventory().setItem(3, regen.toItemStack(1));
-//		}
+		}
 		playerKits.put(ply.getName(), kit);
 	}
 	/**
@@ -459,10 +401,44 @@ public class SkyWars extends GameBase {
 	* @return location to respawn the player
 	*/
 	public Location playerRespawn(Player ply) {
+		ply.getInventory().clear();
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		Location loc = null;
 		
-		pd.setItems();
+		setItems(ply);
+		
+		
+		//Add player to ghost mode
+		if (gameBegun && !playersSpectating.contains(ply)) {
+			ply.setGameMode(GameMode.ADVENTURE);
+			ply.setCollidable(false);
+			pd.setSpectatingStatus(true);
+			ply.setAllowFlight(true);
+			playersSpectating.add(ply);
+			playersInGame.removeAll(new ArrayList<Player>() {{
+				add(ply);
+			}});
+			
+			ply.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
+			
+			//Unhide spectators
+			for (Player player : playersSpectating) {
+				ply.showPlayer(mainInstance,player);
+			}
+			
+			//Hide player from players in the active game
+			for (Player player : playersInGame) {
+				player.hidePlayer(mainInstance,ply);
+			}
+			
+			//Set permissions
+			pd.setPermission("nyeblock.canBreakBlocks", false);
+			pd.setPermission("nyeblock.canUseInventory", false);
+			pd.setPermission("nyeblock.canDamage", false);
+			pd.setPermission("nyeblock.canBeDamaged", false);
+			pd.setPermission("nyeblock.canDropItems", false);
+			pd.setPermission("nyeblock.canLoseHunger", false);
+		}
 		
 		//Determine spawn position
 		if (pd.getSpectatingStatus()) {
@@ -495,41 +471,8 @@ public class SkyWars extends GameBase {
 	/**
     * Handle when a player died
     */
-	public void playerDeath(Player killed,Player killer) {		
+	public void playerDeath(Player killed,Player killer) {
 		boolean isSpectating = playersSpectating.contains(killed);
-		
-		//Add player to ghost mode
-		if (gameBegun && !isSpectating) {	
-			PlayerData pd = playerHandling.getPlayerData(killed);
-			
-			killed.setGameMode(GameMode.ADVENTURE);
-			pd.setSpectatingStatus(true);
-			killed.setAllowFlight(true);
-			playersSpectating.add(killed);
-			playersInGame.removeAll(new ArrayList<Player>() {{
-				add(killed);
-			}});
-			
-			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
-			
-			//Unhide spectators
-			for (Player ply : playersSpectating) {
-				killed.showPlayer(mainInstance,ply);
-			}
-			
-			//Hide player from players in the active game
-			for (Player ply : playersInGame) {
-				ply.hidePlayer(mainInstance,killed);
-			}
-			
-			//Set permissions
-			pd.setPermission("nyeblock.canBreakBlocks", false);
-			pd.setPermission("nyeblock.canUseInventory", false);
-			pd.setPermission("nyeblock.canDamage", false);
-			pd.setPermission("nyeblock.canBeDamaged", false);
-			pd.setPermission("nyeblock.canDropItems", false);
-			pd.setPermission("nyeblock.canLoseHunger", false);
-		}
 		
 		if (killer != null) {
 			for (int i = 0; i < 10; i++) {
@@ -539,7 +482,7 @@ public class SkyWars extends GameBase {
 			
 			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
 			killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName()));
-			giveXP(killer,"Kills",10);
+			addStat(killer,"Kills",10,SummaryStatType.XP);
 			killer.setLevel(killer.getLevel() + 2);
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
 		} else {

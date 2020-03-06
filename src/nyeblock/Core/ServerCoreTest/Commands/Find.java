@@ -12,14 +12,14 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-public class SetUserGroup extends CommandBase {
+public class Find extends CommandBase {
 	private PlayerHandling playerHandling;
 	
-	public SetUserGroup(Main mainInstance) {
+	public Find(Main mainInstance) {
 		super(mainInstance,
-			"setUserGroup",
-			"Sets the user group for the specified player",
-			"/setUserGroup <player> <userGroup>",
+			"find",
+			"Get the realm of the specified player",
+			"/find <player>",
 			new ArrayList<String>(),
 			Arrays.asList(UserGroup.ADMIN)
 		);
@@ -28,17 +28,11 @@ public class SetUserGroup extends CommandBase {
 	}
 	
 	public void execute(Player ply, String[] args) {
-		if (args.length >= 2) {			
+		if (args.length >= 1) {
 			Player player = Bukkit.getPlayerExact(args[0]);
 			
 			if (player != null) {
-				UserGroup group = UserGroup.fromName(args[1]);
-				
-				if (group != null) {
-					playerHandling.getPlayerData(player).setUserGroup(group);
-				} else {
-					ply.sendMessage(ChatColor.YELLOW + "Please enter a valid usergroup!");
-				}
+				ply.sendMessage(ChatColor.YELLOW + player.getName() + " is currently in: " + ChatColor.GREEN + playerHandling.getPlayerData(player).getCurrentRealm().getRealm().toString());
 			} else {
 				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}
@@ -50,15 +44,19 @@ public class SetUserGroup extends CommandBase {
 		List<String> autoCompletes = new ArrayList<>();
 		
 		if (args.length == 1) {
+			boolean foundPlayer = false;
+			
 			for (Player ply : player.getWorld().getPlayers()) {
-				if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {						
+				if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {	
+					foundPlayer = true;
 					autoCompletes.add(ply.getName());
 				}
 			}
-		} else if (args.length == 2) {
-			for (UserGroup group : UserGroup.values()) {
-				if (group.toString().toLowerCase().contains(args[1].toLowerCase())) {
-					autoCompletes.add(group.toString());
+			if (!foundPlayer) {
+				for (Player ply : Bukkit.getOnlinePlayers()) {
+					if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {	
+						autoCompletes.add(ply.getName());
+					}
 				}
 			}
 		}

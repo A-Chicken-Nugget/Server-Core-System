@@ -37,14 +37,18 @@ public abstract class MenuBase extends ItemBase {
 		
 		return this;
 	}
-	public void open() {
-		openMenu(null);
-	}
-	public void openMenu(String title) {
-		SubMenu menu = null;
-		menus.clear();
-		setContents();
+	public MenuBase open() {
+		openMenu(null,true);
 		
+		return this;
+	}
+	public void openMenu(String title, boolean refreshItems) {
+		SubMenu menu = null;
+		
+		if (refreshItems) {			
+			menus.clear();
+			setContents();
+		}
 		if (title != null) {			
 			for (SubMenu menuItem : menus) {
 				if (menuItem.getTitle().equalsIgnoreCase(title)) {
@@ -60,7 +64,7 @@ public abstract class MenuBase extends ItemBase {
 			PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(player);
 			MenuBase instance = this;
 			
-			for(MenuOption option : menu.getOptions()) {				
+			for(MenuOption option : menu.getOptions()) {
 				inventory.setItem(option.getPosition(), option.getItem());
 			}
 			if (pd.getMenu() != this) {				

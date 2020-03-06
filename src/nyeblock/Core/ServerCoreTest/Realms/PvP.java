@@ -15,11 +15,15 @@ import org.bukkit.Effect;
 import org.bukkit.FireworkEffect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.FireworkEffect.Type;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
@@ -27,17 +31,21 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
+import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
+import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
 
 @SuppressWarnings({"deprecation","serial"})
 public class PvP extends GameBase {
 	//Game info
 	private boolean active = false;
-	private boolean gameBegun = false;
 	//Player data
 	private ArrayList<Player> playersSpectating = new ArrayList<>();
 	private ArrayList<Player> playersInGame = new ArrayList<>();
@@ -54,7 +62,7 @@ public class PvP extends GameBase {
 	//
 	
 	public PvP(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers, Realm realm, PvPMode pvpMode, PvPType pvpType) {
-		super(mainInstance,realm,worldName);
+		super(mainInstance,realm,worldName,Realm.PVP_LOBBY);
 		
 		this.id = id;
 		this.worldName = worldName;
@@ -63,6 +71,33 @@ public class PvP extends GameBase {
 		this.maxPlayers = maxPlayers;
 		this.pvpMode = pvpMode;
 		this.pvpType = pvpType;
+		
+		scoreboard = new Runnable() {
+			@Override
+			public void run() {
+				for(Player ply : players)
+				{       				
+					int pos = 1;
+					int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
+					PlayerData pd = playerHandling.getPlayerData(ply);
+					HashMap<Integer,String> scores = new HashMap<Integer,String>();
+					
+					scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
+					scores.put(pos++, ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.YELLOW + "Mode: " + ChatColor.GREEN + pvpType.toString());
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+					if (shouldRainbowTitleText) {
+						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + pvpMode.toString());				
+					} else {				
+						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + pvpMode.toString());
+					}
+					pd.updateObjectiveScores(scores);
+				}
+			}
+		};
 	}
 	
 	//
@@ -83,7 +118,7 @@ public class PvP extends GameBase {
 				}
 			}
 			
-			leave(ply,false,Realm.HUB);
+			leave(ply,false,lobbyRealm);
 		}
 	}
 	/**
@@ -96,6 +131,7 @@ public class PvP extends GameBase {
 			gameBegun = true;
 			canUsersJoin = false;
 			startTime = System.currentTimeMillis() / 1000L;
+			
 			for(Player ply : players) {
 				playersInGame.add(ply);
 				
@@ -141,9 +177,6 @@ public class PvP extends GameBase {
 			teamsSetup.add(team,teamSpawns);
 		}
 		
-		//Scoreboard timer
-		mainInstance.getTimerInstance().createMethodTimer("score_" + worldName, .5, 0, "setScoreboard", false, null, this);
-		
 		//Main functions timer
 		mainInstance.getTimerInstance().createMethodTimer("main_" + worldName, 1, 0, "mainFunctions", false, null, this);
 	}
@@ -151,7 +184,6 @@ public class PvP extends GameBase {
 	* What needs to be ran when the world is deleted
 	*/
 	public void onDelete() {
-		mainInstance.getTimerInstance().deleteTimer("score_" + worldName);
 		mainInstance.getTimerInstance().deleteTimer("main_" + worldName);
 	}
 	/**
@@ -208,23 +240,6 @@ public class PvP extends GameBase {
 				}
 			}
 		}
-	}
-	/**
-    * Set the players scoreboard
-    */
-	public void setScoreboard() {
-		//Give players xp for play time
-		if (gameBegun) {			
-			playTimeCount++;
-			if (playTimeCount >= 90 && !endStarted) {
-				playTimeCount = 0;
-				for (Player ply : players) {
-					giveXP(ply,"Play time",5);
-					ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
-				}
-			}
-		}
-		
 		//Check if team has won
 		if (gameBegun && !endStarted) {
 			for (int team = 0; team < 2; team++) {
@@ -252,7 +267,7 @@ public class PvP extends GameBase {
 							}
 							teamPlayers.add(entry.getValue());
 							playWinAction(entry.getValue());
-							giveXP(entry.getValue(),"Winning",150);
+							addStat(entry.getValue(),"Winning",150,SummaryStatType.XP);
 							playerHandling.getPlayerData(entry.getValue()).addGamePlayed(realm, true);
 						}
 					}
@@ -267,28 +282,6 @@ public class PvP extends GameBase {
 					break;
 				}
 			}
-		}
-		//Update players scoreboard
-		for(Player ply : players)
-		{       				
-			int pos = 1;
-			int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
-			PlayerData pd = playerHandling.getPlayerData(ply);
-			HashMap<Integer,String> scores = new HashMap<Integer,String>();
-			
-			scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
-			scores.put(pos++, ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
-			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.YELLOW + "Mode: " + ChatColor.GREEN + pvpType.toString());
-			scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-			scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-			if (shouldRainbowTitleText) {
-				pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + pvpMode.toString());				
-			} else {				
-				pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + pvpMode.toString());
-			}
-			pd.updateObjectiveScores(scores);
 		}
 		//Manage weather/time
 		if (world != null) {
@@ -312,6 +305,39 @@ public class PvP extends GameBase {
 				mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
+	}
+	/**
+    * Set the players permissions
+    */
+	public void setDefaultPermissions(Player player) {
+		PermissionAttachment permissions = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getPermissionAttachment();
+		
+		permissions.setPermission("nyeblock.canBreakBlocks", false);
+		permissions.setPermission("nyeblock.canBreakBlocks", false);
+		permissions.setPermission("nyeblock.canUseInventory", false);
+		permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
+		permissions.setPermission("nyeblock.canDamage", false);
+		permissions.setPermission("nyeblock.canBeDamaged", true);
+		permissions.setPermission("nyeblock.canTakeFallDamage", true);
+		permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
+		permissions.setPermission("nyeblock.canDropItems", false);
+		permissions.setPermission("nyeblock.canLoseHunger", false);
+		permissions.setPermission("nyeblock.canSwapItems", false);
+		permissions.setPermission("nyeblock.canMove", true);
+	}
+	/**
+    * Set the players items
+    */
+	public void setItems(Player player) {
+		if (isGameActive()) {						
+			//Select player
+			PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
+			player.getInventory().setItem(4, selectPlayer.give());
+		}
+		
+		//Return to hub
+		ReturnToLobby returnToLobby = new ReturnToLobby(mainInstance,lobbyRealm,player);
+		player.getInventory().setItem(8, returnToLobby.give());
 	}
 	public PvPType getPvPType() {
 		return pvpType;
@@ -337,10 +363,10 @@ public class PvP extends GameBase {
 	* @return location to respawn the player
 	*/
 	public Location playerRespawn(Player ply) {
-		PlayerData pd = playerHandling.getPlayerData(ply);
-		
-		pd.setItems();
+		ply.getInventory().clear();
+		setItems(ply);
 		ply.setFireTicks(0);
+		
 		return getPlayerSpawn(ply);
 	}
 	/**
@@ -389,7 +415,7 @@ public class PvP extends GameBase {
 			killer.playSound(killer.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
 			
 			killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName()));
-			giveXP(killer,"Kills",10);
+			addStat(killer,"Kills",10,SummaryStatType.XP);
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
 		} else {
 			if (!isSpectating) {

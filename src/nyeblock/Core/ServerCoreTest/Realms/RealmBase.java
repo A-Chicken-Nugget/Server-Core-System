@@ -185,7 +185,7 @@ public abstract class RealmBase {
     */
 	public void messageToAll(String message) {
 		for(Player ply : players) {
-			ply.sendMessage(ChatColor.BOLD + "§7Nye§bBlock §7\u00BB " + ChatColor.RESET + message);
+			ply.sendMessage(ChatColor.BOLD + "Â§7NyeÂ§bBlock Â§7\u00BB " + ChatColor.RESET + message);
 		}
 	}
 	/**
@@ -250,8 +250,8 @@ public abstract class RealmBase {
 			players.add(ply);
 		}
 		
-		//Update playerdata
-		pd.setRealm(realm,true,true,true);
+		//Update realm
+		pd.setRealm(realm,true);
 		
 		//Show/hide players accordingly
 		for (Player ply2 : Bukkit.getOnlinePlayers()) {
@@ -326,6 +326,12 @@ public abstract class RealmBase {
 			}
 		}
 		
+		//Set permissions/items
+		ply.getInventory().clear();
+		pd.clearCustomItems();
+		setItems(ply);
+		setDefaultPermissions(ply);
+		
 		//Run the proper join method depending on the type of realm
 		if (isGame) {
 			gameJoin(ply);
@@ -356,30 +362,38 @@ public abstract class RealmBase {
     * @param destination - The realm to send the player
     */
 	public void leave(Player ply, boolean showLeaveMessage, Realm destination) {
-		PlayerData pd = playerHandling.getPlayerData(ply);
-		
-		//Remove from the players array
-		players.removeAll(new ArrayList<Player>() {{
-			add(ply);
-		}});
-		
-		//Clear players scoreboard
-		pd.clearScoreboard();
-		
-		//Leave current realm
-		if (this instanceof GameBase) {
-			((GameBase)this).gameLeave(ply, showLeaveMessage);
-		} else {			
-			playerLeave(ply);
-		}
-		
-		//Join destination
-		if (destination != null) {			
-			mainInstance.getGameInstance().joinGame(ply, destination);
+		if (players.contains(ply)) {
+			PlayerData pd = playerHandling.getPlayerData(ply);
+			
+			//Remove from the players array
+			players.removeAll(new ArrayList<Player>() {{
+				add(ply);
+			}});
+			
+			//Clear players scoreboard
+			pd.clearScoreboard();
+			
+			//Leave current realm
+			if (this instanceof GameBase) {
+				((GameBase)this).gameLeave(ply, showLeaveMessage);
+			} else {			
+				playerLeave(ply);
+			}
+			
+			//Join destination
+			if (destination != null) {			
+				if (!destination.getDBName().contains("lobby")) {				
+					mainInstance.getRealmHandlingInstance().joinRealm(ply, destination);
+				} else {
+					mainInstance.getRealmHandlingInstance().joinLobby(ply, destination);
+				}
+			}			
 		}
 	}
 	public void playerDeath(Player killed, Player attacker) {}
 	public Location playerRespawn(Player ply) { return null; }
+	public void setDefaultPermissions(Player player) {}
+	public void setItems(Player player) {}
 	
 	//
 	// GETTERS

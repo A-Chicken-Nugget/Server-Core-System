@@ -23,6 +23,9 @@ public class ChestValueItems {
 			put(Material.WOODEN_SWORD,1);
 			put(Material.WOODEN_AXE,1);
 			put(Material.WOODEN_PICKAXE,1);
+			put(Material.WOODEN_SWORD,1);
+			put(Material.WOODEN_AXE,1);
+			put(Material.WOODEN_PICKAXE,1);
 			put(Material.STONE_SWORD,1);
 			put(Material.STONE_AXE,1);
 			put(Material.STONE_PICKAXE,1);
@@ -49,6 +52,9 @@ public class ChestValueItems {
 			put(Material.CHAINMAIL_CHESTPLATE,1);
 			put(Material.CHAINMAIL_LEGGINGS,1);
 			put(Material.CHAINMAIL_HELMET,1);
+			put(Material.CHAINMAIL_CHESTPLATE,1);
+			put(Material.CHAINMAIL_LEGGINGS,1);
+			put(Material.CHAINMAIL_HELMET,1);
 			put(Material.POTION,1);
 			put(Material.EXPERIENCE_BOTTLE,Toolkit.GetRandomNumber(25,64));
 			put(Material.BOOKSHELF,Toolkit.GetRandomNumber(5,13));
@@ -58,6 +64,11 @@ public class ChestValueItems {
 		put(ChestValue.HIGH,new HashMap<Material,Integer>() {{
 			put(Material.DIAMOND_SWORD,1);
 			put(Material.DIAMOND_AXE,1);
+			put(Material.IRON_AXE,1);
+			put(Material.IRON_LEGGINGS,1);
+			put(Material.IRON_CHESTPLATE,1);
+			put(Material.IRON_BOOTS,1);
+			put(Material.IRON_HELMET,1);
 			put(Material.IRON_AXE,1);
 			put(Material.IRON_LEGGINGS,1);
 			put(Material.IRON_CHESTPLATE,1);
@@ -85,6 +96,11 @@ public class ChestValueItems {
 		}});
 	}};
 	private HashMap<Material,Integer> defaultItems = new HashMap<Material,Integer>() {{
+		put(Material.GLASS,Toolkit.GetRandomNumber(10,64));
+		put(Material.GRAY_CONCRETE,Toolkit.GetRandomNumber(5,45));
+		put(Material.OAK_PLANKS,Toolkit.GetRandomNumber(5,45));
+		put(Material.COOKED_BEEF,Toolkit.GetRandomNumber(2,8));
+		put(Material.COOKED_CHICKEN,Toolkit.GetRandomNumber(2,8));
 		put(Material.GRAY_CONCRETE,Toolkit.GetRandomNumber(5,45));
 		put(Material.OAK_PLANKS,Toolkit.GetRandomNumber(5,45));
 		put(Material.COOKED_BEEF,Toolkit.GetRandomNumber(2,8));

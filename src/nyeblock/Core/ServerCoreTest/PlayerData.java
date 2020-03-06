@@ -1,18 +1,23 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.potion.PotionEffect;
@@ -29,6 +34,8 @@ import com.google.gson.reflect.TypeToken;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.minecraft.server.v1_15_R1.DataWatcherObject;
+import net.minecraft.server.v1_15_R1.DataWatcherRegistry;
 
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -37,14 +44,14 @@ import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToStart;
-import nyeblock.Core.ServerCoreTest.Menus.HubMenu;
+import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
 import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
 import nyeblock.Core.ServerCoreTest.Menus.MenuBase;
 import nyeblock.Core.ServerCoreTest.Menus.NyeBlockMenu;
 import nyeblock.Core.ServerCoreTest.Menus.ParkourMenu;
-import nyeblock.Core.ServerCoreTest.Menus.ProfileStatsMenu;
-import nyeblock.Core.ServerCoreTest.Menus.ShopMenu;
+import nyeblock.Core.ServerCoreTest.Menus.StatsMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
@@ -72,6 +79,7 @@ public class PlayerData {
 	private PermissionAttachment permissions;
 	private Realm realm = Realm.HUB;
 	private ChatColor chatTextColor = null;
+	private ChatColor nameTextColor = null;
 	private HashMap<String,String> customData = new HashMap<>();
 	private HashMap<String,ItemBase> customItems = new HashMap<>();
 	private ArrayList<ShopItem> shopItems = new ArrayList<>();
@@ -103,11 +111,20 @@ public class PlayerData {
 				player.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
 				createScoreboard();
 				mainInstance.getHubInstance().join(ply, false);
+				
+				//Open welcome book
+//				ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+//				BookMeta bookMeta = (BookMeta)book.getItemMeta();
+//				bookMeta.setTitle("Blank");
+//				bookMeta.setAuthor("Server");
+//				bookMeta.setPages(Arrays.asList("test1","test2"));
+//				book.setItemMeta(bookMeta);
+//				player.openBook(book);
 			}
 		});
 	}
 	
-	public void addShopItem(String uniqueId) {
+	public void addShopItem(String uniqueId,String menuName) {
 		boolean found = false;
 		
 		for (ShopItem item : shopItems) {
@@ -117,7 +134,7 @@ public class PlayerData {
 			}
 		}
 		if (!found) {
-			shopItems.add(new ShopItem(uniqueId,1,false));
+			shopItems.add(new ShopItem(uniqueId,1,false,menuName));
 		}
 	}
 	public void removeShopItem(ShopItem item) {
@@ -161,7 +178,7 @@ public class PlayerData {
 	}
 	/**
     * Give the player xp
-    * @param realm - realm to give the xp should be added to
+    * @param realm - realm
     * @param amount - amount of xp added to the specified realm
     */
 	public void giveXP(Realm realm, int amount) {
@@ -245,8 +262,13 @@ public class PlayerData {
 	public void saveToDB() {
 		DatabaseHandling dh = mainInstance.getDatabaseInstance();
 		
-		//Save players points and time played
-		dh.query("UPDATE users SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getTimeJoined()) + "), points = " + points + " WHERE name = '" + player.getName() + "'", 0, true);			
+		//Save players points, time played and chat text color
+		dh.query("UPDATE users "
+			+ "SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getTimeJoined()) + "), "
+			+ "points = " + points + ", "
+			+ "chatTextColor = " + (chatTextColor == null ? "NULL, " : ("'" + chatTextColor.name().toString() + "', "))
+			+ "nameTextColor = " + (nameTextColor == null ? "NULL " : ("'" + nameTextColor.name().toString() + "' "))
+			+ "WHERE uniqueId = '" + player.getUniqueId() + "'", true);			
 		
 		//Save players realm xp
 		HashMap<String,Integer> realmXp = getRealmXp();
@@ -259,7 +281,9 @@ public class PlayerData {
 				xpString += ", " + entry.getKey() + " = " + entry.getValue();
 			}
 		}
-		dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + player.getUniqueId() + "'", 0, true);
+		if (!xpString.equals("")) {			
+			dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + player.getUniqueId() + "'", true);
+		}
 
 		//Save players total games won
 		HashMap<String,Integer> totalGamesWon = getTotalGamesPlayed();
@@ -272,7 +296,9 @@ public class PlayerData {
 				wonString += ", " + entry.getKey() + " = " + entry.getValue();
 			}
 		}
-		dh.query("UPDATE userGamesWon SET " + wonString + " WHERE uniqueId = '" + player.getUniqueId() + "'", 0, true);	
+		if (!wonString.equals("")) {			
+			dh.query("UPDATE userGamesWon SET " + wonString + " WHERE uniqueId = '" + player.getUniqueId() + "'", true);	
+		}
 		
 		//Save players total games
 		HashMap<String,Integer> totalGamesPlayed = getTotalGamesPlayed();
@@ -285,13 +311,15 @@ public class PlayerData {
 				totalString += ", " + entry.getKey() + " = " + entry.getValue();
 			}
 		}
-		dh.query("UPDATE userTotalGames SET " + totalString + " WHERE uniqueId = '" + player.getUniqueId() + "'", 0, true);	
+		if (!totalString.equals("")) {			
+			dh.query("UPDATE userTotalGames SET " + totalString + " WHERE uniqueId = '" + player.getUniqueId() + "'", true);	
+		}
 		
 		//Save players shop items
 		if (shopItems.size() > 0) {									
 			String shopItemsJSON = new Gson().toJson(shopItems);
 			
-			dh.query("UPDATE userShopItems SET items = '" + shopItemsJSON + "' WHERE uniqueId = '" + player.getUniqueId() + "'", 0, true);	
+			dh.query("UPDATE userShopItems SET items = '" + shopItemsJSON + "' WHERE uniqueId = '" + player.getUniqueId() + "'", true);	
 		}
 	}
 	/**
@@ -301,7 +329,7 @@ public class PlayerData {
 		DatabaseHandling db = mainInstance.getDatabaseInstance();
     	
     	//Get the players realm xp
-    	ArrayList<HashMap<String, String>> realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
+    	ArrayList<HashMap<String, String>> realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     	
     	//If the player exists in the userXP table
     	if (realmXPQuery.size() > 0) {
@@ -313,16 +341,11 @@ public class PlayerData {
     				realmXp.put(realm.getDBName(),Integer.parseInt(realmXPQueryData.get(realm.getDBName())));
     			}
     		}
-//    		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
-//    		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
-//    		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
-//    		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
-//    		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
     	} else {
     		//Insert the user in the userXP table
-    		db.query("INSERT INTO userXP (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
+    		db.query("INSERT INTO userXP (uniqueId) VALUES ('" + player.getUniqueId() + "')", true);
     		
-    		realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
+    		realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     		HashMap<String, String> realmXPQueryData = realmXPQuery.get(0);
     		
     		//Set the players realm xp
@@ -331,15 +354,10 @@ public class PlayerData {
     				realmXp.put(realm.getDBName(),Integer.parseInt(realmXPQueryData.get(realm.getDBName())));
     			}
     		}
-//    		realmXp.put("kitpvp", Integer.parseInt(realmXPQueryData.get("kitpvp")));
-//    		realmXp.put("skywars", Integer.parseInt(realmXPQueryData.get("skywars")));
-//    		realmXp.put("stepspleef", Integer.parseInt(realmXPQueryData.get("stepspleef")));
-//    		realmXp.put("duels_fists", Integer.parseInt(realmXPQueryData.get("duels_fists")));
-//    		realmXp.put("2v2_fists", Integer.parseInt(realmXPQueryData.get("2v2_fists")));
     	}
     	
     	//Get the players total games played
-    	ArrayList<HashMap<String, String>> totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
+    	ArrayList<HashMap<String, String>> totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     	
     	//If the player exists in the table
     	if (totalGamesQuery.size() > 0) {
@@ -351,16 +369,11 @@ public class PlayerData {
     				totalGamesPlayed.put(realm.getDBName(),Integer.parseInt(totalGamesQueryData.get(realm.getDBName())));
     			}
     		}
-//    		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
-//    		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
-//    		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
-//    		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
-//    		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
     	} else {
     		//Insert the user in the table
-    		db.query("INSERT INTO userTotalGames (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
+    		db.query("INSERT INTO userTotalGames (uniqueId) VALUES ('" + player.getUniqueId() + "')", true);
     		
-    		totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
+    		totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
     		
     		//Set the players total games played
@@ -369,15 +382,10 @@ public class PlayerData {
     				totalGamesPlayed.put(realm.getDBName(),Integer.parseInt(totalGamesQueryData.get(realm.getDBName())));
     			}
     		}
-//    		totalGamesPlayed.put("kitpvp", Integer.parseInt(totalGamesQueryData.get("kitpvp")));
-//    		totalGamesPlayed.put("skywars", Integer.parseInt(totalGamesQueryData.get("skywars")));
-//    		totalGamesPlayed.put("stepspleef", Integer.parseInt(totalGamesQueryData.get("stepspleef")));
-//    		totalGamesPlayed.put("duels_fists", Integer.parseInt(totalGamesQueryData.get("duels_fists")));
-//    		totalGamesPlayed.put("2v2_fists", Integer.parseInt(totalGamesQueryData.get("2v2_fists")));
     	}
     	
     	//Get the players game wins
-    	ArrayList<HashMap<String, String>> gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
+    	ArrayList<HashMap<String, String>> gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     	
     	//If the player exists in the table
     	if (gamesWonQuery.size() > 0) {
@@ -389,16 +397,11 @@ public class PlayerData {
     				totalGamesWon.put(realm.getDBName(),Integer.parseInt(gamesWonQueryData.get(realm.getDBName())));
     			}
     		}
-//    		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
-//    		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
-//    		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
-//    		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
-//    		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
     	} else {
     		//Insert the user in the table
-    		db.query("INSERT INTO userGamesWon (uniqueId) VALUES ('" + player.getUniqueId() + "')", 0, true);
+    		db.query("INSERT INTO userGamesWon (uniqueId) VALUES ('" + player.getUniqueId() + "')", true);
     		
-    		gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", 9, false);
+    		gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
     		
     		//Set the players games won
@@ -407,15 +410,10 @@ public class PlayerData {
     				totalGamesWon.put(realm.getDBName(),Integer.parseInt(gamesWonQueryData.get(realm.getDBName())));
     			}
     		}
-//    		totalGamesWon.put("kitpvp", Integer.parseInt(gamesWonQueryData.get("kitpvp")));
-//    		totalGamesWon.put("skywars", Integer.parseInt(gamesWonQueryData.get("skywars")));
-//    		totalGamesWon.put("stepspleef", Integer.parseInt(gamesWonQueryData.get("stepspleef")));
-//    		totalGamesWon.put("duels_fists", Integer.parseInt(gamesWonQueryData.get("duels_fists")));
-//    		totalGamesWon.put("2v2_fists", Integer.parseInt(gamesWonQueryData.get("2v2_fists")));
     	}
     	
     	//Get the players shop items
-    	ArrayList<HashMap<String, String>> shopItemsQuery = db.query("SELECT * FROM userShopItems WHERE uniqueId = '" + player.getUniqueId() + "'", 3, false);
+    	ArrayList<HashMap<String, String>> shopItemsQuery = db.query("SELECT * FROM userShopItems WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     	
     	if (shopItemsQuery.size() > 0) {
     		ArrayList<ShopItem> test = new Gson().fromJson(shopItemsQuery.get(0).get("items"), new TypeToken<ArrayList<ShopItem>>(){}.getType());
@@ -423,16 +421,41 @@ public class PlayerData {
     		shopItems = test;
     	} else {
     		//Insert the user in the table
-    		db.query("INSERT INTO userShopItems (uniqueId,items) VALUES ('" + player.getUniqueId() + "','" + new Gson().toJson(new ArrayList<ShopItem>()) + "')", 0, true);
+    		db.query("INSERT INTO userShopItems (uniqueId,items) VALUES ('" + player.getUniqueId() + "','" + new Gson().toJson(new ArrayList<ShopItem>()) + "')", true);
     	}
     	
     	loadedDBInfo = true;
+	}
+	/**
+    * Update the players scoreboard text if any part of it has changed
+    * @param scores - scores on the scoreboard to compare/set.
+    */
+	public void updateObjectiveScores(HashMap<Integer,String> scores) {
+		for (Map.Entry<Integer, String> entry : scores.entrySet()) {
+			Toolkit.updateScore(objective, entry.getKey(), entry.getValue());
+		}
+	}
+	/**
+    * Get the players queuing status
+    * @return the players queuing status
+    */
+	public boolean isQueuingGame() {
+		return queuingGame;
+	}
+	public void clearCustomItems() {
+		customItems.clear();
 	}
 	
 	//
 	// GETTERS
 	//
 	
+	public ChatColor getNameTextColor() {
+		return nameTextColor;
+	}
+	public PermissionAttachment getPermissionAttachment() {
+		return permissions;
+	}
 	public Player getPlayer() {
 		return player;
 	}
@@ -613,18 +636,17 @@ public class PlayerData {
 	public UserGroup getUserGroup() {
 		return userGroup;
 	}
-	/**
-    * Get the players queuing status
-    * @return the players queuing status
-    */
-	public boolean isQueuingGame() {
-		return queuingGame;
-	}
 	
 	//
 	// SETTERS
 	//
 	
+	public void setNameTextColor(ChatColor color) {
+		nameTextColor = color;
+	}
+	public void setChatTextColor(ChatColor color) {
+		chatTextColor = color;
+	}
 	/**
 	* Set the players hidden status
 	* @param shouldHide - should the player be hidden
@@ -639,7 +661,7 @@ public class PlayerData {
 	public void setUserGroup(UserGroup group) {
 		userGroup = group;
 		currentRealm.updateTeamsFromUserGroups();
-		mainInstance.getDatabaseInstance().query("UPDATE users SET userGroup = " + group.getValue() + " WHERE id = " + id, 0, true);
+		mainInstance.getDatabaseInstance().query("UPDATE users SET userGroup = " + group.getValue() + " WHERE id = " + id, true);
 	}
 	/**
 	* Update the player and set the scoreboard to the new player
@@ -699,13 +721,14 @@ public class PlayerData {
     * @param ip - players ip
     * @param userGroup - players user group
     */
-	public void setData(int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup, ChatColor chatTextColor) {
+	public void setData(int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup, ChatColor chatTextColor, ChatColor nameTextColor) {
 		this.id = id;
 		this.points = points;
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
 		this.chatTextColor = chatTextColor;
+		this.nameTextColor = nameTextColor;
 		
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
@@ -713,78 +736,6 @@ public class PlayerData {
             	loadFromDB();
             }
 		});
-		setPermissions();
-	}
-	/**
-    * Set the players permissions based on their current realm
-    */
-	public void setPermissions() {
-		if (realm == Realm.HUB) {
-			permissions.setPermission("nyeblock.canPlaceBlocks", false);
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canUseInventory", false);
-			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
-			permissions.setPermission("nyeblock.canDamage", false);
-			permissions.setPermission("nyeblock.canBeDamaged", false);
-			permissions.setPermission("nyeblock.canTakeFallDamage", false);
-			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-			permissions.setPermission("nyeblock.canDropItems", false);
-			permissions.setPermission("nyeblock.canLoseHunger", false);
-			permissions.setPermission("nyeblock.canSwapItems", false);
-			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.KITPVP) {
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canUseInventory", false);
-			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
-			permissions.setPermission("nyeblock.canDamage", true);
-			permissions.setPermission("nyeblock.canBeDamaged", false);
-			permissions.setPermission("nyeblock.canTakeFallDamage", true);
-			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-			permissions.setPermission("nyeblock.canDropItems", false);
-			permissions.setPermission("nyeblock.canLoseHunger", false);
-			permissions.setPermission("nyeblock.canSwapItems", false);
-			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.STEPSPLEEF) {
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canUseInventory", false);
-			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
-			permissions.setPermission("nyeblock.canDamage", true);
-			permissions.setPermission("nyeblock.canBeDamaged", true);
-			permissions.setPermission("nyeblock.canTakeFallDamage", false);
-			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-			permissions.setPermission("nyeblock.canDropItems", false);
-			permissions.setPermission("nyeblock.canLoseHunger", false);
-			permissions.setPermission("nyeblock.canSwapItems", false);
-			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.SKYWARS) {
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canUseInventory", false);
-			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", true);
-			permissions.setPermission("nyeblock.canDamage", true);
-			permissions.setPermission("nyeblock.canBeDamaged", true);
-			permissions.setPermission("nyeblock.canTakeFallDamage", true);
-			permissions.setPermission("nyeblock.tempNoDamageOnFall", true);
-			permissions.setPermission("nyeblock.canDropItems", false);
-			permissions.setPermission("nyeblock.canLoseHunger", false);
-			permissions.setPermission("nyeblock.canSwapItems", false);
-			permissions.setPermission("nyeblock.canMove", true);
-		} else if (realm == Realm.PVP_DUELS_FISTS || realm == Realm.PVP_2V2_FISTS) {
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canBreakBlocks", false);
-			permissions.setPermission("nyeblock.canUseInventory", false);
-			permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
-			permissions.setPermission("nyeblock.canDamage", false);
-			permissions.setPermission("nyeblock.canBeDamaged", true);
-			permissions.setPermission("nyeblock.canTakeFallDamage", true);
-			permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-			permissions.setPermission("nyeblock.canDropItems", false);
-			permissions.setPermission("nyeblock.canLoseHunger", false);
-			permissions.setPermission("nyeblock.canSwapItems", false);
-			permissions.setPermission("nyeblock.canMove", true);
-		}
 	}
 	/**
     * Set a specific permission for the player
@@ -795,156 +746,42 @@ public class PlayerData {
 		permissions.setPermission(permission, value);
 	}
 	/**
-    * Give the player default items based on their realm
-    */
-	public void setItems() {
-		player.getInventory().clear();
-		customItems.clear();
-		
-		if (realm == Realm.HUB) {
-			//Game Menu
-			HubMenu hubMenu = new HubMenu(mainInstance,player);
-			ItemStack hm = hubMenu.give();
-			player.getInventory().setItem(4, hm);
-			player.getInventory().setHeldItemSlot(4);
-			
-			//Hide players
-			HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
-			ItemStack hp = hidePlayers.give();
-			player.getInventory().setItem(6, hp);
-			
-			//Shop menu
-			ShopMenu shopMenu = new ShopMenu(mainInstance,player);
-			ItemStack sm = shopMenu.give();
-			player.getInventory().setItem(2, sm);
-			
-			//Profile/Stats menu
-			ProfileStatsMenu profileStatsMenu = new ProfileStatsMenu(mainInstance,player);
-			ItemStack ssm = profileStatsMenu.give();
-			player.getInventory().setItem(0, ssm);
-			
-			//NyeBlock
-			NyeBlockMenu nyeBlockMenu = new NyeBlockMenu(mainInstance,player);
-			ItemStack nbm = nyeBlockMenu.give();
-			player.getInventory().setItem(8, nbm);
-			
-		} else if (realm == Realm.PARKOUR) {
-			//Parkour menu
-			ParkourMenu parkourMenu = new ParkourMenu(mainInstance,player);
-			ItemStack pm = parkourMenu.give();
-			player.getInventory().setItem(4, pm);
-			
-			//Hide players
-			HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
-			ItemStack hp = hidePlayers.give();
-			player.getInventory().setItem(6, hp);
-			
-			//Go to start
-			ReturnToStart startItem = new ReturnToStart(mainInstance,player);
-			ItemStack si = startItem.give();
-			player.getInventory().setItem(2, si);
-		} if (realm == Realm.KITPVP) {
-			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
-			player.getInventory().setItem(8, returnToHub.give());
-			//Select kit
-			KitSelectorMenu selectKit = new KitSelectorMenu(mainInstance,player);
-			player.getInventory().setItem(7, selectKit.give());
-			//Sword
-			ItemStack sword = new ItemStack(Material.IRON_SWORD);
-			sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
-			player.getInventory().setItem(0, sword);
-			player.getInventory().setHeldItemSlot(0);
-			//Golden Apples
-			ItemStack goldenApples = new ItemStack(Material.ENCHANTED_GOLDEN_APPLE,1);
-			player.getInventory().setItem(1, goldenApples);
-			//Armor
-			ItemStack[] armor = {
-				new ItemStack(Material.IRON_BOOTS),
-				new ItemStack(Material.IRON_LEGGINGS),
-				new ItemStack(Material.IRON_CHESTPLATE),
-				new ItemStack(Material.IRON_HELMET)
-			};
-			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			player.getInventory().setArmorContents(armor);
-		} else if (realm == Realm.STEPSPLEEF) {
-			if (currentRealm != null) {
-				if (currentRealm.isInServer(player) && ((GameBase)currentRealm).isGameActive()) {
-					//Select player
-					PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
-					player.getInventory().setItem(4, selectPlayer.give());
-				}
-			}
-			
-			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
-			player.getInventory().setItem(8, returnToHub.give());
-		} else if (realm == Realm.SKYWARS) {
-			if (currentRealm != null) {
-				if (currentRealm.isInServer(player)) {
-					if (((GameBase)currentRealm).isGameActive()) {						
-						//Select player
-						PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
-						player.getInventory().setItem(4, selectPlayer.give());
-					} else {						
-						//Select kit
-						KitSelectorMenu selectKit = new KitSelectorMenu(mainInstance,player);
-						player.getInventory().setItem(4, selectKit.give());
-					}
-				}
-			}
-			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
-			player.getInventory().setItem(8, returnToHub.give());
-		} else if (realm == Realm.PVP_DUELS_FISTS || realm == Realm.PVP_2V2_FISTS) {
-			if (currentRealm != null && ((GameBase)currentRealm).isGameActive()) {						
-				//Select player
-				PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
-				player.getInventory().setItem(4, selectPlayer.give());
-			}
-			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
-			player.getInventory().setItem(8, returnToHub.give());
-		}
-	}
-	/**
     * Set the players realm
     * @param realm - realm to set.
     * @param updatePermissions - should their permissions be updated?
     * @param updateItems - should their items be updated?
     */
-	public void setRealm(Realm realm, boolean updatePermissions, boolean updateItems, boolean resetPlayer) {
+	public void setRealm(Realm realm, boolean resetPlayer) {
 		this.realm = realm;
 		
-		if (updatePermissions) {			
-			setPermissions();
-		}
-		if (updateItems) {			
-			setItems();
-		}
+		//Reset player stuff
 		if (resetPlayer) {
-			//Remove potion effects
+			//Potion effects
 			for(PotionEffect effect : player.getActivePotionEffects())
 			{
 				player.removePotionEffect(effect.getType());
 			}
-			//Reset flying
+			//Flying status
 			player.setAllowFlight(false);
-			//Reset health/food
+			//Health/food
 			player.setHealth(20);
 			player.setFoodLevel(20);
-			//Remove fire
+			//Fire ticks
 			player.setFireTicks(0);
-			//Reset title
+			//Title text
 			player.sendTitle("", "", 0, 0, 0);
+			//Action bar text
 			player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-			//Reset spectating status
+			//Spectating status
 			setSpectatingStatus(false);
+			//Level
 			player.setLevel(0);
+			//Opened menu
 			openedMenu = null;
+			//Arrows in player
+			((CraftPlayer)player).getHandle().getDataWatcher().set(new DataWatcherObject<>(11, DataWatcherRegistry.b),0);
+			//Set collision status
+			player.setCollidable(true);
 		}
 	}
 	/**
@@ -970,30 +807,34 @@ public class PlayerData {
 		objective.setDisplayName(title);
 	}
 	/**
-    * Update the players scoreboard text if any part of it has changed
-    * @param scores - scores on the scoreboard to compare/set.
-    */
-	public void updateObjectiveScores(HashMap<Integer,String> scores) {
-		for (Map.Entry<Integer, String> entry : scores.entrySet()) {
-			Toolkit.updateScore(objective, entry.getKey(), entry.getValue());
-		}
-	}
-	/**
     * Set the players scoreboard teams and adds the given teams
     * @param teams - list of teams to create.
+    * @param collisionStatus - should the player collide with their teammates
     */
-	public void setScoreBoardTeams(String[] teams,Team.OptionStatus status) {
+	public void setScoreBoardTeams(String[] teams, Team.OptionStatus collisionStatus) {
 		if (teams != null) {			
 			for (int i = 0; i < teams.length; i++) {			
 				Team team = board.registerNewTeam(teams[i]);
-				team.setOption(Team.Option.COLLISION_RULE, status);
+				team.setOption(Team.Option.COLLISION_RULE, collisionStatus);
 			}
 		}
 		for (UserGroup userGroup : UserGroup.values()) {
 			if (board.getTeam(userGroup.toString()) == null) {
 				Team team = board.registerNewTeam(userGroup.toString());
-				team.setOption(Team.Option.COLLISION_RULE, status);
+				team.setOption(Team.Option.COLLISION_RULE, collisionStatus);
 				team.setColor(userGroup.getColor());
+			}
+		}
+	}
+	/**
+    * Set the teams name tag display
+    * @param team - Name of the team to set
+    * @param status - should the tag be displayed
+    */
+	public void setTeamNametagDisplay(String name, Team.OptionStatus status) {
+		for (Team team : board.getTeams()) {
+			if (team.getName().equalsIgnoreCase(name)) {
+				team.setOption(Team.Option.NAME_TAG_VISIBILITY, status);
 			}
 		}
 	}

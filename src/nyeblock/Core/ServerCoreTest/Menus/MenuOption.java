@@ -26,10 +26,12 @@ public class MenuOption {
 	}
 	
 	public void runAction(ClickType clickType) {
-		Runnable action = clickActions.get(clickType);
-		
-		if (action != null) {		
-			action.run();
+		if (clickActions != null) {			
+			Runnable action = clickActions.get(clickType);
+			
+			if (action != null) {		
+				action.run();
+			}
 		}
 	}
 	
