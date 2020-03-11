@@ -24,9 +24,9 @@ public class KitSelectorMenu extends MenuBase {
 	
 	public void setContents() {
 		GameBase game = (GameBase)mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm();
-		SubMenu subMenu = new SubMenu("Kit Selector",9,this);
 		
 		if (game.getRealm() == Realm.KITPVP) {
+			SubMenu subMenu = new SubMenu("Kit Selector",9,this);
 			String kitSelected = (game.getPlayerKit(player) == null ? "knight" : game.getPlayerKit(player));
 			
 			//Knight kit
@@ -132,7 +132,10 @@ public class KitSelectorMenu extends MenuBase {
 					});
 			}});
 		} else if (game.getRealm() == Realm.SKYWARS) {
+			
+			
 			String kitSelected = (game.getPlayerKit(player) == null ? "default" : game.getPlayerKit(player));
+			SubMenu subMenu = new SubMenu("Kit Selector",9,this);
 			
 			//Default kit
 			subMenu.createOption(4, Material.WOODEN_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Default", new ArrayList<String>() {{

@@ -28,7 +28,6 @@ public class SkyWarsShop extends ShopBase {
 	
 	public void setContents() {
 		SubMenu subMenu;
-		ShopSubMenu shopSubMenu;
 		
 		//
 		// Shop menu
@@ -51,10 +50,27 @@ public class SkyWarsShop extends ShopBase {
 			});
 		}});
 		
+		//Realm win actions
+		subMenu.createOption(13, Material.IRON_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Special Kits", new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "Special kits that give you");
+			add(ChatColor.YELLOW + "different fighting abilities");
+			add(ChatColor.YELLOW + "from the default kits.");
+			add(ChatColor.YELLOW + ChatColor.ITALIC.toString() + "(Can only equip 1 item at a time)");
+			add(ChatColor.RESET.toString());
+			add(ChatColor.GREEN + "\u279D \u279D Click to view the special kits");
+		}}, new HashMap<ClickType,Runnable>() {{
+			put(ClickType.LEFT,new Runnable() {
+				@Override
+				public void run() {
+					openMenu("Special Kits",false);
+				}
+			});
+		}});
+		
 		//
 		// Win Actions
 		//
-		shopSubMenu = new ShopSubMenu("Win Actions",36,true,1,this);
+		ShopSubMenu shopSubMenu = new ShopSubMenu("Win Actions",36,true,1,this);
 		
 		//Rainbow scoreboard title
 		shopSubMenu.createShopOption(11, Material.BLUE_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Rainbow Scoreboard Title", new ArrayList<String>() {{
@@ -112,6 +128,41 @@ public class SkyWarsShop extends ShopBase {
 				}
 			});
 		}});
+		
+		//
+		// Special Kits
+		//
+		ShopSubMenu shopSubMenu2 = new ShopSubMenu("Special Kits",36,true,1,this);
+		
+		//Fireball kit
+		shopSubMenu2.createShopOption(11, Material.FIRE_CHARGE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fireball", new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "- Wood sword");
+			add(ChatColor.YELLOW + "- x2 Fireball");
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						shopSubMenu2.useItem("skyWars_kit_fireball");
+					}
+				});
+		}}, new ArrayList<RequirementBase>() {{
+			add(new LevelRequirement(3,Realm.SKYWARS));
+		}}, "skyWars_kit_fireball", 350, false);
+		
+		//Ender pearl kit
+		shopSubMenu2.createShopOption(13, Material.ENDER_PEARL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Ender Pearl", new ArrayList<String>() {{
+			add(ChatColor.YELLOW + "- Wood sword");
+			add(ChatColor.YELLOW + "- x2 Ender Pearl");
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						shopSubMenu2.useItem("skyWars_kit_enderPearl");
+					}
+				});
+		}}, new ArrayList<RequirementBase>() {{
+			add(new LevelRequirement(5,Realm.SKYWARS));
+		}}, "skyWars_kit_enderPearl", 650, false);
 	}
 	//Give the player this item
 	public ItemStack give() {
