@@ -11,17 +11,16 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
+@SuppressWarnings("serial")
 public class SkyWarsMenu extends MenuBase {
 	public SkyWarsMenu(Main mainInstance, Player player) {
 		super(mainInstance,player,"skyWars_menu");
 	}
 	
 	public void setContents() {
-		PlayerHandling playerHandling = mainInstance.getPlayerHandlingInstance();
 		SubMenu subMenu;
 		
 		//

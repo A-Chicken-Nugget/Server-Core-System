@@ -3,7 +3,6 @@ package nyeblock.Core.ServerCoreTest.Misc;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -18,52 +17,44 @@ import net.minecraft.server.v1_15_R1.PlayerConnection;
 import net.minecraft.server.v1_15_R1.PlayerInteractManager;
 import net.minecraft.server.v1_15_R1.WorldServer;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
+import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.CustomNPCType;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_15_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_15_R1.entity.CraftLivingEntity;
 import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_15_R1.util.CraftChatMessage;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.Vector;
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class CustomNPCManager {
 	private Main mainInstance;
+	private PlayerHandling playerHandling;
 	private HashMap<Integer,CustomNPC> npcs = new HashMap<>();
 	private HashMap<Integer,ArrayList<Player>> npcPlayers = new HashMap<>();
 	
 	public CustomNPCManager(Main mainInstance) {
 		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
 		
 		//Listen to packets to tell when an npc has been clicked
 		mainInstance.getProtocolManagerInstance().addPacketListener(new PacketAdapter(mainInstance, ListenerPriority.NORMAL, PacketType.Play.Client.USE_ENTITY){
 		    @Override
 		    public void onPacketReceiving(PacketEvent event) {
 		    	CustomNPC npc = npcs.get(event.getPacket().getIntegers().read(0));
+		    	Player ply = event.getPlayer();
 		    	
-		    	if (npc != null) {		    		
-		    		npc.playerUse(event.getPlayer());
+		    	if (npc != null) {
+		    		if ((System.currentTimeMillis()/1000L)-playerHandling.getLastUsed(ply) > 1) {		    			
+		    			npc.playerUse(event.getPlayer());
+		    			playerHandling.setLastUsed(ply);
+		    		}
 		    	}
 		    }
 		});

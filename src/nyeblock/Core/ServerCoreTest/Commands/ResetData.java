@@ -44,6 +44,14 @@ public class ResetData extends CommandBase {
 					player.kickPlayer(ChatColor.YELLOW + "Data reset. Join back.");
 					pd.saveToDB();
 					playerHandling.removePlayerData(player);
+				} else if (args[1].equalsIgnoreCase("log_queuing")) {
+					if (!pd.getLogSearch()) {						
+						pd.setLogSearch(true);
+						ply.sendMessage(ChatColor.YELLOW + "Enabled search log for " + player.getName());
+					} else {
+						pd.setLogSearch(false);
+						ply.sendMessage(ChatColor.YELLOW + "Disabled search log for " + player.getName());
+					}
 				}
 			}
 		}
@@ -68,7 +76,7 @@ public class ResetData extends CommandBase {
 				}
 			}
 		} else if (args.length == 2) {
-			for (String permission : Arrays.asList("queuing_status","force_leave","kick_reset")) {
+			for (String permission : Arrays.asList("queuing_status","force_leave","kick_reset","log_queuing")) {
 				if (permission.toLowerCase().contains(args[1].toLowerCase())) {
 					autoCompletes.add(permission);
 				}

@@ -18,7 +18,7 @@ public class LevelRequirement extends RequirementBase {
 	public boolean meetsRequirement(PlayerData playerData) { 
 		boolean doesMeet = false;
 		
-		if (level >= playerData.getLevel(realm)) {
+		if (playerData.getLevel(realm) >= level) {
 			doesMeet = true;
 		}
 		return doesMeet;

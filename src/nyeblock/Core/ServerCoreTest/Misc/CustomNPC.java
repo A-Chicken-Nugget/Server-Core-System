@@ -1,14 +1,10 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
-import java.lang.reflect.Method;
-
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import com.mojang.authlib.properties.PropertyMap;
 
 import net.minecraft.server.v1_15_R1.EntityPlayer;
 import nyeblock.Core.ServerCoreTest.Main;
@@ -30,10 +26,8 @@ public class CustomNPC {
 	}
 	
 	public void playerUse(Player player) {
-		if (type.equals(CustomNPCType.JOIN_REALM)) {
-			if (realm != null) {
-				mainInstance.getRealmHandlingInstance().joinRealm(player, realm);
-			}
+		if (type.equals(CustomNPCType.JOIN_REALM) && realm != null) {
+			mainInstance.getRealmHandlingInstance().joinRealm(player, realm);
 		} else if (type.equals(CustomNPCType.TO_HUB)) {
 			mainInstance.getPlayerHandlingInstance().getPlayerData(player).getCurrentRealm().leave(player, true, Realm.HUB);
 		}

@@ -1,12 +1,10 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.UUID;
 
 import org.apache.commons.lang.math.IntRange;
 import org.bukkit.ChatColor;
@@ -23,7 +21,6 @@ import org.json.simple.parser.ParseException;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 public class Toolkit 
 {
 	public static int GetRandomNumber(int min, int max) 

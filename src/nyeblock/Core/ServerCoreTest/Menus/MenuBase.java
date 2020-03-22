@@ -45,7 +45,7 @@ public abstract class MenuBase extends ItemBase {
 	public void openMenu(String title, boolean refreshItems) {
 		SubMenu menu = null;
 		
-		if (refreshItems) {			
+		if (refreshItems) {
 			menus.clear();
 			setContents();
 		}

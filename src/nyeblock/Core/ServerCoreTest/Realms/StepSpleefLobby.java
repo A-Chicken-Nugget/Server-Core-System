@@ -2,10 +2,8 @@ package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
@@ -13,12 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.craftbukkit.v1_15_R1.CraftServer;
-import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
@@ -26,23 +19,13 @@ import org.bukkit.scoreboard.Team;
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 import com.gmail.filoghost.holographicdisplays.api.VisibilityManager;
-import com.mojang.authlib.GameProfile;
 
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.server.v1_15_R1.EntityPlayer;
-import net.minecraft.server.v1_15_R1.PacketPlayOutNamedEntitySpawn;
-import net.minecraft.server.v1_15_R1.PacketPlayOutPlayerInfo;
-import net.minecraft.server.v1_15_R1.PacketPlayOutPlayerInfo.EnumPlayerInfoAction;
-import net.minecraft.server.v1_15_R1.PlayerInteractManager;
-import net.minecraft.server.v1_15_R1.WorldServer;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Items.QueueGame;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
-import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
-import nyeblock.Core.ServerCoreTest.Menus.SkyWarsShop;
 import nyeblock.Core.ServerCoreTest.Menus.StepSpleefShop;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.CustomNPCType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -58,9 +41,7 @@ public class StepSpleefLobby extends RealmBase {
 	private World world = Bukkit.getWorld("StepSpleefLobby");
 	private HashMap<UUID,Hologram> playerHolograms = new HashMap<>();
 	private TextAnimation boardAnimation;
-	private CustomNPC topPlayerNPC;
 	private CustomNPC joinGameNPC;
-	private CustomNPC placeholderNPC;
 	
 	public StepSpleefLobby(Main mainInstance) {
 		super(mainInstance,Realm.STEPSPLEEF_LOBBY);
@@ -128,36 +109,8 @@ public class StepSpleefLobby extends RealmBase {
 		});
 		
 		//Create NPC's
-//		topPlayerNPC = customNPCManagerInstance.spawnNPC(null, "HonestMage60658", CustomNPCType.NORMAL, new Location(world,-81.5,91,492.5,154,0));
 		joinGameNPC = customNPCManagerInstance.spawnNPC(null, null, CustomNPCType.JOIN_REALM, new Location(world,-4.5,198,7.5,-144,0));
 		joinGameNPC.setRealm(Realm.STEPSPLEEF);
-//		placeholderNPC = customNPCManagerInstance.spawnNPC(null, "JoueurDuGrenier", CustomNPCType.NORMAL, new Location(world,-85.5,91,471.5,0,0));
-		
-		//Level display timer
-//		mainInstance.getTimerInstance().createRunnableTimer("skyWarsLobby_playerLevelInfo", 60, 0, new Runnable() {
-//			@Override
-//			public void run() {
-//				for (Player ply : players) {
-//					PlayerData pd = playerHandlingInstance.getPlayerData(ply);
-//					Hologram hologram = playerHolograms.get(ply.getUniqueId());
-//					int level = pd.getLevel(Realm.SKYWARS);
-//					
-//					hologram.clearLines();
-//					hologram.appendTextLine(ChatColor.YELLOW + ChatColor.BOLD.toString() + "Your Sky Wars Level Info");
-//					hologram.appendTextLine(ChatColor.RESET.toString());
-//					hologram.appendTextLine(ChatColor.YELLOW + "Level: " + ChatColor.GREEN + level);
-//					hologram.appendTextLine(ChatColor.YELLOW.toString() + level + " " + LevelXPBar.getBarText(50, pd.getXPFromLevel(level), pd.getXPFromLevel((level+1))) + " " + ChatColor.YELLOW + (level+1));
-//					hologram.appendTextLine(ChatColor.GREEN.toString() + (pd.getXPFromLevel((level+1))-pd.getXp(Realm.SKYWARS)) + ChatColor.YELLOW + " XP till next level");
-//					hologram.appendItemLine(new ItemStack(Material.EMERALD));
-//				}
-//			}
-//		});
-		
-		//NPC's
-//		NPC npc = CitizensAPI.getNPCRegistry().createNPC(EntityType.PLAYER, "");
-//		npc.setProtected(true);
-//		npc.spawn(new Location(world,-87.5,91,494.5,-180,0));
-//		((SkinnableEntity) npc.getEntity()).setSkinName("worldtutorials");
 		
 		ArrayList<String> hints = new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "This is a hint message");
@@ -263,9 +216,7 @@ public class StepSpleefLobby extends RealmBase {
 		pd.setCustomDataKey("level_npc", String.valueOf(levelNpc.getId()));
 		
 		levelNpc.showFor(ply);
-//		topPlayerNPC.showFor(ply);
 		joinGameNPC.showFor(ply);
-//		placeholderNPC.showFor(ply);
 		
 		//Setup team
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
@@ -283,9 +234,7 @@ public class StepSpleefLobby extends RealmBase {
 		playerHolograms.get(ply.getUniqueId()).delete();
 		playerHolograms.remove(ply.getUniqueId());
 		
-//		topPlayerNPC.removeFor(ply);
 		joinGameNPC.removeFor(ply);
-//		placeholderNPC.removeFor(ply);
 		customNPCManagerInstance.deleteNPC(Integer.valueOf(pd.getCustomDataKey("level_npc")));
 		
 		//Remove players from teams

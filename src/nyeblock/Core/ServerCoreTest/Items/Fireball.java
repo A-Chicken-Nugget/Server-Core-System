@@ -18,6 +18,11 @@ public class Fireball extends ItemBase {
 		super(mainInstance,player,"fireball");
 		this.amount = amount;
 	}
+	public Fireball(int amount) {
+		super("fireball");
+		
+		this.amount = amount;
+	}
 	
 	public ItemStack give() {
 		ItemStack item = new ItemStack(Material.FIRE_CHARGE,amount);

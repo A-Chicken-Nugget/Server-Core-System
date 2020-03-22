@@ -18,7 +18,6 @@ import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
@@ -29,6 +28,7 @@ import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import nyeblock.Core.ServerCoreTest.KitHandling;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
@@ -45,6 +45,7 @@ import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings({"deprecation","serial"})
 public class SkyWars extends GameBase {
+	private KitHandling kitHandling;
 	//Player data
 	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private HashMap<String,String> playerKits = new HashMap<>();
@@ -72,6 +73,7 @@ public class SkyWars extends GameBase {
 		
 		this.mainInstance = mainInstance;
 		playerHandling = mainInstance.getPlayerHandlingInstance();
+		kitHandling = mainInstance.getKitHandlingInstance();
 		this.id = id;
 		this.worldName = worldName;
 		this.duration = duration;
@@ -157,7 +159,7 @@ public class SkyWars extends GameBase {
 				
 				//Give kit
 				ply.getInventory().clear();
-				setPlayerKit(ply,playerKits.get(ply.getName()));
+				kitHandling.setKit(ply, realm, playerKits.get(ply.getName()));
 				
 				if (ply.getOpenInventory() != null) {
 					ply.getOpenInventory().close();
@@ -381,18 +383,6 @@ public class SkyWars extends GameBase {
     * @param player - the player to set the kit for.
     */
 	public void setPlayerKit(Player ply, String kit) {
-		if (kit.equalsIgnoreCase("default")) {
-			//Sword
-			ItemStack sword = new ItemStack(Material.WOODEN_SWORD);
-			ply.getInventory().setItem(0, sword);
-			ply.getInventory().setHeldItemSlot(0);
-			//Steak
-			ItemStack steak = new ItemStack(Material.COOKED_BEEF,10);
-			ply.getInventory().setItem(8, steak);
-			//Concrete
-			ItemStack concrete = new ItemStack(Material.GRAY_CONCRETE,15);
-			ply.getInventory().setItem(7, concrete);
-		}
 		playerKits.put(ply.getName(), kit);
 	}
 	/**
@@ -506,7 +496,7 @@ public class SkyWars extends GameBase {
 		
 		//Add player to arrays
 		playerKills.put(ply.getName(), 0);
-		playerKits.put(ply.getName(),"default");
+		playerKits.put(ply.getName(),"Stone Mason");
 		
 		//Find available spot for player
 		if (spawns.size() > 0) {

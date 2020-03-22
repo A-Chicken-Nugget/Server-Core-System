@@ -12,9 +12,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
-import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopBase;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopSubMenu;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopEquipSubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Options.ShopMenuTypeOptionItem;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.LevelRequirement;
@@ -23,16 +22,13 @@ import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 @SuppressWarnings("serial")
 public class StepSpleefShop extends ShopBase {
-	private PlayerHandling playerHandling;
-	
 	public StepSpleefShop(Main mainInstance, Player player) {
 		super(mainInstance,player,"stepSpleef_shop");
 	}
 	
 	public void setContents() {
-		playerHandling = mainInstance.getPlayerHandlingInstance();
 		SubMenu subMenu;
-		ShopSubMenu shopSubMenu;
+		ShopEquipSubMenu shopSubMenu;
 		
 		//
 		// Shop menu
@@ -58,7 +54,7 @@ public class StepSpleefShop extends ShopBase {
 		//
 		// Win Actions
 		//
-		shopSubMenu = new ShopSubMenu("Win Actions",36,true,1,this);
+		shopSubMenu = new ShopEquipSubMenu("Win Actions",36,true,1,this);
 		
 		//Rainbow scoreboard title
 		shopSubMenu.createShopOption(11, Material.BLUE_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Rainbow Scoreboard Title", new ArrayList<String>() {{

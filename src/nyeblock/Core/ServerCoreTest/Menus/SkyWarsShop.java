@@ -12,7 +12,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
+import nyeblock.Core.ServerCoreTest.Kits.KitBase;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopBase;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopEquipSubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopSubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Options.ShopMenuTypeOptionItem;
@@ -32,10 +34,10 @@ public class SkyWarsShop extends ShopBase {
 		//
 		// Shop menu
 		//
-		subMenu = new SubMenu("Sky Wars Shop",36,this);
+		subMenu = new SubMenu("Sky Wars Shop",27,this);
 		
 		//Realm win actions
-		subMenu.createOption(11, Material.FIREWORK_ROCKET, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Win Actions", new ArrayList<String>() {{
+		subMenu.createOption(12, Material.FIREWORK_ROCKET, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Win Actions", new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "Win actions are played whenever");
 			add(ChatColor.YELLOW + "you win in a Sky Wars game.");
 			add(ChatColor.YELLOW + ChatColor.ITALIC.toString() + "(Can only equip 1 item at a time)");
@@ -51,18 +53,17 @@ public class SkyWarsShop extends ShopBase {
 		}});
 		
 		//Realm win actions
-		subMenu.createOption(13, Material.IRON_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Special Kits", new ArrayList<String>() {{
+		subMenu.createOption(14, Material.IRON_SWORD, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Special Kits", new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "Special kits that give you");
 			add(ChatColor.YELLOW + "different fighting abilities");
 			add(ChatColor.YELLOW + "from the default kits.");
-			add(ChatColor.YELLOW + ChatColor.ITALIC.toString() + "(Can only equip 1 item at a time)");
 			add(ChatColor.RESET.toString());
 			add(ChatColor.GREEN + "\u279D \u279D Click to view the special kits");
 		}}, new HashMap<ClickType,Runnable>() {{
 			put(ClickType.LEFT,new Runnable() {
 				@Override
 				public void run() {
-					openMenu("Special Kits",false);
+					openMenu("Special Kits - Page 1",false);
 				}
 			});
 		}});
@@ -70,7 +71,7 @@ public class SkyWarsShop extends ShopBase {
 		//
 		// Win Actions
 		//
-		ShopSubMenu shopSubMenu = new ShopSubMenu("Win Actions",36,true,1,this);
+		ShopEquipSubMenu shopSubMenu = new ShopEquipSubMenu("Win Actions",36,true,1,this);
 		
 		//Rainbow scoreboard title
 		shopSubMenu.createShopOption(11, Material.BLUE_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Rainbow Scoreboard Title", new ArrayList<String>() {{
@@ -132,37 +133,86 @@ public class SkyWarsShop extends ShopBase {
 		//
 		// Special Kits
 		//
-		ShopSubMenu shopSubMenu2 = new ShopSubMenu("Special Kits",36,true,1,this);
+		ArrayList<KitBase> kits = mainInstance.getKitHandlingInstance().getRealmKits(Realm.SKYWARS,false,true);
+		int pages = (int)Math.ceil((double)kits.size()/12);
 		
-		//Fireball kit
-		shopSubMenu2.createShopOption(11, Material.FIRE_CHARGE, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Fireball", new ArrayList<String>() {{
-			add(ChatColor.YELLOW + "- Wood sword");
-			add(ChatColor.YELLOW + "- x2 Fireball");
-		}}, new HashMap<ClickType,Runnable>() {{
-				put(ClickType.LEFT,new Runnable() {
-					@Override
-					public void run() {
-						shopSubMenu2.useItem("skyWars_kit_fireball");
-					}
-				});
-		}}, new ArrayList<RequirementBase>() {{
-			add(new LevelRequirement(3,Realm.SKYWARS));
-		}}, "skyWars_kit_fireball", 350, false);
-		
-		//Ender pearl kit
-		shopSubMenu2.createShopOption(13, Material.ENDER_PEARL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Ender Pearl", new ArrayList<String>() {{
-			add(ChatColor.YELLOW + "- Wood sword");
-			add(ChatColor.YELLOW + "- x2 Ender Pearl");
-		}}, new HashMap<ClickType,Runnable>() {{
-				put(ClickType.LEFT,new Runnable() {
-					@Override
-					public void run() {
-						shopSubMenu2.useItem("skyWars_kit_enderPearl");
-					}
-				});
-		}}, new ArrayList<RequirementBase>() {{
-			add(new LevelRequirement(5,Realm.SKYWARS));
-		}}, "skyWars_kit_enderPearl", 650, false);
+		for (int page = 0; page < pages; page++) {
+			final int currentPage = (page+1);
+			int row = 0;
+			int kitCount = 0;
+			ShopSubMenu shopSubMenu2 = new ShopSubMenu("Special Kits - Page " + (page+1),45,this);
+			
+			for (int i = 0; i < 12; i++) {
+				if (i != 0 && i % 4 == 0) {
+					row += 1;
+				}
+				
+				int position = 10 + (i*2) + row;
+				int kitIndex = (page*12)+i;
+				
+				if (kits.size() > kitIndex) {
+					KitBase kit = kits.get(kitIndex);
+					shopSubMenu2.createShopOption(position, kit.getMaterial(), ChatColor.YELLOW.toString() + ChatColor.BOLD + kit.getName(), kit.getDescription(),
+						new HashMap<ClickType,Runnable>() {{
+							put(ClickType.LEFT,new Runnable() {
+								@Override
+								public void run() {
+									shopSubMenu2.useItem(kit.getUniqueId());
+								}
+							});
+						}}, kit.getPurchaseRequirements(), kit.getUniqueId(), kit.getCost(), false);
+					kitCount++;
+				}
+			}
+			int size = 0;
+			
+			if (kitCount >= 8) {
+				if (pages-(page+1) > 0) {
+					size = 54;
+					
+					shopSubMenu2.createOption(53, Material.ARROW, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Next page", null, new HashMap<ClickType,Runnable>() {{
+						put(ClickType.LEFT,new Runnable() {
+							@Override
+							public void run() {
+								openMenu("Special Kits - Page " + (currentPage+1),false);
+							}
+						});
+					}});
+				} else {						
+					size = 45;
+				}
+			} else if (kitCount > 4) {
+				size = 36;
+			} else {
+				size = 27;
+			}
+			if (page != 0) {
+				if (size != 54) {
+					size += 9;
+				}
+				shopSubMenu2.createOption(size-9, Material.BARRIER, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Previous page", null, new HashMap<ClickType,Runnable>() {{
+					put(ClickType.LEFT,new Runnable() {
+						@Override
+						public void run() {
+							openMenu("Special Kits - Page " + (currentPage-1),false);
+						}
+					});
+				}});
+			} else {
+				if (size != 54) {
+					size += 9;
+				}
+				shopSubMenu2.createOption(size-9, Material.RED_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Back", null, new HashMap<ClickType,Runnable>() {{
+					put(ClickType.LEFT,new Runnable() {
+						@Override
+						public void run() {
+							openMenu("Sky Wars Shop",false);
+						}
+					});
+				}});
+			}
+			shopSubMenu2.setSize(size);
+		}
 	}
 	//Give the player this item
 	public ItemStack give() {

@@ -5,19 +5,16 @@ import java.util.List;
 
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
-import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Menus.MenuOption;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopEquipSubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.RequirementBase;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class ShopMenuOption extends ShopMenuOptionBase {
 	private List<RequirementBase> requirements;
@@ -35,36 +32,56 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 	public void use() {
 		ShopItem item = playerData.getShopItem(uniqueId);
 		
-		if (item != null) {
-			if (multiPurchasable) {	
+		if (subMenu instanceof ShopEquipSubMenu) {
+			ShopEquipSubMenu equipSubMenu = (ShopEquipSubMenu)subMenu;
+			
+			if (item != null) {
+				if (multiPurchasable) {	
+					playerData.removePoints(cost);
+					playerData.addShopItem(uniqueId,subMenu.getTitle());
+					getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
+					player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+					player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
+				} else {
+					if (!isEquipped) {
+						if (equipSubMenu.canEquipItem()) {								
+							playerData.getShopItem(uniqueId).setEquipped(true);
+							getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
+							player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+							player.sendMessage(ChatColor.YELLOW + "You have equipped " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
+						} else {
+							player.sendMessage(ChatColor.RED + "Cannot equip item! You can only equip " + equipSubMenu.getMaxEquippedItems() + " item(s) at a time!");
+						}
+					} else {
+						playerData.getShopItem(uniqueId).setEquipped(false);
+						getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
+						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+						player.sendMessage(ChatColor.YELLOW + "You have unequipped " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
+					}
+				}
+			} else {
 				playerData.removePoints(cost);
 				playerData.addShopItem(uniqueId,subMenu.getTitle());
 				getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
 				player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
 				player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
-			} else {
-				if (!isEquipped) {
-					if (subMenu.canEquipItem()) {								
-						playerData.getShopItem(uniqueId).setEquipped(true);
-						getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
-						player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-						player.sendMessage(ChatColor.YELLOW + "You have equipped " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
-					} else {
-						player.sendMessage(ChatColor.RED + "Cannot equip item! You can only equip " + subMenu.getMaxEquippedItems() + " item(s) at a time!");
-					}
-				} else {
-					playerData.getShopItem(uniqueId).setEquipped(false);
-					getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
-					player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-					player.sendMessage(ChatColor.YELLOW + "You have unequipped " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
-				}
 			}
 		} else {
-			playerData.removePoints(cost);
-			playerData.addShopItem(uniqueId,subMenu.getTitle());
-			getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
-			player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
-			player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
+			if (item != null) {
+				if (multiPurchasable) {
+					playerData.removePoints(cost);
+					playerData.addShopItem(uniqueId,subMenu.getTitle());
+					getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
+					player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+					player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
+				}
+			} else {
+				playerData.removePoints(cost);
+				playerData.addShopItem(uniqueId,subMenu.getTitle());
+				getSubMenu().getParent().openMenu(subMenu.getTitle(),true);
+				player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 1);
+				player.sendMessage(ChatColor.YELLOW + "You have purchased " + ChatColor.GREEN + displayName + ChatColor.YELLOW + "!");
+			}
 		}
 	}
 	public void runAction(ClickType clickType) {
@@ -91,7 +108,11 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 					player.sendMessage(ChatColor.RED + "You do not have enough points to purchase this item!");
 				}
 			} else {
-				if (subMenu.getCanEquipItems()) {
+				if (subMenu instanceof ShopEquipSubMenu) {
+					if (((ShopEquipSubMenu)subMenu).getCanEquipItems()) {
+						action.run();
+					}
+				} else {
 					action.run();
 				}
 			}
@@ -134,15 +155,21 @@ public class ShopMenuOption extends ShopMenuOptionBase {
 					itemMetaLore.add(ChatColor.RED + "\u2716 You don't have enough points");
 				}
 			} else {
-				if (subMenu.getCanEquipItems()) {
-					if (isEquipped) {						
-						itemMetaLore.add(ChatColor.GREEN + "\u2714 Equipped. Left-Click to unequip");
-					} else {
-						if (!subMenu.canEquipItem()) {
-							itemMetaLore.add(ChatColor.RED + "\u2716 Cannot Equip");
+				if (subMenu instanceof ShopEquipSubMenu) {
+					ShopEquipSubMenu equipSubMenu = (ShopEquipSubMenu)subMenu;
+					
+					if (equipSubMenu.getCanEquipItems()) {
+						if (isEquipped) {						
+							itemMetaLore.add(ChatColor.GREEN + "\u2714 Equipped. Left-Click to unequip");
 						} else {
-							itemMetaLore.add(ChatColor.GREEN + "\u279D Left-Click to equip");
+							if (!equipSubMenu.canEquipItem()) {
+								itemMetaLore.add(ChatColor.RED + "\u2716 Cannot Equip");
+							} else {
+								itemMetaLore.add(ChatColor.GREEN + "\u279D Left-Click to equip");
+							}
 						}
+					} else {
+						itemMetaLore.add(ChatColor.GREEN + "Already purchased");
 					}
 				} else {
 					itemMetaLore.add(ChatColor.GREEN + "Already purchased");

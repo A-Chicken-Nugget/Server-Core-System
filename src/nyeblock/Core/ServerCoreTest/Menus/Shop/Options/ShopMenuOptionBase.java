@@ -5,14 +5,9 @@ import java.util.ArrayList;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
-import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Menus.MenuOption;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopSubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 
 public abstract class ShopMenuOptionBase extends MenuOption {
@@ -21,7 +16,7 @@ public abstract class ShopMenuOptionBase extends MenuOption {
 	protected String uniqueId;
 	protected String displayName;
 	protected int cost;
-	protected ShopSubMenu subMenu;
+	protected SubMenu subMenu;
 	protected boolean isEquipped;
 	protected boolean multiPurchasable;
 	protected boolean hasPurchased;
@@ -37,7 +32,7 @@ public abstract class ShopMenuOptionBase extends MenuOption {
 		player = subMenu.getParent().getPlayer();
 		playerData = subMenu.getParent().getMainInstance().getPlayerHandlingInstance().getPlayerData(player);
 		this.uniqueId = uniqueId;
-		this.subMenu = (ShopSubMenu)subMenu;
+		this.subMenu = subMenu;
 		this.multiPurchasable = multiPurchasable;
 	}
 	

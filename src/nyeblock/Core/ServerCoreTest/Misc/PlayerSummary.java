@@ -1,10 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
 import java.util.HashMap;
-import java.util.Map;
-
-import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
 
 public class PlayerSummary {

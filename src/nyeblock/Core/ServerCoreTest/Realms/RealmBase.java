@@ -1,7 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -365,13 +364,13 @@ public abstract class RealmBase {
 		if (players.contains(ply)) {
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			
+			//Clear players scoreboard
+			pd.clearScoreboard();
+			
 			//Remove from the players array
 			players.removeAll(new ArrayList<Player>() {{
 				add(ply);
 			}});
-			
-			//Clear players scoreboard
-			pd.clearScoreboard();
 			
 			//Leave current realm
 			if (this instanceof GameBase) {

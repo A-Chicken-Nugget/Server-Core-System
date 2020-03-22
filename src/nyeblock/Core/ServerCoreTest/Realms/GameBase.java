@@ -1,7 +1,6 @@
 package nyeblock.Core.ServerCoreTest.Realms;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +28,6 @@ import net.coreprotect.CoreProtectAPI.ParseResult;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.server.v1_15_R1.DataWatcher.Item;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
@@ -148,12 +146,15 @@ public abstract class GameBase extends RealmBase {
 	public void playWinAction(Player player) {
 		PlayerData playerData = playerHandling.getPlayerData(player);
 		RealmBase game = playerData.getCurrentRealm();
+		String dbName = game.getRealm().getDBName();
 		
 		for (ShopItem item : playerData.getShopItems()) {
+			String uniqueId = item.getUniqueId().toLowerCase();
+			
 			if (item.isEquipped()) {
-				if (item.getUniqueId().contains("rainbow_scoreboard_winAction")) {
+				if (uniqueId.contains(dbName + "_rainbow_scoreboard_winaction")) {
 					shouldRainbowTitleText = true;
-				} else if (item.getUniqueId().contains("fireworks_winAction")) {
+				} else if (uniqueId.contains(dbName + "_fireworks_winaction")) {
 					Color color = colorFromChatColor(item.getUniqueId().split("::")[1]);
 					
 					mainInstance.getTimerInstance().createRunnableTimer(player.getUniqueId() + "_fireworks", .7, 0, new Runnable() {						
@@ -173,7 +174,7 @@ public abstract class GameBase extends RealmBase {
 							}
 						}
 					});
-				} else if (item.getUniqueId().contains("time_speed_up_winAction")) {
+				} else if (uniqueId.contains(dbName + "_time_speed_up_winaction")) {
 					setWorldTime = true;
 					mainInstance.getTimerInstance().createRunnableTimer(player.getUniqueId() + "_timeWarp", .1, 0, new Runnable() {
 						@Override
@@ -199,6 +200,7 @@ public abstract class GameBase extends RealmBase {
     * Cleans up the world and deletes the game
     */
 	public void delete() {
+		mainInstance.getTimerInstance().deleteTimer("gameFunctions_" + worldName);
 		mainInstance.getTimerInstance().deleteTimer("deleteCheck_" + worldName);
 		canUsersJoin = false;
 		
@@ -369,19 +371,17 @@ public abstract class GameBase extends RealmBase {
     * @param showLeaveMessage - should a leave message be printed
     */
 	public void gameLeave(Player ply, boolean showLeaveMessage) {
-		DamagePlayer lastDamage = mainInstance.getPlayerHandlingInstance().getLastPlayerDamage(ply);
+		DamagePlayer lastDamage = playerHandling.getLastPlayerDamage(ply);
 		
-		if (players.contains(ply)) {			
-			playerLeave(ply);
-			if (playerSummary.get(ply) != null) {			
-				playerSummary.remove(ply);
-			}
-			if (lastDamage != null && ((System.currentTimeMillis()-lastDamage.getTime())/1000L) < 1) {
-				playerDeath(ply,lastDamage.getPlayer());
-			}
-			if (showLeaveMessage) {			
-				messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " left");
-			}
+		playerLeave(ply);
+		if (playerSummary.get(ply) != null) {			
+			playerSummary.remove(ply);
+		}
+		if (lastDamage != null && ((System.currentTimeMillis()-lastDamage.getTime())/1000L) < 4) {
+			playerDeath(ply,lastDamage.getPlayer());
+		}
+		if (showLeaveMessage) {			
+			messageToAll(ChatColor.GREEN + ply.getName() + ChatColor.YELLOW + " left");
 		}
 	}
 	public Location playerRespawn(Player ply) { return null; }
@@ -403,6 +403,9 @@ public abstract class GameBase extends RealmBase {
 	// GETTERS
 	//
 	
+	public long getStartTime() {
+		return startTime;
+	}
 	public Realm getLobbyRealm() {
 		return lobbyRealm;
 	}

@@ -14,7 +14,7 @@ import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 public class ManagePoints extends CommandBase {
-private PlayerHandling playerHandling;
+	private PlayerHandling playerHandling;
 	
 	public ManagePoints(Main mainInstance) {
 		super(mainInstance,
@@ -30,25 +30,45 @@ private PlayerHandling playerHandling;
 	
 	public void execute(Player ply, String[] args) {
 		if (args.length >= 3) {
-			Player player = Bukkit.getPlayerExact(args[0]);
-			
-			if (player != null) {
+			if (!args[0].equalsIgnoreCase("<<_All_players_in_world_>>")) {
+				Player player = Bukkit.getPlayerExact(args[0]);
+				
+				if (player != null) {
+					try {					
+						Integer amount = Integer.parseInt(args[2]);
+						PlayerData pd = playerHandling.getPlayerData(player);	
+						
+						if (args[1].equalsIgnoreCase("give")) {
+							pd.addPoints(amount);
+						} else if (args[1].equalsIgnoreCase("take")) {
+							pd.removePoints(amount);
+						} else {
+							ply.sendMessage(ChatColor.RED + "Please enter a valid action!");
+						}
+					} catch (Exception ex) {
+						ply.sendMessage(ChatColor.RED + "Please enter a valid amount!");
+					}
+				} else {
+					ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
+				}
+			} else {
 				try {					
 					Integer amount = Integer.parseInt(args[2]);
-					PlayerData pd = playerHandling.getPlayerData(player);	
 					
 					if (args[1].equalsIgnoreCase("give")) {
-						pd.addPoints(amount);
+						for (Player player : ply.getWorld().getPlayers()) {							
+							playerHandling.getPlayerData(player).addPoints(amount);
+						}
 					} else if (args[1].equalsIgnoreCase("take")) {
-						pd.removePoints(amount);
+						for (Player player : ply.getWorld().getPlayers()) {							
+							playerHandling.getPlayerData(player).removePoints(amount);
+						}
 					} else {
 						ply.sendMessage(ChatColor.RED + "Please enter a valid action!");
 					}
 				} catch (Exception ex) {
 					ply.sendMessage(ChatColor.RED + "Please enter a valid amount!");
 				}
-			} else {
-				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}
 		} else {
 			ply.sendMessage(ChatColor.RED + "Please enter the proper arguements for this command!");
@@ -58,10 +78,22 @@ private PlayerHandling playerHandling;
 		List<String> autoCompletes = new ArrayList<>();
 		
 		if (args.length == 1) {
+			boolean foundPlayer = false;
+			
 			for (Player ply : player.getWorld().getPlayers()) {
 				if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {						
 					autoCompletes.add(ply.getName());
 				}
+			}
+			if (!foundPlayer) {
+				for (Player ply : Bukkit.getOnlinePlayers()) {
+					if (ply.getName().toLowerCase().contains(args[0].toLowerCase())) {	
+						autoCompletes.add(ply.getName());
+					}
+				}
+			}
+			if ("<<_all_players_in_world_>>".contains(args[0].toLowerCase())) {	
+				autoCompletes.add("<<_All_players_in_world_>>");
 			}
 		} else if (args.length == 2) {
 			for (String permission : Arrays.asList("give","take")) {

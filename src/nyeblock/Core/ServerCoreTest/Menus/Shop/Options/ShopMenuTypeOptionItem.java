@@ -1,6 +1,5 @@
 package nyeblock.Core.ServerCoreTest.Menus.Shop.Options;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.RequirementBase;

@@ -27,7 +27,6 @@ import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Items.QueueGame;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Menus.KitPvPShop;
-import nyeblock.Core.ServerCoreTest.Menus.SkyWarsShop;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPC;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
 import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
@@ -42,9 +41,7 @@ public class KitPvPLobby extends RealmBase {
 	private World world = Bukkit.getWorld("KitPvPLobby");
 	private HashMap<UUID,Hologram> playerHolograms = new HashMap<>();
 	private TextAnimation boardAnimation;
-	private CustomNPC topPlayerNPC;
 	private CustomNPC joinGameNPC;
-	private CustomNPC placeholderNPC;
 
 	public KitPvPLobby(Main mainInstance) {
 		super(mainInstance,Realm.KITPVP_LOBBY);
@@ -109,10 +106,8 @@ public class KitPvPLobby extends RealmBase {
 		});
 		
 		//Create NPC's
-//		topPlayerNPC = customNPCManagerInstance.spawnNPC(null, "HonestMage60658", CustomNPCType.NORMAL, new Location(world,-81.5,91,492.5,154,0));
 		joinGameNPC = customNPCManagerInstance.spawnNPC(null, null, CustomNPCType.JOIN_REALM, new Location(world,13.5,163,14.5,180,0));
 		joinGameNPC.setRealm(Realm.KITPVP);
-//		placeholderNPC = customNPCManagerInstance.spawnNPC(null, "JoueurDuGrenier", CustomNPCType.NORMAL, new Location(world,-85.5,91,471.5,0,0));
 		
 		ArrayList<String> hints = new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "This is a hint message");
@@ -219,9 +214,7 @@ public class KitPvPLobby extends RealmBase {
 		pd.setCustomDataKey("level_npc", String.valueOf(levelNpc.getId()));
 		
 		levelNpc.showFor(ply);
-//		topPlayerNPC.showFor(ply);
 		joinGameNPC.showFor(ply);
-//		placeholderNPC.showFor(ply);
 		
 		//Setup team
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);
@@ -239,9 +232,7 @@ public class KitPvPLobby extends RealmBase {
 		playerHolograms.get(ply.getUniqueId()).delete();
 		playerHolograms.remove(ply.getUniqueId());
 		
-//		topPlayerNPC.removeFor(ply);
 		joinGameNPC.removeFor(ply);
-//		placeholderNPC.removeFor(ply);
 		customNPCManagerInstance.deleteNPC(Integer.valueOf(pd.getCustomDataKey("level_npc")));
 		
 		//Remove players from teams

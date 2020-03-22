@@ -22,6 +22,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Firework;
+import org.bukkit.entity.FishHook;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Snowball;
@@ -92,6 +94,7 @@ public class PlayerHandling implements Listener {
 	private HashMap<UUID,DamagePlayer> lastPlayerDamage = new HashMap<UUID, DamagePlayer>();
 	private HashMap<UUID,ArrayList<Long>> playerChatMessages = new HashMap<>();
 	private HashMap<UUID,ArrayList<Long>> playerActions = new HashMap<>();
+	private HashMap<UUID,Long> playerLastUsed = new HashMap<>();
 	private World world = Bukkit.getWorld("world");
 
 	public PlayerHandling(Main mainInstance) {
@@ -135,13 +138,32 @@ public class PlayerHandling implements Listener {
                 	}
                 }
 			}
+//			@Override
+//			public void onPacketReceiving(PacketEvent event) {
+//				
+//			}
 		});
+	}
+	
+	public void logDamage(Player damager, Player damaged) {
+		//Manage damage logs
+		DamagePlayer dp = lastPlayerDamage.get(damaged.getUniqueId());
+		
+		if (dp != null) {
+			dp.setPlayer(damager);
+			dp.setTime(System.currentTimeMillis());
+		} else {
+			lastPlayerDamage.put(damaged.getUniqueId(), new DamagePlayer(damager,System.currentTimeMillis()));
+		}
 	}
 	
 	//
 	// GETTERS
 	//
 
+	public Long getLastUsed(Player ply) {
+		return playerLastUsed.get(ply.getUniqueId());
+	}
 	// Get a specific players player data
 	public PlayerData getPlayerData(Player ply) {
 		return playersData.get(ply.getUniqueId());
@@ -151,10 +173,19 @@ public class PlayerHandling implements Listener {
 		playersData.remove(ply.getUniqueId());
 		playerChatMessages.remove(ply.getUniqueId());
 		playerActions.remove(ply.getUniqueId());
+		playerLastUsed.remove(ply.getUniqueId());
 	}
 	// Get a specific players last damage info
 	public DamagePlayer getLastPlayerDamage(Player ply) {
 		return lastPlayerDamage.get(ply.getUniqueId());
+	}
+	
+	//
+	// SETTERS
+	//
+	
+	public void setLastUsed(Player ply) {
+		playerLastUsed.put(ply.getUniqueId(),System.currentTimeMillis()/1000L);
 	}
 	
 	//
@@ -353,6 +384,7 @@ public class PlayerHandling implements Listener {
 			playersData.put(ply.getUniqueId(), playerData);
 			playerChatMessages.put(ply.getUniqueId(), new ArrayList<Long>());
 			playerActions.put(ply.getUniqueId(), new ArrayList<Long>());
+			playerLastUsed.put(ply.getUniqueId(), 0L);
 		} else {
 			mainInstance.getTimerInstance().deleteTimer("leave_" + ply.getUniqueId());
 			PlayerData pd = getPlayerData(ply);
@@ -531,9 +563,12 @@ public class PlayerHandling implements Listener {
 	// Handle when a player is damaged by an entity
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-		if (event.getDamager() instanceof Player && event.getEntity() instanceof Player) {
-			Player damager = (Player) event.getDamager();
-			Player damaged = (Player) event.getEntity();
+		Entity dmgr = event.getDamager();
+		Entity dmged = event.getEntity();
+		
+		if (dmgr instanceof Player && dmged instanceof Player) {
+			Player damager = (Player)dmgr;
+			Player damaged = (Player)dmged;
 			PlayerData damagerpd = getPlayerData(damager);
 			PlayerData damagedpd = getPlayerData(damaged);
 
@@ -546,26 +581,25 @@ public class PlayerHandling implements Listener {
 			} else if (damaged.getHealth() <= 0) {
 				event.setCancelled(true);
 			} else {
-				//Manage damage logs
-				DamagePlayer dp = lastPlayerDamage.get(damaged.getUniqueId());
-				
-				if (dp != null) {
-					dp.setPlayer(damager);
-					dp.setTime(System.currentTimeMillis());
-				} else {
-					lastPlayerDamage.put(damaged.getUniqueId(), new DamagePlayer(damager,System.currentTimeMillis()));
-				}
+				logDamage(damager,damaged);
 			}
-		} else if (event.getDamager() instanceof Snowball) {
-			event.setDamage(1.0E-4D);
-		} else if (event.getDamager() instanceof Egg) {
-			event.setDamage(1.0E-4D);
-		} else if (event.getDamager() instanceof EnderPearl) {
-			event.setDamage(1.0E-4D);
-		} else if (event.getDamager() instanceof Firework) {
-			event.setCancelled(true);
-		} else if (event.getEntity().getType().equals(EntityType.ITEM_FRAME)) {
-			event.setCancelled(true);
+		} else if (dmged instanceof Player) {
+			Player damaged = (Player)dmged;
+			
+			if (dmgr instanceof Snowball) {
+				event.setDamage(1.0E-4D);
+				logDamage((Player)((Snowball)dmgr).getShooter(),damaged);
+			} else if (dmgr instanceof Egg) {
+				event.setDamage(1.0E-4D);
+				logDamage((Player)((Egg)dmgr).getShooter(),damaged);
+			} else if (dmgr instanceof EnderPearl) {
+				event.setDamage(1.0E-4D);
+				logDamage((Player)((EnderPearl)dmgr).getShooter(),damaged);
+			} else if (dmgr instanceof Firework) {
+				event.setCancelled(true);
+			} else if (event.getEntity().getType().equals(EntityType.ITEM_FRAME)) {
+				event.setCancelled(true);
+			}
 		}
 	}
 	// Handle when the player falls
@@ -613,6 +647,32 @@ public class PlayerHandling implements Listener {
 				knockback.add(attacker.getLocation().getDirection().multiply(1.5));
 				
 				attacked.setVelocity(knockback);
+				logDamage(attacker,attacked);
+			} else if (projectile instanceof FishHook) {
+				FishHook hook = (FishHook)event.getEntity();
+				Player hookShooter = (Player)entAttacker;
+				LivingEntity hitEntity = (LivingEntity)entAttacked;
+			      
+				double kx = hook.getLocation().getDirection().getX() / 2.5D;
+				double kz = hook.getLocation().getDirection().getZ() / 2.5D;
+				kx -= kx * 2.0D;
+			      
+				if (hitEntity.getNoDamageTicks() >= 6.5D)
+					return; 
+				if (hitEntity.getNoDamageTicks() < 6.5D && hitEntity.getLocation().getWorld().getBlockAt(hitEntity.getLocation()).getType().toString() != "AIR") {
+					hitEntity.setNoDamageTicks(0);
+				}
+			      
+				hitEntity.damage(0.001D, hookShooter);
+				double upVel = 0.372D;
+				if (!hitEntity.isOnGround()) {
+					upVel = 0.0D;
+				}
+			      
+				hitEntity.setVelocity(new Vector(kx, upVel, kz));
+				hitEntity.setNoDamageTicks(17);
+				
+				logDamage(attacker,attacked);
 			}
 		}
 	}
@@ -691,7 +751,7 @@ public class PlayerHandling implements Listener {
 	//Handle when a player changes their world
 	@EventHandler
 	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-		Player ply = event.getPlayer();
+//		Player ply = event.getPlayer();
 //		
 //		mainInstance.getTimerInstance().createRunnableTimer("clearInventory_" + ply.getUniqueId(), .75, 1, new Runnable() {
 //			@Override
@@ -863,9 +923,9 @@ public class PlayerHandling implements Listener {
 							
 							if (canDo) {			
 								playerActions.get(ply.getUniqueId()).removeAll(remove);
-								Bukkit.getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
+								Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(mainInstance, new Runnable() {
 									@Override
-									public void run() {
+									public void run() {		
 										pd.getCustomItem(itemName).use(item);
 									}
 								});
@@ -874,6 +934,19 @@ public class PlayerHandling implements Listener {
 							}									
 							playerActions.get(ply.getUniqueId()).add(System.currentTimeMillis());
 							event.setCancelled(true);
+						} else {
+							if (item.getType().equals(Material.ENDER_PEARL)) {
+								GameBase game = ((GameBase)pd.getCurrentRealm());
+								
+								if (game != null) {
+									Long startTime = game.getStartTime();
+									
+									if (startTime != null && ((System.currentTimeMillis()/1000L)-startTime) < 30) {
+										event.setCancelled(true);
+										ply.sendMessage(ChatColor.RED + "You will be able to use this item in " + (30-((System.currentTimeMillis()/1000L)-startTime)) + " second(s).");
+									}
+								}
+							}
 						}
 					}
 				}

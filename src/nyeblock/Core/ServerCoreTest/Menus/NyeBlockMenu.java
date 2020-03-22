@@ -13,13 +13,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopEquipSubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopSubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.LevelRequirement;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.RequirementBase;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.UserGroupRequirement;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
 @SuppressWarnings("serial")
@@ -79,7 +77,7 @@ public class NyeBlockMenu extends MenuBase {
 		//
 		// Chat text colors menu
 		//
-		final ShopSubMenu shopSubMenu = new ShopSubMenu("Chat Text Color",45,true,1,this);
+		final ShopEquipSubMenu shopSubMenu = new ShopEquipSubMenu("Chat Text Color",45,true,1,this);
 		
 		//Grey
 		shopSubMenu.createShopOption(12, Material.LIGHT_GRAY_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Grey", new ArrayList<String>() {{
@@ -234,7 +232,7 @@ public class NyeBlockMenu extends MenuBase {
 		//
 		// Name colors menu
 		//
-		final ShopSubMenu shopSubMenu2 = new ShopSubMenu("Name Color",45,true,1,this);
+		final ShopEquipSubMenu shopSubMenu2 = new ShopEquipSubMenu("Name Color",45,true,1,this);
 		
 		//Grey
 		shopSubMenu2.createShopOption(12, Material.LIGHT_GRAY_WOOL, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Grey", new ArrayList<String>() {{

@@ -9,8 +9,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.apache.commons.lang.StringEscapeUtils;
-
 public class DatabaseHandling {
 	private String host;
 	private int port;

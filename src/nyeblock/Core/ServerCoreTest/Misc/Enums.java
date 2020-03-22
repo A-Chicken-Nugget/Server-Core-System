@@ -2,16 +2,8 @@ package nyeblock.Core.ServerCoreTest.Misc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.bukkit.ChatColor;
-
-import nyeblock.Core.ServerCoreTest.Realms.Hub;
-import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
-import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
-import nyeblock.Core.ServerCoreTest.Realms.SkyWars;
-import nyeblock.Core.ServerCoreTest.Realms.PvP;
-import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 
 public class Enums {
 	//Realm enums
@@ -280,28 +272,45 @@ public class Enums {
 		INTEGER(),
 		LEVEL_BAR();
 	}
-	//Achievement enums
-	public enum Achievement {
-		KILLS_15("kills_15", new Runnable() {
-			@Override
-			public void run() {
-				
-			}
-		});
+	//Armor type
+	public enum ArmorType {
+		HELMET(3),
+		CHEST_PLATE(2),
+		LEGGINGS(1),
+		BOOTS(0);
 		
-		private String dbname;
-		private Runnable requirement;
+		private int armorSlot;
 		
-		private Achievement(String dbname, Runnable requirement) {
-			this.dbname = dbname;
-			this.requirement = requirement;
+		private ArmorType(int armorSlot) {
+			this.armorSlot = armorSlot;
 		}
 		
-		public String getDBName() {
-			return dbname;
+		public int getArmorSlot() {
+			return armorSlot;
 		}
-//		public boolean tryRequirement(Main mainInstance, Player ply) {
-////			requirement.run(mainInstance,ply);
-//		}
 	}
+	//Achievement enums
+//	public enum Achievement {
+//		KILLS_15("kills_15", new Runnable() {
+//			@Override
+//			public void run() {
+//				
+//			}
+//		});
+//		
+//		private String dbname;
+//		private Runnable requirement;
+//		
+//		private Achievement(String dbname, Runnable requirement) {
+//			this.dbname = dbname;
+//			this.requirement = requirement;
+//		}
+//		
+//		public String getDBName() {
+//			return dbname;
+//		}
+////		public boolean tryRequirement(Main mainInstance, Player ply) {
+//////			requirement.run(mainInstance,ply);
+////		}
+//	}
 }

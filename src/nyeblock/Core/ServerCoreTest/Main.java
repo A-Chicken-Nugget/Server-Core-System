@@ -1,10 +1,6 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -12,7 +8,6 @@ import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldType;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,22 +17,18 @@ import de.xxschrandxx.awm.api.config.WorldData;
 import net.coreprotect.CoreProtect;
 import net.coreprotect.CoreProtectAPI;
 
-import com.comphenix.protocol.ProtocolLib;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.sk89q.worldedit.LocalConfiguration;
 
-import nyeblock.Core.ServerCoreTest.Menus.XMLToMenu;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
 import nyeblock.Core.ServerCoreTest.Misc.VoidWorldGenerator;
 import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
-import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.Hub;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvPLobby;
 import nyeblock.Core.ServerCoreTest.Realms.PvPLobby;
 import nyeblock.Core.ServerCoreTest.Realms.SkyWarsLobby;
-import nyeblock.Core.ServerCoreTest.Realms.StepSpleef;
 import nyeblock.Core.ServerCoreTest.Realms.StepSpleefLobby;
 
 public class Main extends JavaPlugin {
@@ -47,6 +38,7 @@ public class Main extends JavaPlugin {
 	private RealmHandling realmHandling;
 	private DatabaseHandling databaseHandling;
 	private TimerHandling timerHandling;
+	private KitHandling kitHandling;
 	private Hub hub;
 	private HubParkour hubParkour;
 	private CoreProtectAPI coreProtectAPI;
@@ -66,6 +58,7 @@ public class Main extends JavaPlugin {
 		commandHandling.setCommands();
 		realmHandling = new RealmHandling(this);
 		timerHandling = new TimerHandling();
+		kitHandling = new KitHandling(this);
 		CoreProtect coreProtect = (CoreProtect) getServer().getPluginManager().getPlugin("CoreProtect");
 		coreProtectAPI = coreProtect.getAPI();
 		customNPCManager = new CustomNPCManager(this);
@@ -116,6 +109,7 @@ public class Main extends JavaPlugin {
 		//
 		// CREATE/LOAD WORLDS
 		//
+		Main mainInstance = this;
 		
 		//SkyWars Lobby
 		WorldData skl = new WorldData();
@@ -126,7 +120,15 @@ public class Main extends JavaPlugin {
 		skl.setKeepSpawnInMemory(false);
 		skl.setAutoSave(false);
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(skl);
-		skyWarsLobby = new SkyWarsLobby(this);
+		timerHandling.createRunnableTimer("skyWarsLobby_worldWait", 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (Bukkit.getWorld("SkyWarsLobby") != null) {
+					timerHandling.deleteTimer("skyWarsLobby_worldWait");
+					skyWarsLobby = new SkyWarsLobby(mainInstance);
+				}
+			}
+		});
 		
 		//StepSpleef Lobby
 		WorldData ssl = new WorldData();
@@ -137,7 +139,15 @@ public class Main extends JavaPlugin {
 		ssl.setKeepSpawnInMemory(false);
 		ssl.setAutoSave(false);
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(ssl);
-		stepSpleefLobby = new StepSpleefLobby(this);
+		timerHandling.createRunnableTimer("stepSpleefLobby_worldWait", 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (Bukkit.getWorld("StepSpleefLobby") != null) {
+					timerHandling.deleteTimer("stepSpleefLobby_worldWait");
+					stepSpleefLobby = new StepSpleefLobby(mainInstance);
+				}
+			}
+		});
 		
 		//KitPvP Lobby
 		WorldData kpl = new WorldData();
@@ -148,7 +158,15 @@ public class Main extends JavaPlugin {
 		kpl.setKeepSpawnInMemory(false);
 		kpl.setAutoSave(false);
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(kpl);
-		kitPvPLobby = new KitPvPLobby(this);
+		timerHandling.createRunnableTimer("kitPvPLobby_worldWait", 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (Bukkit.getWorld("KitPvPLobby") != null) {
+					timerHandling.deleteTimer("kitPvPLobby_worldWait");
+					kitPvPLobby = new KitPvPLobby(mainInstance);
+				}
+			}
+		});
 		
 		//PvP Lobby
 		WorldData ppl = new WorldData();
@@ -159,7 +177,15 @@ public class Main extends JavaPlugin {
 		ppl.setKeepSpawnInMemory(false);
 		ppl.setAutoSave(false);
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(ppl);
-		pvPLobby = new PvPLobby(this);
+		timerHandling.createRunnableTimer("pvPLobby_worldWait", 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (Bukkit.getWorld("PvPLobby") != null) {
+					timerHandling.deleteTimer("pvPLobby_worldWait");
+					pvPLobby = new PvPLobby(mainInstance);
+				}
+			}
+		});
 		
 		//Create/load game worlds
 		for (int i = 0; i < 10; i++) {			
@@ -210,6 +236,9 @@ public class Main extends JavaPlugin {
 	}
 	public TimerHandling getTimerInstance() {
 		return timerHandling;
+	}
+	public KitHandling getKitHandlingInstance() {
+		return kitHandling;
 	}
 	public Hub getHubInstance() {
 		return hub;

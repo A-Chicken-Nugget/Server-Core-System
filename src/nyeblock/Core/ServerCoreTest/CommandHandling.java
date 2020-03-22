@@ -12,6 +12,7 @@ import nyeblock.Core.ServerCoreTest.Commands.Hub;
 import nyeblock.Core.ServerCoreTest.Commands.Leave;
 import nyeblock.Core.ServerCoreTest.Commands.Lobby;
 import nyeblock.Core.ServerCoreTest.Commands.ManagePoints;
+import nyeblock.Core.ServerCoreTest.Commands.PlayerInfo;
 import nyeblock.Core.ServerCoreTest.Commands.ResetData;
 import nyeblock.Core.ServerCoreTest.Commands.Send;
 import nyeblock.Core.ServerCoreTest.Commands.SetPermission;
@@ -54,6 +55,7 @@ public class CommandHandling {
 			add(new Lobby(mainInstance));
 			add(new Hub(mainInstance));
 			add(new Find(mainInstance));
+			add(new PlayerInfo(mainInstance));
 		}};		
 	}
 }

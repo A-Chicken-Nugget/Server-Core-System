@@ -1,6 +1,7 @@
 package nyeblock.Core.ServerCoreTest;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -15,6 +16,15 @@ import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 public class TimerHandling {
 	private HashMap<String,BukkitTask> timers = new HashMap<String,BukkitTask>();
 	private HashMap<String,Integer> timesRan = new HashMap<String,Integer>();
+	
+	public ArrayList<String> getTimers() {
+		ArrayList<String> timerss = new ArrayList<>();
+		
+		for (Map.Entry<String,BukkitTask> entry : timers.entrySet()) {
+			timerss.add(entry.getKey());
+		}
+		return timerss;
+	}
 	
 	/**
 	* Creates a timer that calls a method

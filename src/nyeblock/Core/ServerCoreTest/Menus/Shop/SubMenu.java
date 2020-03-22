@@ -63,4 +63,12 @@ public class SubMenu {
 	public ArrayList<MenuOption> getOptions() {
 		return options;
 	}
+	
+	//
+	// SETTERS
+	//
+	
+	public void setSize(int size) {
+		this.size = size;
+	}
 }

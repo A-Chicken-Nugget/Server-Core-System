@@ -89,6 +89,7 @@ public class PlayerData {
 	private boolean isHidden = false;
 	private boolean queuingGame = false;
 	private boolean loadedDBInfo = false;
+	private boolean logSearch = false;
 	//Stats
 	private HashMap<String,Integer> realmXp = new HashMap<>();
 	private HashMap<String,Integer> totalGamesPlayed = new HashMap<>();
@@ -124,6 +125,12 @@ public class PlayerData {
 		});
 	}
 	
+	public void setLogSearch(boolean logSearch) {
+		this.logSearch = logSearch;
+	}
+	public boolean getLogSearch() {
+		return logSearch;
+	}
 	public void addShopItem(String uniqueId,String menuName) {
 		boolean found = false;
 		
@@ -450,6 +457,9 @@ public class PlayerData {
 	// GETTERS
 	//
 	
+	public String getIp() {
+		return ip;
+	}
 	public ChatColor getNameTextColor() {
 		return nameTextColor;
 	}
@@ -686,8 +696,17 @@ public class PlayerData {
 					if (!key.equals("-1")) {
 						ArrayList<Player> players = currentRealm.getPlayersInRealm();
 						
-						if (players.size() > 0) {							
-							player.setCompassTarget(currentRealm.getPlayersInRealm().get(Integer.parseInt((key == null ? "0" : key))).getLocation());
+						if (players.size() > 0) {
+							ArrayList<Player> playersInRealm = currentRealm.getPlayersInRealm();
+							Integer index = Integer.parseInt(key == null ? "0" : key);
+			
+							if (index < playersInRealm.size()) {
+								player.setCompassTarget(playersInRealm.get(index).getLocation());
+							} else {
+								if (index != 0) {
+									player.setCompassTarget(playersInRealm.get(index-1).getLocation());
+								}
+							}
 						}
 					}
 				}
