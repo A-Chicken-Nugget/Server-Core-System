@@ -271,15 +271,6 @@ public class PvP extends GameBase {
 				}
 			}
 		}
-		//Manage weather/time
-		if (world != null) {
-			if (!setWorldTime) {				
-				world.setTime(1000);
-			}
-			if (world.hasStorm()) {
-				world.setStorm(false);
-    		}
-		}
 		//Check when the game has ended
 		if (gameBegun && (duration-((System.currentTimeMillis() / 1000L)-startTime)) < 0) {
 			if (!endStarted) {

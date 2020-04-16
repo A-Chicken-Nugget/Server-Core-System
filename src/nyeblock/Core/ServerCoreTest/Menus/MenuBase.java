@@ -10,7 +10,6 @@ import org.bukkit.inventory.ItemStack;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 
 public abstract class MenuBase extends ItemBase {
 	private Inventory inventory;

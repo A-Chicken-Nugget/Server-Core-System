@@ -25,7 +25,7 @@ import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
 import nyeblock.Core.ServerCoreTest.Menus.NyeBlockMenu;
-import nyeblock.Core.ServerCoreTest.Menus.StatsMenu;
+import nyeblock.Core.ServerCoreTest.Menus.MyProfileMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 
@@ -155,7 +155,7 @@ public class Hub extends RealmBase {
     */
 	public void setItems(Player player) {
 		//Profile/Stats menu
-		StatsMenu profileStatsMenu = new StatsMenu(mainInstance,player);
+		MyProfileMenu profileStatsMenu = new MyProfileMenu(mainInstance,player);
 		ItemStack ssm = profileStatsMenu.give();
 		player.getInventory().setItem(2, ssm);
 		

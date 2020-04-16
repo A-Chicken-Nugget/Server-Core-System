@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.Vector;
 
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
@@ -24,13 +25,16 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.QueueGame;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
 import nyeblock.Core.ServerCoreTest.Menus.KitPvPShop;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPC;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
 import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.CustomNPCType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
@@ -73,7 +77,7 @@ public class KitPvPLobby extends RealmBase {
 					scores.put(9, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
 					scores.put(8, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 					scores.put(7, ChatColor.YELLOW + "KitPvP Level");
-					scores.put(6, ChatColor.GREEN.toString() + pd.getLevel(Realm.SKYWARS));
+					scores.put(6, ChatColor.GREEN.toString() + pd.getLevel(Realm.KITPVP));
 					scores.put(5, ChatColor.RESET.toString() + ChatColor.RESET.toString());
 					scores.put(4, ChatColor.YELLOW + "Points");
 					scores.put(3, ChatColor.GREEN.toString() + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()));
@@ -131,6 +135,12 @@ public class KitPvPLobby extends RealmBase {
 		if (world.hasStorm()) {
 			world.setStorm(false);
 		}
+		//Check if players are on island
+		for (Player ply : players) {
+			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(-119,274,-119), new Vector(124,25,100))) {
+				ply.teleport(new Location(world,0.5,162,.5,180,0));
+			}
+		}
 	}
 	/**
     * Set the players permissions
@@ -158,6 +168,11 @@ public class KitPvPLobby extends RealmBase {
 	public void setItems(Player player) {
 		player.getInventory().clear();
 		
+		//Game Menu
+		GameMenu hubMenu = new GameMenu(mainInstance,player);
+		ItemStack hm = hubMenu.give();
+		player.getInventory().setItem(0, hm);
+		
 		//Kit PvP Shop
 		KitPvPShop shop = new KitPvPShop(mainInstance,player);
 		ItemStack s = shop.give();
@@ -168,6 +183,11 @@ public class KitPvPLobby extends RealmBase {
 		ItemStack qg = queueGame.give();
 		player.getInventory().setItem(4, qg);
 		player.getInventory().setHeldItemSlot(4);
+		
+		//Hide players
+		HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
+		ItemStack hp = hidePlayers.give();
+		player.getInventory().setItem(6, hp);
 		
 		//Return to hub
 		ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);

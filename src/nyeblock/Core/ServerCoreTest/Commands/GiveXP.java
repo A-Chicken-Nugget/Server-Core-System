@@ -30,23 +30,41 @@ private PlayerHandling playerHandling;
 	
 	public void execute(Player ply, String[] args) {
 		if (args.length >= 3) {
-			Player player = Bukkit.getPlayerExact(args[0]);
-			
-			if (player != null) {
+			if (!args[0].equalsIgnoreCase("<<_All_players_in_world_>>")) {
+				Player player = Bukkit.getPlayerExact(args[0]);
+				
+				if (player != null) {
+					Realm realm = Realm.fromDBName(args[1]);
+					
+					if (realm != null) {					
+						try {					
+							Integer amount = Integer.parseInt(args[2]);
+							playerHandling.getPlayerData(player).giveXP(realm, amount);
+						} catch (Exception ex) {
+							ply.sendMessage(ChatColor.RED + "Please enter a valid amount!");
+						}
+					} else {
+						ply.sendMessage(ChatColor.YELLOW + "Please enter a valid realm!");
+					}
+				} else {
+					ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
+				}
+			} else {
 				Realm realm = Realm.fromDBName(args[1]);
 				
 				if (realm != null) {					
 					try {					
 						Integer amount = Integer.parseInt(args[2]);
-						playerHandling.getPlayerData(player).giveXP(realm, amount);
+						
+						for (Player player : ply.getWorld().getPlayers()) {							
+							playerHandling.getPlayerData(player).giveXP(realm, amount);
+						}
 					} catch (Exception ex) {
 						ply.sendMessage(ChatColor.RED + "Please enter a valid amount!");
 					}
 				} else {
 					ply.sendMessage(ChatColor.YELLOW + "Please enter a valid realm!");
 				}
-			} else {
-				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}
 		} else {
 			ply.sendMessage(ChatColor.RED + "Please enter the proper arguements for this command!");
@@ -70,6 +88,9 @@ private PlayerHandling playerHandling;
 						autoCompletes.add(ply.getName());
 					}
 				}
+			}
+			if ("<<_all_players_in_world_>>".contains(args[0].toLowerCase())) {	
+				autoCompletes.add("<<_All_players_in_world_>>");
 			}
 		} else if (args.length == 2) {
 			for (String permission : Realm.listRealms(true)) {

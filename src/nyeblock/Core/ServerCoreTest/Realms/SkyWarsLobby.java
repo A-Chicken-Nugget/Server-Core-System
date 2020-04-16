@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.Vector;
 
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
@@ -24,8 +25,10 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.QueueGame;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
 import nyeblock.Core.ServerCoreTest.Menus.SkyWarsShop;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.CustomNPCType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -33,6 +36,7 @@ import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPC;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings("serial")
 public class SkyWarsLobby extends RealmBase {
@@ -112,7 +116,7 @@ public class SkyWarsLobby extends RealmBase {
 		
 		ArrayList<String> hints = new ArrayList<String>() {{
 			add(ChatColor.YELLOW + "Use /hub or /leave to return to the hub");
-			add(ChatColor.YELLOW + "Use the " + ChatColor.BOLD + "SHOP MENU " + ChatColor.RESET.toString() + ChatColor.YELLOW + "to purchase items custom stuff");
+			add(ChatColor.YELLOW + "Use the " + ChatColor.BOLD + "SHOP MENU " + ChatColor.RESET.toString() + ChatColor.YELLOW + "to purchase items and custom stuff");
 			add(ChatColor.YELLOW + "Use /level to view your " + realm.toString() + " level");
 		}};
 		
@@ -133,6 +137,12 @@ public class SkyWarsLobby extends RealmBase {
 		world.setTime(1000);
 		if (world.hasStorm()) {
 			world.setStorm(false);
+		}
+		//Check if players are on island
+		for (Player ply : players) {
+			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(127,239,-122), new Vector(-123,71,118))) {
+				ply.teleport(new Location(world,.5,200,.5,0,0));
+			}
 		}
 	}
 	/**
@@ -161,6 +171,11 @@ public class SkyWarsLobby extends RealmBase {
 	public void setItems(Player player) {
 		player.getInventory().clear();
 		
+		//Game Menu
+		GameMenu hubMenu = new GameMenu(mainInstance,player);
+		ItemStack hm = hubMenu.give();
+		player.getInventory().setItem(0, hm);
+		
 		//Sky Wars Shop
 		SkyWarsShop shop = new SkyWarsShop(mainInstance,player);
 		ItemStack s = shop.give();
@@ -171,6 +186,11 @@ public class SkyWarsLobby extends RealmBase {
 		ItemStack qg = queueGame.give();
 		player.getInventory().setItem(4, qg);
 		player.getInventory().setHeldItemSlot(4);
+		
+		//Hide players
+		HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
+		ItemStack hp = hidePlayers.give();
+		player.getInventory().setItem(6, hp);
 		
 		//Return to hub
 		ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);

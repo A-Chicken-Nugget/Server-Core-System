@@ -8,6 +8,7 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
+import nyeblock.Core.ServerCoreTest.Misc.Party;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.PvP;
@@ -24,6 +25,9 @@ public class RealmHandling {
 	
 	public GameBase[] getGames() {
 		return games;
+	}
+	public void joinGame(Player ply, GameBase game) {
+		mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,game}, this);
 	}
 	/**
     * Find a game in the games list
@@ -131,148 +135,162 @@ public class RealmHandling {
 	public void joinRealm(Player ply, Realm realm) {
 		PlayerHandling ph = mainInstance.getPlayerHandlingInstance();
 		PlayerData pd = ph.getPlayerData(ply);
+		boolean canQueue = true;
 		
 		if (!pd.isQueuingGame()) {
-			if (realm == Realm.HUB) {
-				ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
+			if (pd.getParty() != null) {
+				Party party = pd.getParty();
 				
-				mainInstance.getHubInstance().join(ply, false);
-			} else if (realm == Realm.PARKOUR) {
-				mainInstance.getHubParkourInstance().join(ply, false);
-			} else if (realm == Realm.KITPVP) {
-				pd.setQueuingStatus(true);
-				GameBase gameToJoin = findGame(realm);
-				
-				//If no games are found, create one
-				if (gameToJoin == null) {
-					int id = getAvailablePosition();
-					
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
-					}
-					if (id != -1) {
-						gameToJoin = new KitPvP(mainInstance,id,"gameWorld_" + (id+1),120,20);
-						addGameToList(gameToJoin);
-						
-						ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);						
-					} else {
-						ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
-					}
+				if (party.getCreator().equals(ply)) {
+					party.messageToAll(ChatColor.GREEN + party.getCreator().getName() + ChatColor.YELLOW + " has queued for a " + realm.toString() + " game!", false);					
 				} else {
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
-					}
-					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+					ply.sendMessage(ChatColor.YELLOW + "Unable to queue for game. You are in a party and not the host.");
+					canQueue = false;
 				}
-			} else if (realm == Realm.STEPSPLEEF) {
-				pd.setQueuingStatus(true);
-				GameBase gameToJoin = findGame(realm);
-				
-				//If no games are found, create one
-				if (gameToJoin == null) {
-					int id = getAvailablePosition();
+			}
+			
+			if (canQueue) {
+				if (realm == Realm.HUB) {
+					ply.teleport(new Location(Bukkit.getWorld("world"),-9.548, 113, -11.497));
 					
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
-					}
-					if (id != -1) {							
-						gameToJoin = new StepSpleef(mainInstance,id,"gameWorld_" + (id+1),600,5,20);
-						addGameToList(gameToJoin);
-						
-						ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
-					} else {
-						ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
-					}
-				} else {
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
-					}
-					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
-				}
-			} else if (realm == Realm.SKYWARS) {
-				pd.setQueuingStatus(true);
-				GameBase gameToJoin = findGame(realm);
-				
-				//If no games are found, create one
-				if (gameToJoin == null) {
-					int id = getAvailablePosition();
+					mainInstance.getHubInstance().join(ply, false);
+				} else if (realm == Realm.PARKOUR) {
+					mainInstance.getHubParkourInstance().join(ply, false);
+				} else if (realm == Realm.KITPVP) {
+					pd.setQueuingStatus(true);
+					GameBase gameToJoin = findGame(realm);
 					
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
-					}
-					if (id != -1) {							
-						gameToJoin = new SkyWars(mainInstance,id,"gameWorld_" + (id+1),900,4,8);
-						addGameToList(gameToJoin);
+					//If no games are found, create one
+					if (gameToJoin == null) {
+						int id = getAvailablePosition();
 						
-						ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
+						}
+						if (id != -1) {
+							gameToJoin = new KitPvP(mainInstance,id,"gameWorld_" + (id+1),120,20);
+							addGameToList(gameToJoin);
+							
+							ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);						
+						} else {
+							ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
+						}
 					} else {
-						ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
+						}
+						ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 					}
-				} else {
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
-					}
-					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
-				}
-			} else if (realm == Realm.PVP_DUELS_FISTS) {					
-				pd.setQueuingStatus(true);
-				GameBase gameToJoin = findGame(realm);
-				
-				//If no games are found, create one
-				if (gameToJoin == null) {
-					int id = getAvailablePosition();
+				} else if (realm == Realm.STEPSPLEEF) {
+					pd.setQueuingStatus(true);
+					GameBase gameToJoin = findGame(realm);
 					
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
-					}
-					if (id != -1) {	
-						gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,2,2,Realm.PVP_DUELS_FISTS,PvPMode.DUELS,PvPType.FIST);
-						addGameToList(gameToJoin);
+					//If no games are found, create one
+					if (gameToJoin == null) {
+						int id = getAvailablePosition();
 						
-						ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);						
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
+						}
+						if (id != -1) {							
+							gameToJoin = new StepSpleef(mainInstance,id,"gameWorld_" + (id+1),600,5,20);
+							addGameToList(gameToJoin);
+							
+							ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+						} else {
+							ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
+						}
 					} else {
-						ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
+						}
+						ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 					}
-				} else {
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
-					}
-					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
-				}
-			} else if (realm == Realm.PVP_2V2_FISTS) {					
-				pd.setQueuingStatus(true);
-				GameBase gameToJoin = findGame(realm);
-				
-				//If no games are found, create one
-				if (gameToJoin == null) {
-					int id = getAvailablePosition();
+				} else if (realm == Realm.SKYWARS) {
+					pd.setQueuingStatus(true);
+					GameBase gameToJoin = findGame(realm);
 					
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
-					}
-					if (id != -1) {							
-						gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,4,4,Realm.PVP_2V2_FISTS,PvPMode.TWOVTWO,PvPType.FIST);
-						addGameToList(gameToJoin);
+					//If no games are found, create one
+					if (gameToJoin == null) {
+						int id = getAvailablePosition();
 						
-						ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
-						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
+						}
+						if (id != -1) {							
+							gameToJoin = new SkyWars(mainInstance,id,"gameWorld_" + (id+1),900,4,8);
+							addGameToList(gameToJoin);
+							
+							ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+						} else {
+							ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
+						}
 					} else {
-						ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
+						}
+						ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 					}
-				} else {
-					if (pd.getLogSearch()) {
-						System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
+				} else if (realm == Realm.PVP_DUELS_FISTS) {					
+					pd.setQueuingStatus(true);
+					GameBase gameToJoin = findGame(realm);
+					
+					//If no games are found, create one
+					if (gameToJoin == null) {
+						int id = getAvailablePosition();
+						
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
+						}
+						if (id != -1) {	
+							gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,2,2,Realm.PVP_DUELS_FISTS,PvPMode.DUELS,PvPType.FIST);
+							addGameToList(gameToJoin);
+							
+							ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);						
+						} else {
+							ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
+						}
+					} else {
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
+						}
+						ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
 					}
-					ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
-					mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+				} else if (realm == Realm.PVP_2V2_FISTS) {					
+					pd.setQueuingStatus(true);
+					GameBase gameToJoin = findGame(realm);
+					
+					//If no games are found, create one
+					if (gameToJoin == null) {
+						int id = getAvailablePosition();
+						
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Creating new " + realm.toString() + " game");
+						}
+						if (id != -1) {							
+							gameToJoin = new PvP(mainInstance,id,"gameWorld_" + (id+1),300,4,4,Realm.PVP_2V2_FISTS,PvPMode.TWOVTWO,PvPType.FIST);
+							addGameToList(gameToJoin);
+							
+							ply.sendMessage(ChatColor.YELLOW + "No " + realm.toString() + " worlds found! Creating a new one for you...");
+							mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 1, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+						} else {
+							ply.sendMessage(ChatColor.YELLOW + "No game worlds available to create your game. Please try again later.");
+						}
+					} else {
+						if (pd.getLogSearch()) {
+							System.out.println("[SEARCH DEBUG] Joinining " + realm.toString() + " game");
+						}
+						ply.sendMessage(ChatColor.YELLOW + "Found a game. Joining...");
+						mainInstance.getTimerInstance().createMethodTimer("worldWait_" + ply.getName(), 3, 0, "checkWorld", false, new Object[] {ply,gameToJoin}, this);
+					}
 				}
 			}
 		} else {
@@ -310,6 +328,14 @@ public class RealmHandling {
 					}
 				} else {					
 					playerData.getCurrentRealm().leave(ply, true, null);
+					
+					if (playerData.getParty() != null) {
+						Party party = playerData.getParty();
+					
+						if (party.getCreator().equals(ply)) {
+							party.membersJoin(game);
+						}
+					}
 					
 					//Join game
 					game.join(ply,true);

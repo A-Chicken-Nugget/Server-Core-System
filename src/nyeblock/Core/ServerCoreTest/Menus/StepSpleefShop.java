@@ -14,7 +14,6 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopBase;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopEquipSubMenu;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Options.ShopMenuTypeOptionItem;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.LevelRequirement;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.RequirementBase;
@@ -68,7 +67,7 @@ public class StepSpleefShop extends ShopBase {
 					}
 				});
 		}}, new ArrayList<RequirementBase>() {{
-			add(new LevelRequirement(3,Realm.SKYWARS));
+			add(new LevelRequirement(3,Realm.STEPSPLEEF));
 		}}, "stepSpleef_rainbow_scoreboard_winAction", 350, false);
 		
 		//Fireworks
@@ -76,9 +75,9 @@ public class StepSpleefShop extends ShopBase {
 			add(ChatColor.YELLOW + "Random fireworks will be shot");
 			add(ChatColor.YELLOW + "into the sky.");
 		}}, new ArrayList<ShopMenuTypeOptionItem>() {{
-			add(new ShopMenuTypeOptionItem("Red","red",450,Arrays.asList(new LevelRequirement(3,Realm.SKYWARS))));
-			add(new ShopMenuTypeOptionItem("Blue","blue",450,Arrays.asList(new LevelRequirement(4,Realm.SKYWARS))));
-			add(new ShopMenuTypeOptionItem("Green","green",450,Arrays.asList(new LevelRequirement(5,Realm.SKYWARS))));
+			add(new ShopMenuTypeOptionItem("Red","red",450,Arrays.asList(new LevelRequirement(3,Realm.STEPSPLEEF))));
+			add(new ShopMenuTypeOptionItem("Blue","blue",450,Arrays.asList(new LevelRequirement(4,Realm.STEPSPLEEF))));
+			add(new ShopMenuTypeOptionItem("Green","green",450,Arrays.asList(new LevelRequirement(5,Realm.STEPSPLEEF))));
 		}}, new HashMap<ClickType,Runnable>() {{
 				put(ClickType.LEFT,new Runnable() {
 					@Override
@@ -100,7 +99,7 @@ public class StepSpleefShop extends ShopBase {
 					}
 				});
 		}}, new ArrayList<RequirementBase>() {{
-			add(new LevelRequirement(5,Realm.SKYWARS));
+			add(new LevelRequirement(5,Realm.STEPSPLEEF));
 		}}, "stepSpleef_time_speed_up_winAction", 550, false);
 		
 		//Back

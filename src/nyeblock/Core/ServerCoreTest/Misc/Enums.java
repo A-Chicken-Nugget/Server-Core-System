@@ -289,28 +289,25 @@ public class Enums {
 			return armorSlot;
 		}
 	}
-	//Achievement enums
-//	public enum Achievement {
-//		KILLS_15("kills_15", new Runnable() {
-//			@Override
-//			public void run() {
-//				
-//			}
-//		});
-//		
-//		private String dbname;
-//		private Runnable requirement;
-//		
-//		private Achievement(String dbname, Runnable requirement) {
-//			this.dbname = dbname;
-//			this.requirement = requirement;
-//		}
-//		
-//		public String getDBName() {
-//			return dbname;
-//		}
-////		public boolean tryRequirement(Main mainInstance, Player ply) {
-//////			requirement.run(mainInstance,ply);
-////		}
-//	}
+	//Log message types
+	public enum LogType {
+		NORMAL("Core",ChatColor.WHITE),
+		WARNING("Core/Warning",ChatColor.YELLOW),
+		ERROR("Core/Error",ChatColor.RED);
+		
+		private String tag;
+		private ChatColor color;
+		
+		private LogType(String tag, ChatColor color) {
+			this.tag = tag;
+			this.color = color;
+		}
+		
+		public String getTag() {
+			return tag;
+		}
+		public ChatColor getColor() {
+			return color;
+		}
+	}
 }

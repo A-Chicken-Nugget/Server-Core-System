@@ -20,6 +20,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import com.boydti.fawe.object.clipboard.DiskOptimizedClipboard;
+import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.math.BlockVector3;
 
@@ -34,10 +35,13 @@ import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Maps.MapBase;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
 import nyeblock.Core.ServerCoreTest.Misc.DamagePlayer;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.LogType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
 import nyeblock.Core.ServerCoreTest.Misc.PlayerSummary;
 import nyeblock.Core.ServerCoreTest.Misc.SummaryStat;
+
+import com.bergerkiller.bukkit.lightcleaner.lighting.LightingService;
 
 @SuppressWarnings("serial")
 public abstract class GameBase extends RealmBase {
@@ -52,6 +56,7 @@ public abstract class GameBase extends RealmBase {
 	protected long created = System.currentTimeMillis();
 	protected World world;
 	protected Realm lobbyRealm;
+	private EditSession schematicEditSession;
 	//Player data
 	protected ArrayList<HashMap<Location,Player>> teamsSetup = new ArrayList<>();
 	private HashMap<Player,PlayerSummary> playerSummary = new HashMap<>();
@@ -97,8 +102,17 @@ public abstract class GameBase extends RealmBase {
 						
 						if (timePlayed == null) {
 							playerTimePlayed.put(player,1);
+							if (mainInstance.getLogPlayTime()) {
+								System.out.println("[Player time logs] Set up " + player.getName());
+							}
 						} else {
+							if (mainInstance.getLogPlayTime()) {
+								System.out.println("[Player time logs] @ " + (timePlayed % 120));
+							}
 							if (timePlayed % 120 == 0 && !endStarted) {
+								if (mainInstance.getLogPlayTime()) {
+									System.out.println("[Player time logs] Gave xp to " + player.getName());
+								}
 								addStat(player,"Play time",5,SummaryStatType.XP);
 								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You have received " + ChatColor.GREEN + "5xp" + ChatColor.YELLOW + " for playing."));
 							}
@@ -106,6 +120,10 @@ public abstract class GameBase extends RealmBase {
 						}
 					}
 				}
+				world.setTime(6000);
+				if (world.hasStorm()) {
+					world.setStorm(false);
+	    		}
 			}
 		});
 		
@@ -132,6 +150,11 @@ public abstract class GameBase extends RealmBase {
 		});
 	}
 	
+	/**
+    * Return a color from the color text name
+    * @param colorName - the text name of the color
+    * @return the color of the given color name
+    */
 	public Color colorFromChatColor(String colorName) {
 		Color color = Color.WHITE;
 		
@@ -204,16 +227,16 @@ public abstract class GameBase extends RealmBase {
 		mainInstance.getTimerInstance().deleteTimer("deleteCheck_" + worldName);
 		canUsersJoin = false;
 		
-		System.out.println("[Core] Cleaning up " + worldName);
+		mainInstance.logMessage(LogType.NORMAL, "Cleaning up " + worldName);
 		
 		onDelete();
 		
-		System.out.println("[" + worldName + "] Clearing entities.");
+		mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Clearing entities.");
 		
 		//Clear all entities
 		for (Entity ent : world.getEntities()) ent.remove();
 				
-		System.out.println("[" + worldName + "] Undoing player changes.");
+		mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Undoing player changes.");
 		
 		//Undo player changes
 		CoreProtectAPI cp = mainInstance.getCoreProtectAPI();
@@ -230,20 +253,19 @@ public abstract class GameBase extends RealmBase {
 			}
 		}
 		
-		System.out.println("[" + worldName + "] Removing schematic.");
+		mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Removing schematic.");
 		
-		//Clear schematic
+		//Undo schematic
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 			@Override
 			public void run() {
-				DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(map.getClearSchematicFile());
-				clipboard.paste(new BukkitWorld(world), BlockVector3.at(-42, 30, -6),false,true,null);
-				clipboard.close();
+				schematicEditSession.undo(schematicEditSession);
+				schematicEditSession.flushQueue();
 			}
 		});
 		
 		mainInstance.getRealmHandlingInstance().removeGameFromList(id);
-		System.out.println("[" + worldName + "] Finished.");
+		mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Finished.");
 	}
 	/**
     * Checks if the world has been generated. If so then it sets a schematic and allows entry to the game
@@ -253,7 +275,7 @@ public abstract class GameBase extends RealmBase {
 			GameBase instance = this;
 			world = Bukkit.getWorld(worldName);
 			
-			System.out.println("[Core] Starting creation of a new " + instance.getRealm().toString() + " game. Using world " + worldName);
+			mainInstance.logMessage(LogType.NORMAL, "Starting creation of a new " + instance.getRealm().toString() + " game. Using world " + worldName);
 			
 			Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 				@Override
@@ -261,13 +283,13 @@ public abstract class GameBase extends RealmBase {
 					//Set map
 					map = GameMapInfo.getRandomMap(instance);
 					
-					System.out.println("[" + worldName + "] Using map " + map.getName());
+					mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Using map " + map.getName());
 					
-					System.out.println("[" + worldName + "] Setting schematic.");
+					mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Setting schematic.");
 					
 					//Set schematic
 					DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(map.getSchematicFile());
-					clipboard.paste(new BukkitWorld(world), BlockVector3.at(-42, 30, -6),false,false,null);
+					schematicEditSession = clipboard.paste(new BukkitWorld(world), BlockVector3.at(-42, 30, -6),true,false,null);
 					clipboard.close();
 					
 					//Run create method in sub class
@@ -279,7 +301,15 @@ public abstract class GameBase extends RealmBase {
 				    		setSchemStatus(true);
 				    	}
 				    });
-				    System.out.println("[" + worldName + "] Finished.");
+				    
+				    mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Fixing lighting.");
+				    
+				    //Fix lighting
+				    LightingService.ScheduleArguments scheduleArgs = new LightingService.ScheduleArguments();
+				    scheduleArgs.setWorld(world);
+					LightingService.schedule(scheduleArgs);
+				    
+				    mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Finished.");
 				}
 			});
 			mainInstance.getTimerInstance().deleteTimer("worldCheck_" + worldName);
@@ -391,6 +421,9 @@ public abstract class GameBase extends RealmBase {
 	public boolean isGameClosed() {
 		return endStarted;
 	}
+	/**
+    * Add a stat to the players summary
+    */
 	public void addStat(Player ply, String name, int value, SummaryStatType type) {
 		if (playerSummary.get(ply) == null) {
 			playerSummary.put(ply, new PlayerSummary());
@@ -403,18 +436,38 @@ public abstract class GameBase extends RealmBase {
 	// GETTERS
 	//
 	
+	/**
+    * Get the start time of the game
+    * @return unix timestamp when the game started
+    */
 	public long getStartTime() {
 		return startTime;
 	}
+	/**
+    * Get the lobby realm of the game
+    * @return the lobby realm of the game
+    */
 	public Realm getLobbyRealm() {
 		return lobbyRealm;
 	}
+	/**
+    * Get the id of the game
+    * @return the id of the game
+    */
 	public int getId() {
 		return id;
 	}
+	/**
+    * Get the schematic status of the game
+    * @return whether or not the schematic has been set
+    */
 	public boolean getSchematicStatus() {
 		return isSchematicSet;
 	}
+	/**
+    * Get the active status of the game
+    * @return whether or not the game is active
+    */
 	public boolean getActiveStatus() {
 		return active;
 	}
@@ -468,12 +521,6 @@ public abstract class GameBase extends RealmBase {
 		return created;
 	}
 	/**
-    * Get instance of this game
-    */
-	public GameBase getInstance() {
-		return this;
-	}
-	/**
     * Get the join status of the game
     */
 	public boolean getJoinStatus() {
@@ -508,9 +555,17 @@ public abstract class GameBase extends RealmBase {
 	// SETTERS
 	//
 	
+	/**
+    * Set the schematic status of the game
+    * @param status - the status to set
+    */
 	public void setSchemStatus(boolean status) {
 		isSchematicSet = status;
 	}
+	/**
+    * Set the join status of the game
+    * @param status - the status to set
+    */
 	public void setJoinStatus(boolean status) {
 		canUsersJoin = status;
 	}

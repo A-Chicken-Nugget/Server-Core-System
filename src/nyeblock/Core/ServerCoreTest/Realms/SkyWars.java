@@ -33,7 +33,6 @@ import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.CustomChests.CustomChestGenerator;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
-import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
 import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
@@ -57,7 +56,6 @@ public class SkyWars extends GameBase {
 	private int readyCount = 0;
 	private int messageCount = 0;
 	private long lastNumber = 0;
-	private boolean setWorldTime = true;
 	protected ArrayList<Hologram> holograms = new ArrayList<>();
 	protected HashMap<Vector,ChestValue> chests = new HashMap<>();
 	
@@ -267,7 +265,7 @@ public class SkyWars extends GameBase {
 			}
 		}
 		//Check if player has won
-		if (playersInGame.size() == 1 && active) {
+		if (playersInGame.size() == 3 && active) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 					endStarted = true;
@@ -285,15 +283,6 @@ public class SkyWars extends GameBase {
 					mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 				}
 			}
-		}
-		//Manage weather/time
-		if (world != null) {   
-			if (!setWorldTime) {				
-				world.setTime(1000);
-			}
-			if (world.hasStorm()) {
-				world.setStorm(false);
-    		}
 		}
 		//Check when the game has ended
 		if (gameBegun && (duration-((System.currentTimeMillis() / 1000L)-startTime)) < 0) {
@@ -335,19 +324,14 @@ public class SkyWars extends GameBase {
 			//Select player
 			PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
 			player.getInventory().setItem(4, selectPlayer.give());
-			
-			//Return to hub
-			ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
-			player.getInventory().setItem(8, returnToHub.give());
 		} else {						
 			//Select kit
 			KitSelectorMenu selectKit = new KitSelectorMenu(mainInstance,player);
 			player.getInventory().setItem(4, selectKit.give());
-			
-			//Return to lobby
-			ReturnToLobby returnToLobby = new ReturnToLobby(mainInstance,lobbyRealm,player);
-			player.getInventory().setItem(8, returnToLobby.give());
 		}
+		//Return to hub
+		ReturnToLobby returnToLobby = new ReturnToLobby(mainInstance,lobbyRealm,player);
+		player.getInventory().setItem(8, returnToLobby.give());
 	}
 	/**
     * Check if a player is in the game

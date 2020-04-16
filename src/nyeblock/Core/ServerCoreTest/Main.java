@@ -22,6 +22,7 @@ import com.comphenix.protocol.ProtocolManager;
 import com.sk89q.worldedit.LocalConfiguration;
 
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.LogType;
 import nyeblock.Core.ServerCoreTest.Misc.VoidWorldGenerator;
 import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
 import nyeblock.Core.ServerCoreTest.Realms.Hub;
@@ -39,6 +40,7 @@ public class Main extends JavaPlugin {
 	private DatabaseHandling databaseHandling;
 	private TimerHandling timerHandling;
 	private KitHandling kitHandling;
+	private AchievementHandling achievementHandling;
 	private Hub hub;
 	private HubParkour hubParkour;
 	private CoreProtectAPI coreProtectAPI;
@@ -50,6 +52,9 @@ public class Main extends JavaPlugin {
 	private StepSpleefLobby stepSpleefLobby;
 	private PvPLobby pvPLobby;
 	
+	//Logs
+	private boolean logPlayTime = false;
+	
 	//When this plugin is enabled
 	public void onEnable() {
 		protocolManager = ProtocolLibrary.getProtocolManager();
@@ -59,6 +64,7 @@ public class Main extends JavaPlugin {
 		realmHandling = new RealmHandling(this);
 		timerHandling = new TimerHandling();
 		kitHandling = new KitHandling(this);
+		achievementHandling = new AchievementHandling();
 		CoreProtect coreProtect = (CoreProtect) getServer().getPluginManager().getPlugin("CoreProtect");
 		coreProtectAPI = coreProtect.getAPI();
 		customNPCManager = new CustomNPCManager(this);
@@ -117,7 +123,7 @@ public class Main extends JavaPlugin {
 		skl.setEnviroment(Environment.NORMAL);
 		skl.setWorldType(WorldType.FLAT);
 		skl.setGenerator(new VoidWorldGenerator());
-		skl.setKeepSpawnInMemory(false);
+		skl.setKeepSpawnInMemory(true);
 		skl.setAutoSave(false);
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(skl);
 		timerHandling.createRunnableTimer("skyWarsLobby_worldWait", 1, 0, new Runnable() {
@@ -136,7 +142,7 @@ public class Main extends JavaPlugin {
 		ssl.setEnviroment(Environment.NORMAL);
 		ssl.setWorldType(WorldType.FLAT);
 		ssl.setGenerator(new VoidWorldGenerator());
-		ssl.setKeepSpawnInMemory(false);
+		ssl.setKeepSpawnInMemory(true);
 		ssl.setAutoSave(false);
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(ssl);
 		timerHandling.createRunnableTimer("stepSpleefLobby_worldWait", 1, 0, new Runnable() {
@@ -155,7 +161,7 @@ public class Main extends JavaPlugin {
 		kpl.setEnviroment(Environment.NORMAL);
 		kpl.setWorldType(WorldType.FLAT);
 		kpl.setGenerator(new VoidWorldGenerator());
-		kpl.setKeepSpawnInMemory(false);
+		kpl.setKeepSpawnInMemory(true);
 		kpl.setAutoSave(false);
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(kpl);
 		timerHandling.createRunnableTimer("kitPvPLobby_worldWait", 1, 0, new Runnable() {
@@ -174,7 +180,7 @@ public class Main extends JavaPlugin {
 		ppl.setEnviroment(Environment.NORMAL);
 		ppl.setWorldType(WorldType.FLAT);
 		ppl.setGenerator(new VoidWorldGenerator());
-		ppl.setKeepSpawnInMemory(false);
+		ppl.setKeepSpawnInMemory(true);
 		ppl.setAutoSave(false);
 		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(ppl);
 		timerHandling.createRunnableTimer("pvPLobby_worldWait", 1, 0, new Runnable() {
@@ -218,6 +224,12 @@ public class Main extends JavaPlugin {
 		}
 	}
 	
+	//Log a message to the server console
+	//TODO Make this log to db as well
+	public void logMessage(LogType type, String message) {
+		System.out.println(type.getColor() + "[" + type.getTag() + "] " + message);
+	}
+	
 	//
 	// GETTERS
 	//
@@ -239,6 +251,9 @@ public class Main extends JavaPlugin {
 	}
 	public KitHandling getKitHandlingInstance() {
 		return kitHandling;
+	}
+	public AchievementHandling getAchievementHandlingInstance() {
+		return achievementHandling;
 	}
 	public Hub getHubInstance() {
 		return hub;
@@ -266,5 +281,12 @@ public class Main extends JavaPlugin {
 	}
 	public PvPLobby getPvPLobby() {
 		return pvPLobby;
+	}
+	
+	public void setLogPlayTime(boolean ye) {
+		logPlayTime = ye;
+	}
+	public boolean getLogPlayTime() {
+		return logPlayTime;
 	}
 }

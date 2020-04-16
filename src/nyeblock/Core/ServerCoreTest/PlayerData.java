@@ -40,6 +40,7 @@ import net.minecraft.server.v1_15_R1.DataWatcherRegistry;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 
+import nyeblock.Core.ServerCoreTest.Achievements.AchievementBase;
 import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
@@ -51,9 +52,11 @@ import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
 import nyeblock.Core.ServerCoreTest.Menus.MenuBase;
 import nyeblock.Core.ServerCoreTest.Menus.NyeBlockMenu;
 import nyeblock.Core.ServerCoreTest.Menus.ParkourMenu;
-import nyeblock.Core.ServerCoreTest.Menus.StatsMenu;
+import nyeblock.Core.ServerCoreTest.Menus.MyProfileMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
+import nyeblock.Core.ServerCoreTest.Misc.Party;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.LogType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -83,6 +86,9 @@ public class PlayerData {
 	private HashMap<String,String> customData = new HashMap<>();
 	private HashMap<String,ItemBase> customItems = new HashMap<>();
 	private ArrayList<ShopItem> shopItems = new ArrayList<>();
+	private ArrayList<String> achievements = new ArrayList<>();
+	private Party party;
+	private Party partyInvite;
 	private MenuBase openedMenu;
 	private RealmBase currentRealm;
 	private boolean isSpectating = false;
@@ -94,6 +100,8 @@ public class PlayerData {
 	private HashMap<String,Integer> realmXp = new HashMap<>();
 	private HashMap<String,Integer> totalGamesPlayed = new HashMap<>();
 	private HashMap<String,Integer> totalGamesWon = new HashMap<>();
+	private HashMap<String,Integer> totalGameKills = new HashMap<>();
+	private HashMap<String,Integer> totalGameDeaths = new HashMap<>();
 	//Scoreboard
 	private Scoreboard board;
 	private Objective objective;
@@ -113,11 +121,10 @@ public class PlayerData {
 				createScoreboard();
 				mainInstance.getHubInstance().join(ply, false);
 				
-				//Open welcome book
 //				ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
 //				BookMeta bookMeta = (BookMeta)book.getItemMeta();
-//				bookMeta.setTitle("Blank");
-//				bookMeta.setAuthor("Server");
+//				bookMeta.setTitle("Welcome");
+//				bookMeta.setAuthor("Nyeblock");
 //				bookMeta.setPages(Arrays.asList("test1","test2"));
 //				book.setItemMeta(bookMeta);
 //				player.openBook(book);
@@ -125,12 +132,48 @@ public class PlayerData {
 		});
 	}
 	
+	//Temp
 	public void setLogSearch(boolean logSearch) {
 		this.logSearch = logSearch;
 	}
 	public boolean getLogSearch() {
 		return logSearch;
 	}
+	
+	/**
+	* Give the player a death in the specified realm
+	* @param realm - realm to add the death to
+	*/
+	public void addDeath(Realm realm) {
+		if (realm.isGame()) {
+			totalGameDeaths.put(realm.getDBName(), totalGameDeaths.get(realm.getDBName()) + 1);
+		}
+	}
+	/**
+	* Give the player a kill in the specified realm
+	* @param realm - realm to add the kill to
+	*/
+	public void addKill(Realm realm) {
+		if (realm.isGame()) {
+			totalGameKills.put(realm.getDBName(), totalGameKills.get(realm.getDBName()) + 1);
+		}
+	}
+	/**
+	* Give an achievement to the player
+	* @param uniqueId - the unique id of the achievement
+	*/
+	public void addAchievement(String uniqueId) {
+		if (!achievements.contains(uniqueId)) {			
+			achievements.add(uniqueId);
+		} else {
+			mainInstance.logMessage(LogType.WARNING, "Attempted to give the player an achievement they already had!");
+		}
+	}
+	/**
+	* Give a shop item to the player. If it exists add to its quantity
+	* @param uniqueId - the unique id of the shop item
+	* @param menuName - the name of the menu the shop item is purchased in
+	*/
 	public void addShopItem(String uniqueId,String menuName) {
 		boolean found = false;
 		
@@ -144,6 +187,10 @@ public class PlayerData {
 			shopItems.add(new ShopItem(uniqueId,1,false,menuName));
 		}
 	}
+	/**
+	* Removed a shop item from the player
+	* @param item - the shop item to remove
+	*/
 	public void removeShopItem(ShopItem item) {
 		if (item.updateQuantity(false)) {
 			shopItems.remove(item);
@@ -174,10 +221,10 @@ public class PlayerData {
 	/**
     * Add game played
     * @param realm - realm to add to the games played
-    * @param set - what to set
+    * @param won - did they win
     */
-	public void addGamePlayed(Realm realm, boolean set) {
-		if (!set) {			
+	public void addGamePlayed(Realm realm, boolean won) {
+		if (!won) {			
 			totalGamesPlayed.put(realm.getDBName(), totalGamesPlayed.get(realm.getDBName()) + 1);
 		} else {
 			totalGamesWon.put(realm.getDBName(), totalGamesWon.get(realm.getDBName()) + 1);			
@@ -272,10 +319,15 @@ public class PlayerData {
 		//Save players points, time played and chat text color
 		dh.query("UPDATE users "
 			+ "SET timePlayed = (timePlayed + " + ((System.currentTimeMillis()/1000L)-getTimeJoined()) + "), "
-			+ "points = " + points + ", "
-			+ "chatTextColor = " + (chatTextColor == null ? "NULL, " : ("'" + chatTextColor.name().toString() + "', "))
-			+ "nameTextColor = " + (nameTextColor == null ? "NULL " : ("'" + nameTextColor.name().toString() + "' "))
-			+ "WHERE uniqueId = '" + player.getUniqueId() + "'", true);			
+			+ "points = " + points
+			+ " WHERE uniqueId = '" + player.getUniqueId() + "'", true);			
+		
+		//Save players achievements
+		if (achievements.size() > 0) {									
+			String achievementsJSON = new Gson().toJson(achievements);
+			
+			dh.query("UPDATE userAchievements SET achievements = '" + achievementsJSON + "' WHERE uniqueId = '" + player.getUniqueId() + "'", true);	
+		}
 		
 		//Save players realm xp
 		HashMap<String,Integer> realmXp = getRealmXp();
@@ -291,43 +343,20 @@ public class PlayerData {
 		if (!xpString.equals("")) {			
 			dh.query("UPDATE userXP SET " + xpString + " WHERE uniqueId = '" + player.getUniqueId() + "'", true);
 		}
-
-		//Save players total games won
-		HashMap<String,Integer> totalGamesWon = getTotalGamesPlayed();
-		String wonString = "";
 		
-		for (Map.Entry<String,Integer> entry : totalGamesWon.entrySet()) {
-			if (wonString.equals("")) {
-				wonString = entry.getKey() + " = " + entry.getValue();
-			} else {
-				wonString += ", " + entry.getKey() + " = " + entry.getValue();
-			}
-		}
-		if (!wonString.equals("")) {			
-			dh.query("UPDATE userGamesWon SET " + wonString + " WHERE uniqueId = '" + player.getUniqueId() + "'", true);	
-		}
-		
-		//Save players total games
-		HashMap<String,Integer> totalGamesPlayed = getTotalGamesPlayed();
-		String totalString = "";
-		
-		for (Map.Entry<String,Integer> entry : totalGamesPlayed.entrySet()) {
-			if (totalString.equals("")) {
-				totalString = entry.getKey() + " = " + entry.getValue();
-			} else {
-				totalString += ", " + entry.getKey() + " = " + entry.getValue();
-			}
-		}
-		if (!totalString.equals("")) {			
-			dh.query("UPDATE userTotalGames SET " + totalString + " WHERE uniqueId = '" + player.getUniqueId() + "'", true);	
-		}
+		//Save user stats
+		dh.query("UPDATE userStats SET kills = '"
+			+ new Gson().toJson(totalGameKills)
+			+ "', deaths = '"
+			+ new Gson().toJson(totalGameDeaths)
+			+ "', games_won = '"
+			+ new Gson().toJson(totalGamesWon)
+			+ "', games_played = '"
+			+ new Gson().toJson(totalGamesPlayed)
+			+ "' WHERE uniqueId = '" + player.getUniqueId() + "'", true);
 		
 		//Save players shop items
-		if (shopItems.size() > 0) {									
-			String shopItemsJSON = new Gson().toJson(shopItems);
-			
-			dh.query("UPDATE userShopItems SET items = '" + shopItemsJSON + "' WHERE uniqueId = '" + player.getUniqueId() + "'", true);	
-		}
+		dh.query("UPDATE userShopItems SET items = '" + new Gson().toJson(shopItems) + "' WHERE uniqueId = '" + player.getUniqueId() + "'", true);	
 	}
 	/**
     * Load/Set the players DB info
@@ -337,6 +366,18 @@ public class PlayerData {
     	
     	//Get the players realm xp
     	ArrayList<HashMap<String, String>> realmXPQuery = db.query("SELECT * FROM userXP WHERE uniqueId = '" + player.getUniqueId() + "'", false);
+    	
+    	//Get the players achievements
+    	ArrayList<HashMap<String, String>> achievementsQuery = db.query("SELECT * FROM userAchievements WHERE uniqueId = '" + player.getUniqueId() + "'", false);
+    	
+    	if (achievementsQuery.size() > 0) {
+    		ArrayList<String> achievementData = new Gson().fromJson(achievementsQuery.get(0).get("achievements"), new TypeToken<ArrayList<String>>(){}.getType());
+    		
+    		achievements = achievementData;
+    	} else {
+    		//Insert the user in the table
+    		db.query("INSERT INTO userAchievements (uniqueId,achievements) VALUES ('" + player.getUniqueId() + "','" + new Gson().toJson(new ArrayList<String>()) + "')", true);
+    	}
     	
     	//If the player exists in the userXP table
     	if (realmXPQuery.size() > 0) {
@@ -363,58 +404,54 @@ public class PlayerData {
     		}
     	}
     	
-    	//Get the players total games played
-    	ArrayList<HashMap<String, String>> totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", false);
+    	//Get the players stats
+    	ArrayList<HashMap<String, String>> statsQuery = db.query("SELECT * FROM userStats WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     	
-    	//If the player exists in the table
-    	if (totalGamesQuery.size() > 0) {
-    		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
+    	if (statsQuery.size() > 0) {
+    		HashMap<String, String> statsQueryData = statsQuery.get(0);
     		
-    		//Set the players total games played
+    		//Game kills
+    		HashMap<String, Integer> gameKillsData = new Gson().fromJson(statsQueryData.get("kills"), new TypeToken<HashMap<String,Integer>>(){}.getType());
+    		//Game deaths		
+    		HashMap<String, Integer> gameDeathsData = new Gson().fromJson(statsQueryData.get("deaths"), new TypeToken<HashMap<String,Integer>>(){}.getType());
+    		//Games won
+    		HashMap<String, Integer> gamesWonData = new Gson().fromJson(statsQueryData.get("games_won"), new TypeToken<HashMap<String,Integer>>(){}.getType());
+    		//Games played
+    		HashMap<String, Integer> gamesPlayedData = new Gson().fromJson(statsQueryData.get("games_played"), new TypeToken<HashMap<String,Integer>>(){}.getType());
+    		
     		for (Realm realm : Realm.values()) {
     			if (realm.isGame()) {
-    				totalGamesPlayed.put(realm.getDBName(),Integer.parseInt(totalGamesQueryData.get(realm.getDBName())));
+    				//Game kills
+    				if (gameKillsData.get(realm.getDBName()) != null) {
+    					totalGameKills.put(realm.getDBName(), gameKillsData.get(realm.getDBName()));
+    				}
+    				//Game deaths
+    				if (gameDeathsData.get(realm.getDBName()) != null) {
+    					totalGameDeaths.put(realm.getDBName(), gameDeathsData.get(realm.getDBName()));
+    				}
+    				//Games won
+    				if (gamesWonData.get(realm.getDBName()) != null) {
+    					totalGamesWon.put(realm.getDBName(), gamesWonData.get(realm.getDBName()));
+    				}
+    				//Games played
+    				if (gamesPlayedData.get(realm.getDBName()) != null) {
+    					totalGamesPlayed.put(realm.getDBName(), gamesPlayedData.get(realm.getDBName()));
+    				}
     			}
     		}
     	} else {
-    		//Insert the user in the table
-    		db.query("INSERT INTO userTotalGames (uniqueId) VALUES ('" + player.getUniqueId() + "')", true);
+    		db.query("INSERT INTO userStats (uniqueId,kills,deaths,games_won,games_played) VALUES ('" + player.getUniqueId() + "','[]','[]','[]','[]')", true);
     		
-    		totalGamesQuery = db.query("SELECT * FROM userTotalGames WHERE uniqueId = '" + player.getUniqueId() + "'", false);
-    		HashMap<String, String> totalGamesQueryData = totalGamesQuery.get(0);
-    		
-    		//Set the players total games played
     		for (Realm realm : Realm.values()) {
     			if (realm.isGame()) {
-    				totalGamesPlayed.put(realm.getDBName(),Integer.parseInt(totalGamesQueryData.get(realm.getDBName())));
-    			}
-    		}
-    	}
-    	
-    	//Get the players game wins
-    	ArrayList<HashMap<String, String>> gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", false);
-    	
-    	//If the player exists in the table
-    	if (gamesWonQuery.size() > 0) {
-    		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
-    		
-    		//Set the players games won
-    		for (Realm realm : Realm.values()) {
-    			if (realm.isGame()) {
-    				totalGamesWon.put(realm.getDBName(),Integer.parseInt(gamesWonQueryData.get(realm.getDBName())));
-    			}
-    		}
-    	} else {
-    		//Insert the user in the table
-    		db.query("INSERT INTO userGamesWon (uniqueId) VALUES ('" + player.getUniqueId() + "')", true);
-    		
-    		gamesWonQuery = db.query("SELECT * FROM userGamesWon WHERE uniqueId = '" + player.getUniqueId() + "'", false);
-    		HashMap<String, String> gamesWonQueryData = gamesWonQuery.get(0);
-    		
-    		//Set the players games won
-    		for (Realm realm : Realm.values()) {
-    			if (realm.isGame()) {
-    				totalGamesWon.put(realm.getDBName(),Integer.parseInt(gamesWonQueryData.get(realm.getDBName())));
+    				//Games won
+    				totalGamesWon.put(realm.getDBName(), 0);
+    				//Games played
+    				totalGamesPlayed.put(realm.getDBName(), 0);
+    				//Game kills
+    				totalGameKills.put(realm.getDBName(), 0);
+    				//Game deaths
+    				totalGameDeaths.put(realm.getDBName(), 0);
     			}
     		}
     	}
@@ -423,9 +460,22 @@ public class PlayerData {
     	ArrayList<HashMap<String, String>> shopItemsQuery = db.query("SELECT * FROM userShopItems WHERE uniqueId = '" + player.getUniqueId() + "'", false);
     	
     	if (shopItemsQuery.size() > 0) {
-    		ArrayList<ShopItem> test = new Gson().fromJson(shopItemsQuery.get(0).get("items"), new TypeToken<ArrayList<ShopItem>>(){}.getType());
+    		ArrayList<ShopItem> shopData = new Gson().fromJson(shopItemsQuery.get(0).get("items"), new TypeToken<ArrayList<ShopItem>>(){}.getType());
     		
-    		shopItems = test;
+    		shopItems = shopData;
+    		
+    		//Set the players chat or name text colors
+    		for (ShopItem item : shopItems) {
+    			if (item.isEquipped()) {
+    				String uniqueId = item.getUniqueId();
+    				
+    				if (uniqueId.contains("text_color")) {
+    					setChatTextColor(Toolkit.getColorFromString(uniqueId.split("-")[0].toUpperCase()));
+    				} else if (uniqueId.contains("name_color")) {
+    					setNameTextColor(Toolkit.getColorFromString(uniqueId.split("-")[0].toUpperCase()));
+    				}
+    			}
+    		}
     	} else {
     		//Insert the user in the table
     		db.query("INSERT INTO userShopItems (uniqueId,items) VALUES ('" + player.getUniqueId() + "','" + new Gson().toJson(new ArrayList<ShopItem>()) + "')", true);
@@ -449,6 +499,9 @@ public class PlayerData {
 	public boolean isQueuingGame() {
 		return queuingGame;
 	}
+	/**
+    * Clear the players custom items
+    */
 	public void clearCustomItems() {
 		customItems.clear();
 	}
@@ -457,21 +510,58 @@ public class PlayerData {
 	// GETTERS
 	//
 	
+	public Party getPartyInvite() {
+		return partyInvite;
+	}
+	public Party getParty() {
+		return party;
+	}
+	/**
+    * Get the players achievements
+    * @return list of achievement unique ids that the player has
+    */
+	public ArrayList<String> getAchievements() {
+		return achievements;
+	}
+	/**
+    * Get the players ip
+    * @return the players ip
+    */
 	public String getIp() {
 		return ip;
 	}
+	/**
+    * Get the players name text color
+    * @return the color of the players name text
+    */
 	public ChatColor getNameTextColor() {
 		return nameTextColor;
 	}
+	/**
+    * Get the players permission attachment
+    * @return the players permission attachment
+    */
 	public PermissionAttachment getPermissionAttachment() {
 		return permissions;
 	}
+	/**
+    * Get the players instance
+    * @return the players instance
+    */
 	public Player getPlayer() {
 		return player;
 	}
+	/**
+    * Get the players chat text color
+    * @return the color of the players chat text
+    */
 	public ChatColor getChatTextColor() {
 		return chatTextColor;
 	}
+	/**
+    * Get the players loaded info from db status
+    * @return whether or not the players data has loaded from the db
+    */
  	public boolean getLoadedDBInfoStatus() {
 		return loadedDBInfo;
 	}
@@ -524,6 +614,20 @@ public class PlayerData {
 		return totalGamesPlayed;
 	}
 	/**
+	* Get total game deaths
+	* @return the players total amount of deaths for each game
+	*/
+	public HashMap<String,Integer> getTotalGameDeaths() {
+		return totalGameDeaths;
+	}
+	/**
+	* Get total game kills
+	* @return the players total amount of kills for each game
+	*/
+	public HashMap<String,Integer> getTotalGameKills() {
+		return totalGameKills;
+	}
+	/**
 	* Get total games won
 	* @param realm - the realm
 	* @return the players total amount of games won for specified realm
@@ -538,6 +642,22 @@ public class PlayerData {
 	*/
 	public int getTotalGamesPlayed(Realm realm) {
 		return totalGamesPlayed.get(realm.getDBName());
+	}
+	/**
+	* Get game kills
+	* @param realm - the realm
+	* @return the players kills in the specified realm
+	*/
+	public int getGameKills(Realm realm) {
+		return totalGameKills.get(realm.getDBName());
+	}
+	/**
+	* Get game deaths
+	* @param realm - the realm
+	* @return the players deaths in the specified realm
+	*/
+	public int getGameDeaths(Realm realm) {
+		return totalGameDeaths.get(realm.getDBName());
 	}
 	/**
 	* Get the player level
@@ -651,9 +771,23 @@ public class PlayerData {
 	// SETTERS
 	//
 	
+	public void setPartyInvite(Party partyInvite) {
+		this.partyInvite = partyInvite;
+	}
+	public void setParty(Party party) {
+		this.party = party;
+	}
+	/**
+    * Set the players name text color
+    * @param color - the color to set
+    */
 	public void setNameTextColor(ChatColor color) {
 		nameTextColor = color;
 	}
+	/**
+    * Set the players chat text color
+    * @param color - the color to set
+    */
 	public void setChatTextColor(ChatColor color) {
 		chatTextColor = color;
 	}
@@ -740,14 +874,12 @@ public class PlayerData {
     * @param ip - players ip
     * @param userGroup - players user group
     */
-	public void setData(int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup, ChatColor chatTextColor, ChatColor nameTextColor) {
+	public void setData(int id, int points, int xp, double timePlayed, String ip, UserGroup userGroup) {
 		this.id = id;
 		this.points = points;
 		this.timePlayed = timePlayed;
 		this.ip = ip;
 		this.userGroup = userGroup;
-		this.chatTextColor = chatTextColor;
-		this.nameTextColor = nameTextColor;
 		
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
             @Override
@@ -776,8 +908,7 @@ public class PlayerData {
 		//Reset player stuff
 		if (resetPlayer) {
 			//Potion effects
-			for(PotionEffect effect : player.getActivePotionEffects())
-			{
+			for(PotionEffect effect : player.getActivePotionEffects()) {
 				player.removePotionEffect(effect.getType());
 			}
 			//Flying status

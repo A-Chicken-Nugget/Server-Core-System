@@ -1,13 +1,10 @@
-package nyeblock.Core.ServerCoreTest.Menus.Shop;
+package nyeblock.Core.ServerCoreTest.Menus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.bukkit.Material;
 import org.bukkit.event.inventory.ClickType;
-
-import nyeblock.Core.ServerCoreTest.Menus.MenuBase;
-import nyeblock.Core.ServerCoreTest.Menus.MenuOption;
 
 public class SubMenu {
 	protected String title;
@@ -25,7 +22,15 @@ public class SubMenu {
 	
 	public void createOption(int position, Material material, String itemName, ArrayList<String> desc, HashMap<ClickType,Runnable> clickActions) {
 		MenuOption option = new MenuOption(position,this);
+		
 		option.setItem(material, itemName, desc);
+		option.setClickActions(clickActions);
+		options.add(option);
+	}
+	public void createOption(int position, String playerName, String itemName, ArrayList<String> desc, HashMap<ClickType,Runnable> clickActions) {
+		MenuOption option = new MenuOption(position,this);
+		
+		option.setItem(playerName, itemName, desc);
 		option.setClickActions(clickActions);
 		options.add(option);
 	}

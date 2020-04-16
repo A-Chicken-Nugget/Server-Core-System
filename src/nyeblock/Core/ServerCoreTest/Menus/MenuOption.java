@@ -9,9 +9,9 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
-import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
-
+@SuppressWarnings("deprecation")
 public class MenuOption {
 	protected String name;
 	protected int position;
@@ -28,8 +28,8 @@ public class MenuOption {
 	public void runAction(ClickType clickType) {
 		if (clickActions != null) {			
 			Runnable action = clickActions.get(clickType);
-			
-			if (action != null) {		
+
+			if (action != null) {				
 				action.run();
 			}
 		}
@@ -70,6 +70,25 @@ public class MenuOption {
 			}
 			itemMeta.setLore(itemMetaLore);
 		}
+		item.setItemMeta(itemMeta);
+		this.item = item;
+	}
+	public void setItem(String playerName, String itemName, ArrayList<String> desc) {
+		ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+		
+		SkullMeta itemMeta = (SkullMeta)item.getItemMeta();
+		itemMeta.setDisplayName(itemName);
+		itemMeta.setLocalizedName(name);
+		itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+		itemMeta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
+		if (desc != null) {			
+			ArrayList<String> itemMetaLore = new ArrayList<String>();
+			for (String descItem : desc) {			
+				itemMetaLore.add(descItem);
+			}
+			itemMeta.setLore(itemMetaLore);
+		}
+		itemMeta.setOwner(playerName);
 		item.setItemMeta(itemMeta);
 		this.item = item;
 	}

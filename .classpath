@@ -6,11 +6,12 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/spigot-1.15.1.jar"/>
 	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/plugins/Async-WorldManager-pre_0.8_62.jar"/>
 	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/plugins/CoreProtect-2.18.0.jar"/>
-	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/plugins/FastAsyncWorldEdit-1.15-58.jar"/>
 	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/plugins/HolographicDisplays.jar"/>
 	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/plugins/ProtocolLib.jar"/>
+	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/plugins/FastAsyncWorldEdit-1.15-166.jar"/>
+	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/plugins/LightCleaner-1.15.2-v1.jar"/>
+	<classpathentry kind="lib" path="B:/Minecraft Servers/Test Server/spigot-1.15.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

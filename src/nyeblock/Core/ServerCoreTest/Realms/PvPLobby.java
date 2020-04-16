@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.Vector;
 
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
@@ -24,7 +25,9 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
 import nyeblock.Core.ServerCoreTest.Menus.PvPShop;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.CustomNPCType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -32,6 +35,7 @@ import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPC;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings("serial")
 public class PvPLobby extends RealmBase {
@@ -138,6 +142,7 @@ public class PvPLobby extends RealmBase {
 	* Main functions ran for the hub
 	*/
 	public void mainFunctions() {
+		//Manage scoreboard level display for each mode
 		if (levelInterval < 20) {
 			levelInterval += 1;
 		} else {
@@ -162,11 +167,16 @@ public class PvPLobby extends RealmBase {
 				hologram.appendItemLine(new ItemStack(Material.EMERALD));
 			}
 		}
-		
 		// Manage hub weather/time
 		world.setTime(1000);
 		if (world.hasStorm()) {
 			world.setStorm(false);
+		}
+		//Check if players are on island
+		for (Player ply : players) {
+			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(-127,255,551), new Vector(45,46,415))) {
+				ply.teleport(new Location(world,-86.5,91,482.5,90,0));
+			}
 		}
 	}
 	/**
@@ -195,10 +205,20 @@ public class PvPLobby extends RealmBase {
 	public void setItems(Player player) {
 		player.getInventory().clear();
 		
+		//Game Menu
+		GameMenu hubMenu = new GameMenu(mainInstance,player);
+		ItemStack hm = hubMenu.give();
+		player.getInventory().setItem(0, hm);
+		
 		//PvP Shop
 		PvPShop shop = new PvPShop(mainInstance,player);
 		ItemStack s = shop.give();
 		player.getInventory().setItem(2, s);
+		
+		//Hide players
+		HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
+		ItemStack hp = hidePlayers.give();
+		player.getInventory().setItem(6, hp);
 		
 		//Return to hub
 		ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);

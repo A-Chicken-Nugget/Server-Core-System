@@ -11,25 +11,21 @@ import java.util.Random;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.GameMode;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.potion.Potion;
-import org.bukkit.potion.PotionType;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import nyeblock.Core.ServerCoreTest.KitHandling;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Items.Fireball;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
 import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
@@ -40,6 +36,7 @@ import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings("deprecation")
 public class KitPvP extends GameBase {
+	private KitHandling kitHandling = mainInstance.getKitHandlingInstance();
 	//Player data
 	private HashMap<String,Integer> playerKills = new HashMap<>();
 	private HashMap<String,String> playerKits = new HashMap<>();
@@ -184,15 +181,6 @@ public class KitPvP extends GameBase {
 				}
 				tempPlayerKills.remove(removePlayer);
 			}
-		}
-		//Manage weather/time
-		if (world != null) {        			
-			if (!setWorldTime) {				
-				world.setTime(1000);
-			}
-			if (world.hasStorm()) {
-				world.setStorm(false);
-    		}
 		}
 		//Manage invincible area
 		if (pointsSet && players.size() > 0) {
@@ -345,104 +333,12 @@ public class KitPvP extends GameBase {
     * @param player - the player to set the kit for.
     */
 	public void setPlayerKit(Player ply, String kit) {
-		if (kit.equalsIgnoreCase("knight")) {
-			//Sword
-			ItemStack sword = new ItemStack(Material.IRON_SWORD);
-			sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
-			ply.getInventory().setItem(0, sword);
-			ply.getInventory().setHeldItemSlot(0);
-			//Golden Apples
-			ItemStack goldenApples = new ItemStack(Material.ENCHANTED_GOLDEN_APPLE,1);
-			ply.getInventory().setItem(1, goldenApples);
-			//Armor
-			ItemStack[] armor = {
-				new ItemStack(Material.IRON_BOOTS),
-				new ItemStack(Material.IRON_LEGGINGS),
-				new ItemStack(Material.IRON_CHESTPLATE),
-				new ItemStack(Material.IRON_HELMET)
-			};
-			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			ply.getInventory().setArmorContents(armor);
-		} else if (kit.equalsIgnoreCase("brawler")) {
-			//Axe
-			ItemStack axe = new ItemStack(Material.IRON_AXE);
-			axe.addEnchantment(Enchantment.DAMAGE_ALL, 2);
-			ply.getInventory().setItem(0, axe);
-			ply.getInventory().setHeldItemSlot(0);
-			//Golden Apples
-			ItemStack goldenApples = new ItemStack(Material.ENCHANTED_GOLDEN_APPLE,5);
-			ply.getInventory().setItem(1, goldenApples);
-			//Armor
-			ItemStack[] armor = {
-				new ItemStack(Material.LEATHER_BOOTS),
-				new ItemStack(Material.LEATHER_LEGGINGS),
-				new ItemStack(Material.LEATHER_CHESTPLATE),
-				new ItemStack(Material.LEATHER_HELMET)
-			};
-			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 2);
-			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 2);
-			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 2);
-			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 2);
-			ply.getInventory().setArmorContents(armor);
-		} else if (kit.equalsIgnoreCase("archer")) {
-			//Sword
-			ItemStack sword = new ItemStack(Material.STONE_AXE);
-			sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
-			ply.getInventory().setItem(0, sword);
-			ply.getInventory().setHeldItemSlot(0);
-			//Armor
-			ItemStack[] armor = {
-				new ItemStack(Material.CHAINMAIL_BOOTS),
-				new ItemStack(Material.CHAINMAIL_LEGGINGS),
-				new ItemStack(Material.CHAINMAIL_CHESTPLATE),
-				new ItemStack(Material.CHAINMAIL_HELMET)
-			};
-			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			ply.getInventory().setArmorContents(armor);
-			//Bow
-			ItemStack bow = new ItemStack(Material.BOW);
-			bow.addEnchantment(Enchantment.ARROW_DAMAGE, 1);
-			ply.getInventory().setItem(1, bow);
-			//Arrows
-			ItemStack arrows = new ItemStack(Material.ARROW,40);
-			ply.getInventory().setItem(2, arrows);
-		} else if (kit.equalsIgnoreCase("wizard")) {
-			//Sword
-			ItemStack sword = new ItemStack(Material.IRON_SWORD);
-			ply.getInventory().setItem(0, sword);
-			ply.getInventory().setHeldItemSlot(0);
-			//Armor
-			ItemStack[] armor = {
-				new ItemStack(Material.LEATHER_BOOTS),
-				new ItemStack(Material.LEATHER_LEGGINGS),
-				new ItemStack(Material.LEATHER_CHESTPLATE),
-				new ItemStack(Material.LEATHER_HELMET)
-			};
-			armor[0].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[1].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[2].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			armor[3].addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
-			ply.getInventory().setArmorContents(armor);
-			//5 Fire ball
-			Fireball fireball = new Fireball(mainInstance,ply,5);
-			ItemStack fb = fireball.give();
-			ply.getInventory().setItem(1,fb);
-			//2 Potion of harm
-			Potion damage = new Potion(PotionType.INSTANT_DAMAGE, 1);
-			damage.setSplash(true);
-			ply.getInventory().setItem(2, damage.toItemStack(2));
-			//1 Potion of regeneration
-			Potion regen = new Potion(PotionType.REGEN, 1);
-			regen.setSplash(true);
-			ply.getInventory().setItem(3, regen.toItemStack(1));
+		//Reset Potion effects
+		for(PotionEffect effect : ply.getActivePotionEffects()) {
+			ply.removePotionEffect(effect.getType());
 		}
 		playerKits.put(ply.getName(), kit);
+		kitHandling.setKit(ply, realm, kit);
 	}
 	/**
 	* When a player respawns
@@ -452,7 +348,7 @@ public class KitPvP extends GameBase {
 	public Location playerRespawn(Player ply) {
 		ply.getInventory().clear();
 		setItems(ply);
-		setPlayerKit(ply,getPlayerKit(ply));
+		kitHandling.setKit(ply, realm, playerKits.get(ply.getName()));
 		
 		return getRandomSpawnPoint();
 	}
@@ -469,7 +365,9 @@ public class KitPvP extends GameBase {
 			killer.playSound(killer.getLocation(), Sound.ITEM_TRIDENT_HIT, 10, 1);
 			
 			//Update the killers kill count
-			playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
+			if (playerKills.get(killer.getName()) != null) {				
+				playerKills.put(killer.getName(), playerKills.get(killer.getName()) + 1);
+			}
 			
 			killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW + "You killed " + ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " (" + ChatColor.GREEN + "+10 XP" + ChatColor.YELLOW + ")"));
 			addStat(killer,"Kills",1,SummaryStatType.XP);
@@ -492,11 +390,10 @@ public class KitPvP extends GameBase {
 		
 		//Add player to arrays
 		playerKills.put(ply.getName(), 0);
-		playerKits.put(ply.getName(),"knight");
 		
 		pd.addGamePlayed(realm, false);
 		
-		setPlayerKit(ply,"knight");
+		setPlayerKit(ply,"Knight");
 		
 		//Add players to proper scoreboard teams
 		updateTeamsFromUserGroups();

@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.Vector;
 
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
@@ -24,8 +25,10 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.QueueGame;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
+import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
 import nyeblock.Core.ServerCoreTest.Menus.StepSpleefShop;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.CustomNPCType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -33,6 +36,7 @@ import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPC;
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
 import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
+import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings("serial")
 public class StepSpleefLobby extends RealmBase {
@@ -134,6 +138,12 @@ public class StepSpleefLobby extends RealmBase {
 		if (world.hasStorm()) {
 			world.setStorm(false);
 		}
+		//Check if players are on island
+		for (Player ply : players) {
+			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(-123,244,-123), new Vector(129,79,121))) {
+				ply.teleport(new Location(world,.5,200,.5,0,0));
+			}
+		}
 	}
 	/**
     * Set the players permissions
@@ -161,6 +171,11 @@ public class StepSpleefLobby extends RealmBase {
 	public void setItems(Player player) {
 		player.getInventory().clear();
 		
+		//Game Menu
+		GameMenu hubMenu = new GameMenu(mainInstance,player);
+		ItemStack hm = hubMenu.give();
+		player.getInventory().setItem(0, hm);
+		
 		//Step Spleef Shop
 		StepSpleefShop shop = new StepSpleefShop(mainInstance,player);
 		ItemStack s = shop.give();
@@ -171,6 +186,11 @@ public class StepSpleefLobby extends RealmBase {
 		ItemStack qg = queueGame.give();
 		player.getInventory().setItem(4, qg);
 		player.getInventory().setHeldItemSlot(4);
+		
+		//Hide players
+		HidePlayers hidePlayers = new HidePlayers(mainInstance,player);
+		ItemStack hp = hidePlayers.give();
+		player.getInventory().setItem(6, hp);
 		
 		//Return to hub
 		ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);

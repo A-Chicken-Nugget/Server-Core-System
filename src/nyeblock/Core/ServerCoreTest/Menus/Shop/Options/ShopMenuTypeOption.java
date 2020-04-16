@@ -9,9 +9,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
+import nyeblock.Core.ServerCoreTest.Menus.SubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopEquipSubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.RequirementBase;
 
 public class ShopMenuTypeOption extends ShopMenuOptionBase {
@@ -145,9 +145,9 @@ public class ShopMenuTypeOption extends ShopMenuOptionBase {
 		itemMetaLore.add(ChatColor.RESET.toString());
 		itemMetaLore.add(ChatColor.YELLOW + ChatColor.ITALIC.toString() + "Requirement(s) to purchase");
 		if (selectedOption.getRequirements() != null) {
-			itemMetaLore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + selectedOption.getCost());
+			itemMetaLore.add(ChatColor.YELLOW + "\u2022 " + ChatColor.GREEN.toString() + selectedOption.getCost() + ChatColor.YELLOW + " points");
 			for (RequirementBase requirement : selectedOption.getRequirements()) {				
-				itemMetaLore.add(requirement.getDisplayText());
+				itemMetaLore.add(ChatColor.YELLOW + "\u2022 " + requirement.getDisplayText());
 			}
 		} else {
 			itemMetaLore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + selectedOption.getCost());

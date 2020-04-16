@@ -14,7 +14,6 @@ import net.md_5.bungee.api.ChatColor;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopBase;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopEquipSubMenu;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Options.ShopMenuTypeOptionItem;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.LevelRequirement;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.Requirements.RequirementBase;

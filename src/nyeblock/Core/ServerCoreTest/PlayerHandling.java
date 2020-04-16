@@ -1,5 +1,6 @@
 package nyeblock.Core.ServerCoreTest;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.FishHook;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -42,6 +44,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -49,6 +52,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -72,6 +76,7 @@ import org.bukkit.util.Vector;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 
 import net.md_5.bungee.api.ChatMessageType;
@@ -81,7 +86,6 @@ import nyeblock.Core.ServerCoreTest.Menus.MenuBase;
 import nyeblock.Core.ServerCoreTest.Misc.DamagePlayer;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
-import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
@@ -90,8 +94,9 @@ import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
 	private Main mainInstance;
-	private HashMap<UUID,PlayerData> playersData = new HashMap<UUID, PlayerData>();
-	private HashMap<UUID,DamagePlayer> lastPlayerDamage = new HashMap<UUID, DamagePlayer>();
+	private HashMap<UUID,PlayerData> playersData = new HashMap<>();
+	private HashMap<UUID,DamagePlayer> lastPlayerDamage = new HashMap<>();
+	private HashMap<UUID,Player> lastPlayerHit = new HashMap<>();
 	private HashMap<UUID,ArrayList<Long>> playerChatMessages = new HashMap<>();
 	private HashMap<UUID,ArrayList<Long>> playerActions = new HashMap<>();
 	private HashMap<UUID,Long> playerLastUsed = new HashMap<>();
@@ -126,27 +131,58 @@ public class PlayerHandling implements Listener {
 		mainInstance.getProtocolManagerInstance().addPacketListener(new PacketAdapter(mainInstance, ListenerPriority.NORMAL, PacketType.Play.Server.NAMED_SOUND_EFFECT){
 			@Override
             public void onPacketSending(PacketEvent event) {
-                if (event.getPacketType() == PacketType.Play.Server.NAMED_SOUND_EFFECT) {
-                	PlayerData pd = getPlayerData(event.getPlayer());
-                	
-                	if (!pd.getCurrentRealm().getRealm().isGame()) {
-                		event.setCancelled(true);
-                	} else {
-                		if (pd.getSpectatingStatus() || pd.getHiddenStatus()) {
-                			event.setCancelled(true);
-                		}
-                	}
-                }
+            	Player ply = event.getPlayer();
+            	PlayerData pd = getPlayerData(ply);
+            	
+            	if (!pd.getCurrentRealm().getRealm().isGame()) {
+            		event.setCancelled(true);
+            	} else {
+            		Player lastHitFromPly = lastPlayerHit.get(ply.getUniqueId());
+            		
+            		if (lastHitFromPly != null) {                			
+            			PlayerData lastHitFromPd = getPlayerData(lastHitFromPly);
+            			
+            			if (lastHitFromPd.getSpectatingStatus() || lastHitFromPd.getHiddenStatus()) {                			
+            				event.setCancelled(true);
+            			}
+            		}
+            	}
 			}
-//			@Override
-//			public void onPacketReceiving(PacketEvent event) {
-//				
-//			}
+		});
+		
+		//Prevent xp spawn
+		mainInstance.getProtocolManagerInstance().addPacketListener(new PacketAdapter(mainInstance, ListenerPriority.NORMAL, PacketType.Play.Server.SPAWN_ENTITY_EXPERIENCE_ORB){
+			@Override
+            public void onPacketSending(PacketEvent event) {
+            	Player ply = event.getPlayer();
+//            	PlayerData pd = getPlayerData(ply);
+            	
+            	System.out.println("Test: " + event.getPacket().getIntegers().readSafely(0));
+            	System.out.println("Test2: " + event.getPacket().getIntegers().readSafely(1));
+            	System.out.println("Test3: " + event.getPacket().getIntegers().readSafely(2));
+            	PacketContainer destroyEntity = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
+                destroyEntity.getIntegerArrays().write(0, new int[] { event.getPacket().getIntegers().read(0) });
+     
+                try {
+					mainInstance.getProtocolManagerInstance().sendServerPacket(ply, destroyEntity);
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
+            	
+//            	System.out.println("Test: " + event.getPacket().getIntegers().read(0));
+//            	for (Entity ent : world.getEntities()) {
+//            		System.out.println("Blah: " + ent.getEntityId() + " :: " + ent.getType());
+//            	}
+//            	if (pd.getSpectatingStatus() || pd.getHiddenStatus()) {
+//            		((CraftPlayer)ply).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityDestroy(event.getPacket().getIntegers().read(0)));
+//            		event.setCancelled(true);
+//            	}
+			}
 		});
 	}
 	
+	//Manage damage logs
 	public void logDamage(Player damager, Player damaged) {
-		//Manage damage logs
 		DamagePlayer dp = lastPlayerDamage.get(damaged.getUniqueId());
 		
 		if (dp != null) {
@@ -347,9 +383,7 @@ public class PlayerHandling implements Listener {
 						
 						playerData.setData(Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
 								Double.parseDouble(userQueryData.get("timePlayed")), ip,
-								UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))), 
-								Toolkit.getColorFromString(userQueryData.get("chatTextColor")),
-								Toolkit.getColorFromString(userQueryData.get("nameTextColor")));
+								UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))));
 						
 						//If the players ip has changed from whats in the DB
 						if (!userQueryData.get("ip").equals(ip)) {
@@ -369,7 +403,7 @@ public class PlayerHandling implements Listener {
 						//Get the users data from the users table. This is done to get their db id
 						userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", false);
 						HashMap<String, String> userQueryData = userQuery.get(0);
-						playerData.setData(Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER, null, null);
+						playerData.setData(Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER);
 						
 						// Let everyone know this is a new player
 						for (Player player : world.getPlayers()) {
@@ -473,6 +507,10 @@ public class PlayerHandling implements Listener {
 		// Remove default quit message
 		event.setQuitMessage("");
 		
+		if (pd.getParty() != null) {
+			pd.getParty().playerLeave(ply,true);
+		}
+		
 		pd.saveToDB();
 		
 		mainInstance.getTimerInstance().createRunnableTimer("leave_" + ply.getUniqueId(), 60, 1, new Runnable() {
@@ -488,6 +526,22 @@ public class PlayerHandling implements Listener {
 		//Leave realm
 		pd.getCurrentRealm().leave(ply, true, null);
 	}
+	//
+//	@EventHandler
+//	public void onEntityTargetEvent(EntityTargetEvent event) {
+//		Entity ent = event.getEntity();
+//		
+//		if (ent instanceof ExperienceOrb) {
+//			event.setTarget(null);
+//			event.setCancelled(true);
+//		}
+//	}
+	//
+//	@EventHandler
+//	public void onExpBottle(ExpBottleEvent event) {
+//		event.getEntity().
+//		event.getEntity().getShooter()
+//	}
 	//When a world loads
 	@EventHandler
 	public void onWorldInit(WorldInitEvent event) {
@@ -583,6 +637,7 @@ public class PlayerHandling implements Listener {
 			} else {
 				logDamage(damager,damaged);
 			}
+			lastPlayerHit.put(damaged.getUniqueId(),damager);
 		} else if (dmged instanceof Player) {
 			Player damaged = (Player)dmged;
 			
@@ -700,7 +755,11 @@ public class PlayerHandling implements Listener {
 		}
 		
 		if (attacker != null) {
-			game.playerDeath(killed, attacker);			
+			game.playerDeath(killed, attacker);
+			if (game.getRealm().isGame()) {				
+				getPlayerData(attacker).addKill(game.getRealm());
+				getPlayerData(killed).addDeath(game.getRealm());
+			}
 		} else {
 			Entity ent = killed.getLastDamageCause().getEntity();
 			
@@ -967,12 +1026,22 @@ public class PlayerHandling implements Listener {
 ////			event.setCancelled(true);
 ////		}
 //	}
+	//Handle when an item frame is interacted with
+	@EventHandler
+	public void onHangingBreakByEntity(HangingBreakByEntityEvent event) {
+		event.setCancelled(true);
+	}
+	//Handle when an armor stand is interacted with
+	@EventHandler
+	public void onPlayerArmorStandManipulate(PlayerArmorStandManipulateEvent event) {
+		event.setCancelled(true);
+	}
 	//Handle when a player interacts with an entity
 	@EventHandler
 	public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
 		Entity entity = event.getRightClicked();
 		
-		if (entity.getType().equals(EntityType.ITEM_FRAME)) {
+		if (entity instanceof ItemFrame) {
 			event.setCancelled(true);
 		}
 	}

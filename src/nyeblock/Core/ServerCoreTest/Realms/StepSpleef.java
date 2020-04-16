@@ -168,7 +168,7 @@ public class StepSpleef extends GameBase {
 		while(itr.hasNext())
 		{
 			Map.Entry<Vector, Long> entry = itr.next();
-			if (System.currentTimeMillis() - entry.getValue() >= 300L) {
+			if (System.currentTimeMillis() - entry.getValue() >= 200L) {
 				entry.getKey().toLocation(world).getBlock().setType(Material.AIR);
 				
 				itr.remove();
@@ -285,15 +285,6 @@ public class StepSpleef extends GameBase {
 				printSummary(ply2,true);
 			}
 			mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
-		}
-		//Manage weather/time
-		if (world != null) {        			
-			if (!setWorldTime) {				
-				world.setTime(1000);
-			}
-			if (world.hasStorm()) {
-				world.setStorm(false);
-    		}
 		}
 		//Check when the game has ended and determine winner
 		if (gameBegun && (duration-((System.currentTimeMillis() / 1000L)-startTime)) < 0) {

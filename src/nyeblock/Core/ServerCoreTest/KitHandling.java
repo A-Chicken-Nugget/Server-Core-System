@@ -6,6 +6,11 @@ import java.util.HashMap;
 import org.bukkit.entity.Player;
 
 import nyeblock.Core.ServerCoreTest.Kits.KitBase;
+import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Archer;
+import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Assassin;
+import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Brawler;
+import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Knight;
+import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Wizard;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Archer;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Armorer;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Butcher;
@@ -36,6 +41,13 @@ public class KitHandling {
 				add(new SkyWars_Armorer());
 				add(new SkyWars_Enchanter());
 				add(new SkyWars_Fisherman());
+			}});
+			put(Realm.KITPVP,new ArrayList<KitBase>() {{
+				add(new KitPvP_Knight());
+				add(new KitPvP_Brawler());
+				add(new KitPvP_Archer());
+				add(new KitPvP_Wizard());
+				add(new KitPvP_Assassin());
 			}});
 		}};
 	}

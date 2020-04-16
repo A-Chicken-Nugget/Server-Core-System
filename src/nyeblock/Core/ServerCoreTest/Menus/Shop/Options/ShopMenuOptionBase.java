@@ -8,7 +8,7 @@ import org.bukkit.event.inventory.ClickType;
 
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Menus.MenuOption;
-import nyeblock.Core.ServerCoreTest.Menus.Shop.SubMenu;
+import nyeblock.Core.ServerCoreTest.Menus.SubMenu;
 
 public abstract class ShopMenuOptionBase extends MenuOption {
 	protected Player player;
