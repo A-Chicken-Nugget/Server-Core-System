@@ -11,6 +11,11 @@ public class MapPoint {
 	private Location location;
 	private int position;
 	
+	public MapPoint(MapPointType type, Location location) {
+		this.type = type;
+		this.location = location;
+	}
+	
 	public MapPoint(MapPointType type, Location location, int position) {
 		this.type = type;
 		this.location = location;

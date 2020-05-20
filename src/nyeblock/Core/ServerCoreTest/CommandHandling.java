@@ -2,11 +2,14 @@ package nyeblock.Core.ServerCoreTest;
 
 import java.util.ArrayList;
 
+import nyeblock.Core.ServerCoreTest.Commands.AcceptPartyInvite;
 import nyeblock.Core.ServerCoreTest.Commands.Ban;
+import nyeblock.Core.ServerCoreTest.Commands.BanIp;
 import nyeblock.Core.ServerCoreTest.Commands.CommandBase;
 import nyeblock.Core.ServerCoreTest.Commands.Find;
 import nyeblock.Core.ServerCoreTest.Commands.ForceStart;
 import nyeblock.Core.ServerCoreTest.Commands.GiveXP;
+import nyeblock.Core.ServerCoreTest.Commands.GoTo;
 import nyeblock.Core.ServerCoreTest.Commands.Hide;
 import nyeblock.Core.ServerCoreTest.Commands.Hub;
 import nyeblock.Core.ServerCoreTest.Commands.Leave;
@@ -42,7 +45,7 @@ public class CommandHandling {
 	public void setCommands() {
 		commands = new ArrayList<CommandBase>() {{
 			add(new Ban(mainInstance));
-//			add(new BanIp(mainInstance));
+			add(new BanIp(mainInstance));
 //			add(new BanPlayerIps(mainInstance));
 			add(new ForceStart(mainInstance));
 			add(new GiveXP(mainInstance));
@@ -58,6 +61,8 @@ public class CommandHandling {
 			add(new Find(mainInstance));
 			add(new PlayerInfo(mainInstance));
 			add(new ManageLogs(mainInstance));
+			add(new AcceptPartyInvite(mainInstance));
+			add(new GoTo(mainInstance));
 		}};		
 	}
 }

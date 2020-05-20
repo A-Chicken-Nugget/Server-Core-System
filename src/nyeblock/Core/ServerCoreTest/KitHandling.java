@@ -9,6 +9,7 @@ import nyeblock.Core.ServerCoreTest.Kits.KitBase;
 import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Archer;
 import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Assassin;
 import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Brawler;
+import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Chevalier;
 import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Knight;
 import nyeblock.Core.ServerCoreTest.Kits.KitPvP_Wizard;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Archer;
@@ -16,8 +17,10 @@ import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Armorer;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Butcher;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Enchanter;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_EnderPearler;
+import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Farmer;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Fireballer;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Fisherman;
+import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Frog;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_Knight;
 import nyeblock.Core.ServerCoreTest.Kits.SkyWars_StoneMason;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
@@ -41,6 +44,8 @@ public class KitHandling {
 				add(new SkyWars_Armorer());
 				add(new SkyWars_Enchanter());
 				add(new SkyWars_Fisherman());
+				add(new SkyWars_Farmer());
+				add(new SkyWars_Frog());
 			}});
 			put(Realm.KITPVP,new ArrayList<KitBase>() {{
 				add(new KitPvP_Knight());
@@ -48,6 +53,7 @@ public class KitHandling {
 				add(new KitPvP_Archer());
 				add(new KitPvP_Wizard());
 				add(new KitPvP_Assassin());
+				add(new KitPvP_Chevalier());
 			}});
 		}};
 	}

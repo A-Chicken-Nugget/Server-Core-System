@@ -17,14 +17,17 @@ public class SkyWars_Savanna extends MapBase {
 		World world = Bukkit.getWorld(game.getWorldName());
 		
 		setPoints(new ArrayList<MapPoint>() {{
-			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,75.5,80,23.5),-1));
-			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,37.5,81,13.5),-1));
-			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,3.5,81,27.5),-1));
-			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,-15.5,81,70.5),-1));
-			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,3.5,80,113.5),-1));
-			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,41.5,81,123.5),-1));
-			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,75.5,81,109.5),-1));
-			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,94.5,81,66.5),-1));
+			add(new MapPoint(MapPointType.BOUNDARY,new Location(world,142,102,-33)));
+			add(new MapPoint(MapPointType.BOUNDARY,new Location(world,-56,25,171)));
+			
+			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,75.5,80,23.5)));
+			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,37.5,81,13.5)));
+			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,3.5,81,27.5)));
+			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,-15.5,81,70.5)));
+			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,3.5,80,113.5)));
+			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,41.5,81,123.5)));
+			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,75.5,81,109.5)));
+			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,94.5,81,66.5)));
 			
 			add(new MapPoint(MapPointType.CHEST_SPAWN,new Location(world,81.5,54,23.5),-1).setChestValue(ChestValue.COMMON));
 			add(new MapPoint(MapPointType.CHEST_SPAWN,new Location(world,87.5,62,23.5),-1).setChestValue(ChestValue.COMMON));

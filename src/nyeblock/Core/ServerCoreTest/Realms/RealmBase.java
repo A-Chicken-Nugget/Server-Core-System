@@ -8,6 +8,7 @@ import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
+import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 
 import net.md_5.bungee.api.ChatColor;
@@ -22,7 +23,9 @@ public abstract class RealmBase {
 	protected Main mainInstance;
 	protected PlayerHandling playerHandling;
 	protected ArrayList<Player> players = new ArrayList<>();
+	protected ArrayList<Player> silentPlayers = new ArrayList<>();
 	protected Runnable scoreboard;
+	protected BossBar bossBar;
 	protected Realm realm;
 	protected int minPlayers = 0;
 	protected int maxPlayers = 0;
@@ -69,10 +72,13 @@ public abstract class RealmBase {
 	* Updates all the players hidden/shown players
 	*/
 	public void updateHiddenShownPlayers() {
-		for (Player ply : players) {
+		ArrayList<Player> allPlayers = new ArrayList<>(players);
+		allPlayers.addAll(silentPlayers);
+		
+		for (Player ply : allPlayers) {
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			
-			for (Player ply2 : players) {
+			for (Player ply2 : allPlayers) {
 				if (ply != ply2) {
 					PlayerData pd2 = mainInstance.getPlayerHandlingInstance().getPlayerData(ply2);
 					
@@ -150,17 +156,28 @@ public abstract class RealmBase {
 	* Updates all the players teams according to the players usergroup
 	*/
 	public void updateTeamsFromUserGroups() {
-		for (Player ply : players) {	
+		ArrayList<Player> allPlayers = new ArrayList<>(players);
+		allPlayers.addAll(silentPlayers);
+		
+		for (Player ply : allPlayers) {	
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			
-			for (Player player : players) {
-				PlayerData pd2 = playerHandling.getPlayerData(player);
-				
-				//Update joining player team
-				pd.addPlayerToTeam(pd2.getUserGroup().toString(), player);
-				
-				//Update current players teams
-				pd2.addPlayerToTeam(pd.getUserGroup().toString(), ply);
+			if (pd != null) {				
+				for (Player player : allPlayers) {				
+					PlayerData pd2 = playerHandling.getPlayerData(player);
+					
+					if (pd2 != null) {							
+						//Update joining player team
+						if (pd2.getPrimaryUserGroup() != null) {								
+							pd.addPlayerToTeam(pd2.getPrimaryUserGroup().toString(), player);
+						}
+						
+						//Update current players teams
+						if (pd.getPrimaryUserGroup() != null) {								
+							pd2.addPlayerToTeam(pd.getPrimaryUserGroup().toString(), ply);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -224,11 +241,154 @@ public abstract class RealmBase {
     * @param ply - Player joining
     * @param isGame - Is the player joining a game
     */
+	public void secretJoin(Player ply, boolean isGame) {
+		PlayerData pd = playerHandling.getPlayerData(ply);
+		
+		//Create scoreboard
+		pd.createScoreboard();
+		
+		//Set boss bar
+		if (bossBar != null) {
+			bossBar.addPlayer(ply);
+		}
+		
+		//Set the players current game
+		if (pd.getCurrentRealm() != this) {
+			pd.setCurrentRealm(this);
+		}
+		
+		//Add to players list
+		boolean found = false;
+		for (int i = 0; i < silentPlayers.size(); i++) {
+			if (silentPlayers.get(i).getName().equalsIgnoreCase(ply.getName())) {
+				if (silentPlayers.get(i) != ply) {
+					silentPlayers.set(i, ply);
+				}
+				found = true;
+			}
+		}
+		if (!found) {
+			silentPlayers.add(ply);
+		}
+		
+		//Update realm
+		pd.setRealm(realm,true);
+		
+		//Show/hide players accordingly
+		ArrayList<Player> allPlayers = new ArrayList<>(players);
+		allPlayers.addAll(silentPlayers);
+		
+		for (Player ply2 : Bukkit.getOnlinePlayers()) {
+			if (allPlayers.contains(ply2)) {
+				PlayerData pd2 = playerHandling.getPlayerData(ply2);
+				
+				if (!ply.canSee(ply2)) {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (!Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+							if (!pd2.getHiddenStatus()) {
+								ply.showPlayer(mainInstance,ply2);
+							}
+						} else {
+							if (!pd2.getHiddenStatus()) {
+								ply.showPlayer(mainInstance,ply2);
+							}
+						}
+					} else {
+						if (!pd2.getHiddenStatus()) {
+							ply.showPlayer(mainInstance,ply2);						
+						}
+					}
+				} else {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (Boolean.parseBoolean(pd.getCustomDataKey("hide_players"))) {
+							if (pd2.getHiddenStatus()) {
+								ply.hidePlayer(mainInstance,ply2);
+							}
+						} else {
+							if (pd2.getHiddenStatus()) {
+								ply.hidePlayer(mainInstance,ply2);
+							}
+						}
+					}
+				}
+				if (!ply2.canSee(ply)) {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (!Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
+							if (!pd.getHiddenStatus()) {
+								ply2.showPlayer(mainInstance,ply);
+							}
+						} else {
+							if (!pd.getHiddenStatus()) {
+								ply2.showPlayer(mainInstance,ply);
+							}
+						}
+					} else {
+						if (!pd.getHiddenStatus()) {
+							ply2.showPlayer(mainInstance,ply);						
+						}
+					}
+				} else {
+					if (realm == Realm.HUB || realm == Realm.PARKOUR) {
+						if (Boolean.parseBoolean(pd2.getCustomDataKey("hide_players"))) {
+							if (pd.getHiddenStatus()) {
+								ply2.hidePlayer(mainInstance,ply);
+							}
+						} else {
+							if (pd.getHiddenStatus()) {
+								ply2.hidePlayer(mainInstance,ply);
+							}
+						}
+					}
+				}
+			} else {
+				if (ply.canSee(ply2)) {					
+					ply.hidePlayer(mainInstance,ply2);
+				}
+				if (ply2.canSee(ply)) {
+					ply2.hidePlayer(mainInstance,ply);
+				}
+			}
+		}
+		
+		//Set permissions/items
+		ply.getInventory().clear();
+		pd.clearCustomItems();
+		setItems(ply);
+		setDefaultPermissions(ply);
+		
+		//Run the proper join method depending on the type of realm
+		if (isGame) {
+			gameJoin(ply);
+		} else {
+			playerJoin(ply);
+		}
+		
+		mainInstance.getTimerInstance().createRunnableTimer("setGamemode_" + ply.getUniqueId(), 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (ply.getGameMode() != GameMode.ADVENTURE) {
+					ply.setGameMode(GameMode.ADVENTURE);
+				} else {
+					mainInstance.getTimerInstance().deleteTimer("setGamemode_" + ply.getUniqueId());
+				}
+			}
+		});
+	}
+	/**
+    * Super class player join method
+    * @param ply - Player joining
+    * @param isGame - Is the player joining a game
+    */
 	public void join(Player ply, boolean isGame) {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Create scoreboard
 		pd.createScoreboard();
+		
+		//Set boss bar
+		if (bossBar != null) {
+			bossBar.addPlayer(ply);
+		}
 		
 		//Set the players current game
 		if (pd.getCurrentRealm() != this) {
@@ -253,8 +413,10 @@ public abstract class RealmBase {
 		pd.setRealm(realm,true);
 		
 		//Show/hide players accordingly
+		ArrayList<Player> allPlayers = getPlayers(false);
+		
 		for (Player ply2 : Bukkit.getOnlinePlayers()) {
-			if (players.contains(ply2)) {
+			if (allPlayers.contains(ply2)) {
 				PlayerData pd2 = playerHandling.getPlayerData(ply2);
 				
 				if (!ply.canSee(ply2)) {
@@ -361,16 +523,30 @@ public abstract class RealmBase {
     * @param destination - The realm to send the player
     */
 	public void leave(Player ply, boolean showLeaveMessage, Realm destination) {
-		if (players.contains(ply)) {
+		ArrayList<Player> allPlayers = new ArrayList<>(players);
+		allPlayers.addAll(silentPlayers);
+		
+		if (allPlayers.contains(ply)) {
 			PlayerData pd = playerHandling.getPlayerData(ply);
 			
 			//Clear players scoreboard
 			pd.clearScoreboard();
 			
+			//Remove boss bar
+			if (bossBar != null) {
+				bossBar.removePlayer(ply);
+			}
+			
 			//Remove from the players array
-			players.removeAll(new ArrayList<Player>() {{
-				add(ply);
-			}});
+			if (players.contains(ply)) {				
+				players.removeAll(new ArrayList<Player>() {{
+					add(ply);
+				}});
+			} else if (silentPlayers.contains(ply)) {
+				silentPlayers.removeAll(new ArrayList<Player>() {{
+					add(ply);
+				}});
+			}
 			
 			//Leave current realm
 			if (this instanceof GameBase) {
@@ -411,11 +587,19 @@ public abstract class RealmBase {
 		return minPlayers;
 	}
 	/**
-    * Get all the players in the realm
+    * Get all the players
+    * @param returnSilent - Do you want to return silent players
     * @return list of players
     */
-	public ArrayList<Player> getPlayersInRealm() {
-		return players;
+	public ArrayList<Player> getPlayers(boolean returnSilent) {
+		if (returnSilent) {
+			ArrayList<Player> returnPlayers = new ArrayList<Player>(players);
+			returnPlayers.addAll(silentPlayers);
+			
+			return returnPlayers;
+		} else {			
+			return players;
+		}
 	}
 	public Location getRandomSpawnPoint() { return null; }
 	public Location getPlayerSpawn(Player ply) { return null; }

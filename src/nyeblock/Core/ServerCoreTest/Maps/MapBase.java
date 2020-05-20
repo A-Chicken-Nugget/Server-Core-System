@@ -3,6 +3,8 @@ package nyeblock.Core.ServerCoreTest.Maps;
 import java.io.File;
 import java.util.ArrayList;
 
+import nyeblock.Core.ServerCoreTest.Misc.Enums.MapPointType;
+
 public abstract class MapBase {
 	private String name;
 	private int maxPlayers;
@@ -37,6 +39,16 @@ public abstract class MapBase {
 	}
 	public File getClearSchematicFile() {
 		return clearSchematicFile;
+	}
+	public ArrayList<MapPoint> getTypePoints(MapPointType type) {
+		ArrayList<MapPoint> returnPoints = new ArrayList<>();
+		
+		for (MapPoint point : points) {
+			if (point.getType().equals(type)) {
+				returnPoints.add(point);
+			}
+		}
+		return returnPoints;
 	}
 	public ArrayList<MapPoint> getPoints() {
 		return points;

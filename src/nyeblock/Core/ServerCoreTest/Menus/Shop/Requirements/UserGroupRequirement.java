@@ -17,8 +17,14 @@ public class UserGroupRequirement extends RequirementBase {
 	public boolean meetsRequirement(PlayerData playerData) { 
 		boolean doesMeet = false;
 		
-		if (playerData.getUserGroup().equals(UserGroup.ADMIN) || playerData.getUserGroup().equals(userGroup)) {
+		if (playerData.getPrimaryUserGroup().equals(UserGroup.ADMIN)) {
 			doesMeet = true;
+		} else {
+			for (UserGroup group : playerData.getUserGroups()) {
+				if (group.equals(userGroup)) {
+					doesMeet = true;
+				}
+			}
 		}
 		return doesMeet;
 	}

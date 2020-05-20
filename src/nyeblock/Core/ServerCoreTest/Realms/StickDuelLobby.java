@@ -29,7 +29,7 @@ import nyeblock.Core.ServerCoreTest.Items.HidePlayers;
 import nyeblock.Core.ServerCoreTest.Items.QueueGame;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToHub;
 import nyeblock.Core.ServerCoreTest.Menus.GameMenu;
-import nyeblock.Core.ServerCoreTest.Menus.SkyWarsShop;
+import nyeblock.Core.ServerCoreTest.Menus.StepSpleefShop;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.CustomNPCType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.LevelXPBar;
@@ -39,31 +39,32 @@ import nyeblock.Core.ServerCoreTest.Misc.TextAnimation;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 
 @SuppressWarnings("serial")
-public class SkyWarsLobby extends RealmBase {
+public class StickDuelLobby extends RealmBase {
 	private PlayerHandling playerHandlingInstance;
 	private CustomNPCManager customNPCManagerInstance;
-	private World world = Bukkit.getWorld("SkyWarsLobby");
+	private World world = Bukkit.getWorld("StickDuelLobby");
 	private HashMap<UUID,Hologram> playerHolograms = new HashMap<>();
 	private TextAnimation boardAnimation;
 	private CustomNPC joinGameNPC;
 	
-	public SkyWarsLobby(Main mainInstance) {
-		super(mainInstance,Realm.SKYWARS_LOBBY);
+	public StickDuelLobby(Main mainInstance) {
+		super(mainInstance,Realm.STICK_DUEL_LOBBY);
 		playerHandlingInstance = mainInstance.getPlayerHandlingInstance();
 		customNPCManagerInstance = mainInstance.getCustomNPCManagerInstance();
 		boardAnimation = new TextAnimation(mainInstance,new ArrayList<String>() {{
-			add("§e§lSky Wars");
-			add("§6§lS§e§lky Wars");
-			add("§e§lS§6§lk§e§ly Wars");
-			add("§e§lSk§6§ly §e§lWars");
-			add("§e§lSky §6§lW§e§lars");
-			add("§e§lSky W§6§la§e§lrs");
-			add("§e§lSky Wa§6§lr§e§ls");
-			add("§e§lSky War§6§ls");
-			add("§e§lSky Wars");
-			add("§6§lSky Wars");
-			add("§e§lSky Wars");
-			add("§6§lSky Wars");
+			add("§e§lStick Duel");
+			add("§6§lS§e§ltick Duel");
+			add("§e§lS§6§lt§e§lick Duel");
+			add("§e§lSt§6§li§e§lck Duel");
+			add("§e§lSti§6§lc§e§lk Duel");
+			add("§e§lStic§6§lk §e§lDuel");
+			add("§e§lStick §6§lD§e§luel");
+			add("§e§lStick D§6§lu§e§lel");
+			add("§e§lStick Du§6§le§e§ll");
+			add("§e§lStick Due§6§ll");
+			add("§6§lStick Duel");
+			add("§e§lStick Duel");
+			add("§6§lStick Duel");
 		}},.3);
 		
 		//Scoreboard
@@ -77,8 +78,8 @@ public class SkyWarsLobby extends RealmBase {
 					//Scoreboard
 					scores.put(9, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
 					scores.put(8, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-					scores.put(7, ChatColor.YELLOW + "SkyWars Level");
-					scores.put(6, ChatColor.GREEN.toString() + pd.getLevel(Realm.SKYWARS));
+					scores.put(7, ChatColor.YELLOW + "Level");
+					scores.put(6, ChatColor.GREEN.toString() + pd.getLevel(Realm.STICK_DUEL));
 					scores.put(5, ChatColor.RESET.toString() + ChatColor.RESET.toString());
 					scores.put(4, ChatColor.YELLOW + "Points");
 					scores.put(3, ChatColor.GREEN.toString() + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()) + ChatColor.RESET.toString());
@@ -91,37 +92,35 @@ public class SkyWarsLobby extends RealmBase {
 		};
 		
 		//Main functions timer
-		mainInstance.getTimerInstance().createMethodTimer("skyWarsLobby_functions", .5, 0, "mainFunctions", false, null, this);
+		mainInstance.getTimerInstance().createMethodTimer("stickDuelLobby_functions", .5, 0, "mainFunctions", false, null, this);
 		
 		//Create holograms above NPC's
-		Hologram joinGameText = HologramsAPI.createHologram(mainInstance, new Location(world,2.5,202,10.5));
-		joinGameText.appendTextLine(ChatColor.YELLOW + "Click to join a " + ChatColor.BOLD + "Sky Wars" + ChatColor.RESET + ChatColor.YELLOW + " game");
+		Hologram joinGameText = HologramsAPI.createHologram(mainInstance, new Location(world,-124.5,65,497.5));
+		joinGameText.appendTextLine(ChatColor.YELLOW + "Click to join a " + ChatColor.BOLD + "Stick Duel" + ChatColor.RESET + ChatColor.YELLOW + " game");
 		joinGameText.appendTextLine(ChatColor.GREEN.toString() + mainInstance.getRealmHandlingInstance().getGamesCount(Realm.fromDBName(realm.getDBName().split("_")[0])) + ChatColor.YELLOW + " games active");
 		joinGameText.appendItemLine(new ItemStack(Material.NETHER_STAR));
 		
 		//Update the active games
-		mainInstance.getTimerInstance().createRunnableTimer("skyWarLobby_gamesActiveUpdate", 5, 0, new Runnable() {
+		mainInstance.getTimerInstance().createRunnableTimer("stickDuelLobby_gamesActiveUpdate", 5, 0, new Runnable() {
 			@Override
 			public void run() {
 				joinGameText.clearLines();
-				joinGameText.appendTextLine(ChatColor.YELLOW + "Click to join a " + ChatColor.BOLD + "Sky Wars" + ChatColor.RESET + ChatColor.YELLOW + " game");
+				joinGameText.appendTextLine(ChatColor.YELLOW + "Click to join a " + ChatColor.BOLD + "Stick Duel" + ChatColor.RESET + ChatColor.YELLOW + " game");
 				joinGameText.appendTextLine(ChatColor.GREEN.toString() + mainInstance.getRealmHandlingInstance().getGamesCount(Realm.fromDBName(realm.getDBName().split("_")[0])) + ChatColor.YELLOW + " games active");
 				joinGameText.appendItemLine(new ItemStack(Material.NETHER_STAR));
 			}
 		});
 		
 		//Create NPC's
-		joinGameNPC = customNPCManagerInstance.spawnNPC(null, null, CustomNPCType.JOIN_REALM, new Location(world,2.5,199,10.5,164,0));
-		joinGameNPC.setRealm(Realm.SKYWARS);
+		joinGameNPC = customNPCManagerInstance.spawnNPC(null, null, CustomNPCType.JOIN_REALM, new Location(world,-124.5,62,497.5,45,0));
+		joinGameNPC.setRealm(Realm.STICK_DUEL);
 		
 		ArrayList<String> hints = new ArrayList<String>() {{
-			add(ChatColor.YELLOW + "Use /hub or /leave to return to the hub");
-			add(ChatColor.YELLOW + "Use the " + ChatColor.BOLD + "SHOP MENU " + ChatColor.RESET.toString() + ChatColor.YELLOW + "to purchase items and custom stuff");
-			add(ChatColor.YELLOW + "Use /level to view your " + realm.toString() + " level");
+			add(ChatColor.YELLOW + "This is a hint message");
 		}};
 		
 		//Hint messages timer
-		mainInstance.getTimerInstance().createRunnableTimer("skyWarLobby_hintMessages", 90, 0, new Runnable() {
+		mainInstance.getTimerInstance().createRunnableTimer("stickDuelLobby_hintMessages", 90, 0, new Runnable() {
 			@Override
 			public void run() {
 				messageToAll(hints.get(new Random().nextInt(hints.size())));
@@ -140,8 +139,8 @@ public class SkyWarsLobby extends RealmBase {
 		}
 		//Check if players are on island
 		for (Player ply : getPlayers(true)) {
-			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(127,239,-122), new Vector(-123,71,118))) {
-				ply.teleport(new Location(world,.5,200,.5,0,0));
+			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(-196,118,548), new Vector(-59,1,409))) {
+				ply.teleport(new Location(world,-132.5,61,505.5,180,0));
 			}
 		}
 	}
@@ -176,8 +175,8 @@ public class SkyWarsLobby extends RealmBase {
 		ItemStack hm = hubMenu.give();
 		player.getInventory().setItem(0, hm);
 		
-		//Sky Wars Shop
-		SkyWarsShop shop = new SkyWarsShop(mainInstance,player);
+		//Step Spleef Shop
+		StepSpleefShop shop = new StepSpleefShop(mainInstance,player);
 		ItemStack s = shop.give();
 		player.getInventory().setItem(2, s);
 		
@@ -195,7 +194,6 @@ public class SkyWarsLobby extends RealmBase {
 		//Return to hub
 		ReturnToHub returnToHub = new ReturnToHub(mainInstance,player);
 		player.getInventory().setItem(8, returnToHub.give());
-		
 	}
 	/**
 	* When a player respawns
@@ -205,22 +203,22 @@ public class SkyWarsLobby extends RealmBase {
 	public Location playerRespawn(Player ply) {
 		setItems(ply);
 		
-		return new Location(world,.5,200,.5,0,0);
+		return new Location(world,-132.5,61,505.5,180,0);
 	}
 	/**
 	* When a player joins the hub
 	*/
 	public void playerJoin(Player ply) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
-		Hologram hologram = HologramsAPI.createHologram(mainInstance,new Location(world,-1.5,203,10.5));
-		int level = pd.getLevel(Realm.SKYWARS);
+		Hologram hologram = HologramsAPI.createHologram(mainInstance,new Location(world,-140.5,66,497.5));
+		int level = pd.getLevel(Realm.STICK_DUEL);
 		
 		//Hologram content
-		hologram.appendTextLine(ChatColor.YELLOW + ChatColor.BOLD.toString() + "Your Sky Wars Level Info");
+		hologram.appendTextLine(ChatColor.YELLOW + ChatColor.BOLD.toString() + "Your Stick Duel Level Info");
 		hologram.appendTextLine(null);
 		hologram.appendTextLine(ChatColor.YELLOW + "Level: " + ChatColor.GREEN + level);
 		hologram.appendTextLine(ChatColor.YELLOW.toString() + level + " " + LevelXPBar.getBarText(50, pd.getXPFromLevel(level), pd.getXPFromLevel((level+1))) + " " + ChatColor.YELLOW + (level+1));
-		hologram.appendTextLine(ChatColor.GREEN.toString() + (pd.getXPFromLevel((level+1))-pd.getXp(Realm.SKYWARS)) + ChatColor.YELLOW + " XP till next level");
+		hologram.appendTextLine(ChatColor.GREEN.toString() + (pd.getXPFromLevel((level+1))-pd.getXp(Realm.STICK_DUEL)) + ChatColor.YELLOW + " XP till next level");
 		hologram.appendItemLine(new ItemStack(Material.EMERALD));
 		
 		//Set it visible to only the player
@@ -230,10 +228,10 @@ public class SkyWarsLobby extends RealmBase {
 		
 		playerHolograms.put(ply.getUniqueId(),hologram);
 		
-		ply.teleport(new Location(world,.5,200,.5,0,0));
+		ply.teleport(new Location(world,-132.5,61,505.5,180,0));
 		
 		//Create the level npc for the player
-		CustomNPC levelNpc = customNPCManagerInstance.spawnNPC(null, ply.getName(), CustomNPCType.NORMAL, new Location(world,-1.5,199,10.5,-164,0));
+		CustomNPC levelNpc = customNPCManagerInstance.spawnNPC(null, ply.getName(), CustomNPCType.NORMAL, new Location(world,-140.5,62,497.5,-45,0));
 		pd.setCustomDataKey("level_npc", String.valueOf(levelNpc.getId()));
 		
 		levelNpc.showFor(ply);
@@ -252,11 +250,8 @@ public class SkyWarsLobby extends RealmBase {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
 		
 		//Remove level hologram
-		Hologram levelHologram = playerHolograms.get(ply.getUniqueId());
-		if (levelHologram != null) {			
-			levelHologram.delete();
-			playerHolograms.remove(ply.getUniqueId());
-		}
+		playerHolograms.get(ply.getUniqueId()).delete();
+		playerHolograms.remove(ply.getUniqueId());
 		
 		joinGameNPC.removeFor(ply);
 		customNPCManagerInstance.deleteNPC(Integer.valueOf(pd.getCustomDataKey("level_npc")));

@@ -13,14 +13,14 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
-public class PlayerInfo extends CommandBase {
+public class GoTo extends CommandBase {
 	private PlayerHandling playerHandling;
 	
-	public PlayerInfo(Main mainInstance) {
+	public GoTo(Main mainInstance) {
 		super(mainInstance,
-			"playerInfo",
-			"Get general info for the specified player",
-			"/playerInfo <player>",
+			"goTo",
+			"Go to the specified player",
+			"/goTo <player>",
 			new ArrayList<String>(),
 			Arrays.asList(UserGroup.ADMIN)
 		);
@@ -34,18 +34,8 @@ public class PlayerInfo extends CommandBase {
 			
 			if (player != null) {
 				PlayerData pd = playerHandling.getPlayerData(player);
-				String groupString = "";
-				
-				for (UserGroup group : pd.getUserGroups()) {
-					if (groupString.equals("")) {
-						groupString = group.toString();
-					} else {
-						groupString += ", " + group.toString();
-					}
-				}
-				ply.sendMessage(ChatColor.YELLOW + "Points: " + ChatColor.GREEN + pd.getPoints() + "\n"
-					+ ChatColor.YELLOW + "Rank: " + ChatColor.GREEN + groupString + "\n"
-					+ ChatColor.YELLOW + "Ip: " + ChatColor.GREEN + pd.getIp());
+				playerHandling.getPlayerData(ply).getCurrentRealm().leave(ply, false, null);
+				pd.getCurrentRealm().secretJoin(ply, pd.getCurrentRealm().getRealm().isGame());
 			} else {
 				ply.sendMessage(ChatColor.RED + "Please enter a valid player!");
 			}

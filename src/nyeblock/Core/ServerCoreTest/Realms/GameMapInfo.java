@@ -11,6 +11,7 @@ import nyeblock.Core.ServerCoreTest.Maps.PvP_Nether;
 import nyeblock.Core.ServerCoreTest.Maps.SkyWars_Savanna;
 import nyeblock.Core.ServerCoreTest.Maps.SkyWars_Woodland;
 import nyeblock.Core.ServerCoreTest.Maps.StepSpleef_Concrete;
+import nyeblock.Core.ServerCoreTest.Maps.StickDuel_Grassland;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 
 public class GameMapInfo {
@@ -29,6 +30,8 @@ public class GameMapInfo {
 			mapPool.add(new SkyWars_Woodland(game));
 		} else if (realm == Realm.PVP_DUELS_FISTS || realm == Realm.PVP_2V2_FISTS) {
 			mapPool.add(new PvP_Nether(game));
+		} else if (realm == Realm.STICK_DUEL) {
+			mapPool.add(new StickDuel_Grassland(game));
 		}
 		map = mapPool.get(new Random().nextInt(mapPool.size()));
 		

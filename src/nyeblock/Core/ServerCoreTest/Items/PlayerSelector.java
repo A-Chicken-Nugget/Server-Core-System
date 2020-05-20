@@ -35,14 +35,16 @@ public class PlayerSelector extends ItemBase {
 		
 		return item;
 	}
+	@SuppressWarnings("unused")
 	public void use(ItemStack item) {
 		PlayerData playerData = playerHandling.getPlayerData(player);
 		int currentIndex = Integer.parseInt(playerData.getCustomDataKey("player_selector_index") != null ? playerData.getCustomDataKey("player_selector_index") : "-1");
 		RealmBase game = playerData.getCurrentRealm();
-		ArrayList<Player> playersInGame = game.getPlayersInRealm();
+		ArrayList<Player> playersInGame = game.getPlayers(false);
 		ItemMeta itemMeta = item.getItemMeta();
 		boolean foundPlayer = false;
 		
+		//TODO Redo
 		for (Player ply : playersInGame) {
 			if (playersInGame.size() > currentIndex + 1) {
 				Player playerToSpec = playersInGame.get(currentIndex + 1);

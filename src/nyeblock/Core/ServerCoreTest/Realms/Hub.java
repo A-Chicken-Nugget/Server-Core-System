@@ -10,6 +10,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
@@ -79,7 +81,7 @@ public class Hub extends RealmBase {
 						scores.put(6, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 						scores.put(5, ChatColor.YELLOW + "Players online: " + ChatColor.GREEN + playersOnline);
 						scores.put(4, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-						scores.put(3, ChatColor.YELLOW + "Points: " + ChatColor.GREEN + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()));
+						scores.put(3, ChatColor.YELLOW + "Points: " + ChatColor.GREEN + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()) + ChatColor.RESET.toString());
 						scores.put(2, ChatColor.RESET.toString());
 						scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
 						pd.setScoreboardTitle(boardAnimation.getMessage());
@@ -88,6 +90,10 @@ public class Hub extends RealmBase {
 				}
 			}
 		};
+		
+		//Boss bar
+		bossBar = Bukkit.getServer().createBossBar(ChatColor.YELLOW + "Test Message",BarColor.PINK,BarStyle.SEGMENTED_12);
+		bossBar.setVisible(true);
 		
 		//Floating text
 		Hologram spawnText = HologramsAPI.createHologram(mainInstance, new Location(Bukkit.getWorld("world"),-9.498,116,-7.467));
@@ -115,12 +121,6 @@ public class Hub extends RealmBase {
 		});
 	}
 	
-	/**
-	* Get players
-	*/
-	public ArrayList<Player> getPlayers() {
-		return players;
-	}
 	/**
 	* Main functions ran for the hub
 	*/
@@ -209,7 +209,7 @@ public class Hub extends RealmBase {
 		for (Player player : players) {
 			PlayerData pd2 = playerHandlingInstance.getPlayerData(player);
 			
-			pd2.removePlayerFromTeam(pd.getUserGroup().toString(), ply);
+			pd2.removePlayerFromTeam(pd.getPrimaryUserGroup().toString(), ply);
 		}
 	}
 }

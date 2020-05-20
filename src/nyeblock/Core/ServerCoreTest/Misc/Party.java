@@ -1,6 +1,7 @@
 package nyeblock.Core.ServerCoreTest.Misc;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.bukkit.entity.Player;
 
@@ -51,9 +52,13 @@ public class Party {
 			members.remove(ply);
 			playerHandling.getPlayerData(ply).setParty(null);
 			
-			for (Player player : members) {
+			Iterator<Player> partyMembers = members.iterator();
+			while (partyMembers.hasNext()) {
+				Player player = partyMembers.next();
+				
 				player.sendMessage(ChatColor.YELLOW + "The creator has closed the party!");
-				playerLeave(player,false);
+				playerHandling.getPlayerData(player).setParty(null);
+				partyMembers.remove();
 			}
 		} else {
 			members.remove(ply);

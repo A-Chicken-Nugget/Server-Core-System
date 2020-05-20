@@ -47,7 +47,7 @@ public abstract class CommandBase extends BukkitCommand {
 	public boolean execute(CommandSender sender, String label, String[] args) {
 		Player ply = (Player)sender;
 		
-		if (canExecute(playerHandling.getPlayerData(ply).getUserGroup())) {
+		if (canExecute(playerHandling.getPlayerData(ply).getPrimaryUserGroup())) {
 			execute(ply,args);
 		} else {
 			ply.sendMessage(ChatColor.RED + "You do not have access to this command.");
@@ -59,7 +59,7 @@ public abstract class CommandBase extends BukkitCommand {
 		Player ply = (Player)sender;
 		List<String> autoCompletes = new ArrayList<String>();
 		
-		if (canExecute(playerHandling.getPlayerData(ply).getUserGroup())) {
+		if (canExecute(playerHandling.getPlayerData(ply).getPrimaryUserGroup())) {
 			autoCompletes = autoCompletes(ply,args);
 		}
 		return autoCompletes;

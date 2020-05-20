@@ -22,6 +22,7 @@ import com.comphenix.protocol.ProtocolManager;
 import com.sk89q.worldedit.LocalConfiguration;
 
 import nyeblock.Core.ServerCoreTest.Misc.CustomNPCManager;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.DBDataType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.LogType;
 import nyeblock.Core.ServerCoreTest.Misc.VoidWorldGenerator;
 import nyeblock.Core.ServerCoreTest.Misc.WorldManager;
@@ -31,6 +32,7 @@ import nyeblock.Core.ServerCoreTest.Realms.KitPvPLobby;
 import nyeblock.Core.ServerCoreTest.Realms.PvPLobby;
 import nyeblock.Core.ServerCoreTest.Realms.SkyWarsLobby;
 import nyeblock.Core.ServerCoreTest.Realms.StepSpleefLobby;
+import nyeblock.Core.ServerCoreTest.Realms.StickDuelLobby;
 
 public class Main extends JavaPlugin {
 	//Instances
@@ -46,12 +48,13 @@ public class Main extends JavaPlugin {
 	private CoreProtectAPI coreProtectAPI;
 	private CustomNPCManager customNPCManager;
 	private ProtocolManager protocolManager;
+	private boolean databaseCanConnect = true;
 	//Lobby Instances
 	private KitPvPLobby kitPvPLobby;
 	private SkyWarsLobby skyWarsLobby;
 	private StepSpleefLobby stepSpleefLobby;
 	private PvPLobby pvPLobby;
-	
+	private StickDuelLobby stickDuelLobby;
 	//Logs
 	private boolean logPlayTime = false;
 	
@@ -91,6 +94,7 @@ public class Main extends JavaPlugin {
 			config = this.getConfig();
 		} else {
 			config = this.getConfig();
+			//Sql info
 			config.addDefault("mysql.host","host");
 			config.addDefault("mysql.database","database");
 			config.addDefault("mysql.port",3306);
@@ -193,6 +197,25 @@ public class Main extends JavaPlugin {
 			}
 		});
 		
+		//Stick Duel lobby
+		WorldData sdl = new WorldData();
+		sdl.setWorldName("StickDuelLobby");
+		sdl.setEnviroment(Environment.NORMAL);
+		sdl.setWorldType(WorldType.FLAT);
+		sdl.setGenerator(new VoidWorldGenerator());
+		sdl.setKeepSpawnInMemory(true);
+		sdl.setAutoSave(false);
+		de.xxschrandxx.awm.api.worldcreation.fawe.faweworld(sdl);
+		timerHandling.createRunnableTimer("stickDuelLobby_worldWait", 1, 0, new Runnable() {
+			@Override
+			public void run() {
+				if (Bukkit.getWorld("StickDuelLobby") != null) {
+					timerHandling.deleteTimer("stickDuelLobby_worldWait");
+					stickDuelLobby = new StickDuelLobby(mainInstance);
+				}
+			}
+		});
+		
 		//Create/load game worlds
 		for (int i = 0; i < 10; i++) {			
 			WorldData wd = new WorldData();
@@ -220,7 +243,7 @@ public class Main extends JavaPlugin {
 		
 		//Save every players play time and xp
 		for (Player ply : Bukkit.getWorld("world").getPlayers()) {
-			playerHandling.getPlayerData(ply).saveToDB();
+			playerHandling.getPlayerData(ply).saveData(DBDataType.ALL);
 		}
 	}
 	
@@ -234,6 +257,9 @@ public class Main extends JavaPlugin {
 	// GETTERS
 	//
 	
+	public boolean getCanDatabaseConnectStatus() {
+		return databaseCanConnect;
+	}
 	public RealmHandling getRealmHandlingInstance() {
 		return realmHandling;
 	}
@@ -282,11 +308,22 @@ public class Main extends JavaPlugin {
 	public PvPLobby getPvPLobby() {
 		return pvPLobby;
 	}
+	public StickDuelLobby getStickDuelLobby() {
+		return stickDuelLobby;
+	}
 	
 	public void setLogPlayTime(boolean ye) {
 		logPlayTime = ye;
 	}
 	public boolean getLogPlayTime() {
 		return logPlayTime;
+	}
+	
+	//
+	// SETTERS
+	//
+	
+	public void setDatabaseCanConnectStatus(boolean status) {
+		databaseCanConnect = status;
 	}
 }

@@ -20,7 +20,9 @@ public class Enums {
 		PVP_DEULS_WEPSARMOR("pvp_deuls_wepsarmor","Duels \u00BB Weapons/Armor",true),
 		PVP_2V2_FISTS("pvp_2v2_fists","2v2 \u00BB Fists",true),
 		PVP_2V2_WEPSARMOR("pvp_2v2_wepsarmor","2v2 \u00BB Weapons/Armor",true),
-		PVP_LOBBY("pvp_lobby","PvP Lobby",false);
+		PVP_LOBBY("pvp_lobby","PvP Lobby",false),
+		STICK_DUEL("stickduel","Stick Duel",true),
+		STICK_DUEL_LOBBY("stickduel_lobby","Stick Duel Lobby",false);
 
 		private String dbname;
 		private String name;
@@ -80,21 +82,21 @@ public class Enums {
 	} 
 	//User group enums
 	public enum UserGroup {
-		USER(1,"User","[" + ChatColor.WHITE + "User" + ChatColor.RESET + "]",ChatColor.WHITE),
-		ADMIN(2,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]",ChatColor.DARK_RED),
-		MODERATOR(3,"Moderator","[" + ChatColor.GRAY + "Mod" + ChatColor.RESET + "]",ChatColor.GRAY),
-		TESTER(4,"Tester","[" + ChatColor.YELLOW + "Tester" + ChatColor.RESET + "]",ChatColor.YELLOW),
-		VIP(5,"VIP","[" + ChatColor.GREEN + "VIP" + ChatColor.RESET + "]",ChatColor.GREEN),
-		VIP_MODERATOR(6,"VIP Moderator","[" + ChatColor.GRAY + "VIP Mod" + ChatColor.RESET + "]",ChatColor.GRAY),
-		VIP_TESTER(7,"VIP Tester","[" + ChatColor.YELLOW + "VIP Tester" + ChatColor.RESET + "]",ChatColor.YELLOW);
+		USER(1,1,"User","[" + ChatColor.WHITE + "User" + ChatColor.RESET + "]",ChatColor.WHITE),
+		ADMIN(2,1,"Admin","[" + ChatColor.DARK_RED + "Admin" + ChatColor.RESET + "]",ChatColor.DARK_RED),
+		MODERATOR(3,1,"Moderator","[" + ChatColor.GRAY + "Mod" + ChatColor.RESET + "]",ChatColor.GRAY),
+		TESTER(4,3,"Tester","[" + ChatColor.YELLOW + "Tester" + ChatColor.RESET + "]",ChatColor.YELLOW),
+		VIP(5,2,"VIP","[" + ChatColor.GREEN + "VIP" + ChatColor.RESET + "]",ChatColor.GREEN);
 
-		private int value;  
+		private int value; 
+		private int weight;
 		private String name;
 		private String tag;
 		private ChatColor color;
 
-		private UserGroup(int value, String name, String tag, ChatColor color) {
+		private UserGroup(int value, int weight, String name, String tag, ChatColor color) {
 			this.value = value;
+			this.weight = weight;
 			this.name = name;
 			this.tag = tag;
 			this.color = color;
@@ -131,6 +133,9 @@ public class Enums {
 		}
 		public int getValue() {
 			return value;
+		}
+		public int getWeight() {
+			return weight;
 		}
 		public String toString() {
 			return name;
@@ -253,7 +258,9 @@ public class Enums {
 	public enum MapPointType {
 		PLAYER_SPAWN(),
 		GRACE_BOUND(),
-		CHEST_SPAWN();
+		CHEST_SPAWN(),
+		BED_SPAWN(),
+		BOUNDARY();
 	}
 	//Shop menu requirement type
 	public enum RequirementType {
@@ -308,6 +315,30 @@ public class Enums {
 		}
 		public ChatColor getColor() {
 			return color;
+		}
+	}
+	//Database data types
+	public enum DBDataType {
+		ALL(),
+		STATS(),
+		USER(),
+		ACHIEVEMENTS(),
+		SHOP_ITEMS();
+	}
+	//Game status types
+	public enum GameStatusType {
+		WAITING_FOR_PLAYERS("Waiting"),
+		STARTING("Starting"),
+		ACTIVE("Active");
+		
+		private String text;
+		
+		private GameStatusType(String text) {
+			this.text = text;
+		}
+		
+		public String getText() {
+			return text;
 		}
 	}
 }

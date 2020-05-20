@@ -107,6 +107,24 @@ public class GameMenu extends MenuBase {
 		            }
 				});
 		}});
+		
+		//Stick Duel
+		subMenu.createOption(23, Material.STICK, ChatColor.YELLOW.toString() + ChatColor.BOLD + "Stick Duel", new ArrayList<String>() {{
+			add(ChatColor.GREEN.toString() + (realmHandling.getGamesCount(Realm.STICK_DUEL)+realmHandling.getGamesCount(Realm.STICK_DUEL)) + ChatColor.YELLOW + " games active");
+			add(ChatColor.RESET.toString());
+			add(ChatColor.YELLOW + "Fight against other players");
+			add(ChatColor.YELLOW + "with knockback sticks. Protect");
+			add(ChatColor.YELLOW + "your bed to be the winner.");
+			add(ChatColor.RESET.toString());
+			add(ChatColor.GREEN + "\u279D \u279D Click to join the Stick Duel lobby");
+		}}, new HashMap<ClickType,Runnable>() {{
+				put(ClickType.LEFT,new Runnable() {
+					@Override
+					public void run() {
+						realmHandling.joinLobby(player, Realm.STICK_DUEL_LOBBY);
+		            }
+				});
+		}});
 	}
 	//Give the player this item
 	public ItemStack give() {

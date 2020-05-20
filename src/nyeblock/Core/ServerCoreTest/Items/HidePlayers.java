@@ -40,7 +40,7 @@ public class HidePlayers extends ItemBase {
 			RealmBase game = playerData.getCurrentRealm();
 			
 			if (game != null) {							
-				for (Player ply2 : game.getPlayersInRealm()) {
+				for (Player ply2 : game.getPlayers(false)) {
 					if (!player.canSee(ply2)) {
 						if (!playerData.getSpectatingStatus()) {									
 							player.showPlayer(mainInstance,ply2);
@@ -62,7 +62,7 @@ public class HidePlayers extends ItemBase {
 			RealmBase game = playerData.getCurrentRealm();
 			
 			if (game != null) {							
-				for (Player ply2 : playerData.getCurrentRealm().getPlayersInRealm()) {
+				for (Player ply2 : playerData.getCurrentRealm().getPlayers(false)) {
 					if (player.canSee(ply2)) {								
 						player.hidePlayer(mainInstance,ply2);
 					}

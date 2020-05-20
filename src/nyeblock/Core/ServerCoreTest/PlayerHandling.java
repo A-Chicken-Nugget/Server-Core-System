@@ -1,6 +1,5 @@
 package nyeblock.Core.ServerCoreTest;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,6 +15,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.EnderPearl;
@@ -26,6 +26,7 @@ import org.bukkit.entity.Firework;
 import org.bukkit.entity.FishHook;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.LightningStrike;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Snowball;
@@ -76,7 +77,6 @@ import org.bukkit.util.Vector;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 
 import net.md_5.bungee.api.ChatMessageType;
@@ -84,12 +84,13 @@ import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Items.ItemBase;
 import nyeblock.Core.ServerCoreTest.Menus.MenuBase;
 import nyeblock.Core.ServerCoreTest.Misc.DamagePlayer;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.DBDataType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 import nyeblock.Core.ServerCoreTest.Realms.GameBase;
 import nyeblock.Core.ServerCoreTest.Realms.KitPvP;
 import nyeblock.Core.ServerCoreTest.Realms.HubParkour;
 import nyeblock.Core.ServerCoreTest.Realms.RealmBase;
+import nyeblock.Core.ServerCoreTest.Realms.StickDuel;
 
 @SuppressWarnings("deprecation")
 public class PlayerHandling implements Listener {
@@ -100,7 +101,6 @@ public class PlayerHandling implements Listener {
 	private HashMap<UUID,ArrayList<Long>> playerChatMessages = new HashMap<>();
 	private HashMap<UUID,ArrayList<Long>> playerActions = new HashMap<>();
 	private HashMap<UUID,Long> playerLastUsed = new HashMap<>();
-	private World world = Bukkit.getWorld("world");
 
 	public PlayerHandling(Main mainInstance) {
 		this.mainInstance = mainInstance;
@@ -119,7 +119,7 @@ public class PlayerHandling implements Listener {
 						Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 							@Override
 							public void run() {
-								pd.saveToDB();
+								pd.saveData(DBDataType.ALL);
 							}
 						});
 		            }
@@ -142,8 +142,10 @@ public class PlayerHandling implements Listener {
             		if (lastHitFromPly != null) {                			
             			PlayerData lastHitFromPd = getPlayerData(lastHitFromPly);
             			
-            			if (lastHitFromPd.getSpectatingStatus() || lastHitFromPd.getHiddenStatus()) {                			
-            				event.setCancelled(true);
+            			if (lastHitFromPd != null) {            				
+            				if (lastHitFromPd.getSpectatingStatus() || lastHitFromPd.getHiddenStatus()) {                			
+            					event.setCancelled(true);
+            				}
             			}
             		}
             	}
@@ -151,34 +153,34 @@ public class PlayerHandling implements Listener {
 		});
 		
 		//Prevent xp spawn
-		mainInstance.getProtocolManagerInstance().addPacketListener(new PacketAdapter(mainInstance, ListenerPriority.NORMAL, PacketType.Play.Server.SPAWN_ENTITY_EXPERIENCE_ORB){
-			@Override
-            public void onPacketSending(PacketEvent event) {
-            	Player ply = event.getPlayer();
-//            	PlayerData pd = getPlayerData(ply);
-            	
-            	System.out.println("Test: " + event.getPacket().getIntegers().readSafely(0));
-            	System.out.println("Test2: " + event.getPacket().getIntegers().readSafely(1));
-            	System.out.println("Test3: " + event.getPacket().getIntegers().readSafely(2));
-            	PacketContainer destroyEntity = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
-                destroyEntity.getIntegerArrays().write(0, new int[] { event.getPacket().getIntegers().read(0) });
-     
-                try {
-					mainInstance.getProtocolManagerInstance().sendServerPacket(ply, destroyEntity);
-				} catch (InvocationTargetException e) {
-					e.printStackTrace();
-				}
-            	
-//            	System.out.println("Test: " + event.getPacket().getIntegers().read(0));
-//            	for (Entity ent : world.getEntities()) {
-//            		System.out.println("Blah: " + ent.getEntityId() + " :: " + ent.getType());
-//            	}
-//            	if (pd.getSpectatingStatus() || pd.getHiddenStatus()) {
-//            		((CraftPlayer)ply).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityDestroy(event.getPacket().getIntegers().read(0)));
-//            		event.setCancelled(true);
-//            	}
-			}
-		});
+//		mainInstance.getProtocolManagerInstance().addPacketListener(new PacketAdapter(mainInstance, ListenerPriority.NORMAL, PacketType.Play.Server.SPAWN_ENTITY_EXPERIENCE_ORB){
+//			@Override
+//            public void onPacketSending(PacketEvent event) {
+//            	Player ply = event.getPlayer();
+////            	PlayerData pd = getPlayerData(ply);
+//            	
+//            	System.out.println("Test: " + event.getPacket().getIntegers().readSafely(0));
+//            	System.out.println("Test2: " + event.getPacket().getIntegers().readSafely(1));
+//            	System.out.println("Test3: " + event.getPacket().getIntegers().readSafely(2));
+//            	PacketContainer destroyEntity = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
+//                destroyEntity.getIntegerArrays().write(0, new int[] { event.getPacket().getIntegers().read(0) });
+//     
+//                try {
+//					mainInstance.getProtocolManagerInstance().sendServerPacket(ply, destroyEntity);
+//				} catch (InvocationTargetException e) {
+//					e.printStackTrace();
+//				}
+//            	
+////            	System.out.println("Test: " + event.getPacket().getIntegers().read(0));
+////            	for (Entity ent : world.getEntities()) {
+////            		System.out.println("Blah: " + ent.getEntityId() + " :: " + ent.getType());
+////            	}
+////            	if (pd.getSpectatingStatus() || pd.getHiddenStatus()) {
+////            		((CraftPlayer)ply).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityDestroy(event.getPacket().getIntegers().read(0)));
+////            		event.setCancelled(true);
+////            	}
+//			}
+//		});
 	}
 	
 	//Manage damage logs
@@ -285,7 +287,7 @@ public class PlayerHandling implements Listener {
 			ChatColor chatTextColor = playerData.getChatTextColor();
 			ChatColor nameTextColor = playerData.getNameTextColor();
 			
-			event.setFormat(playerData.getUserGroup().getTag() + " "
+			event.setFormat(playerData.getPrimaryUserGroup().getTag() + " "
 				+ (nameTextColor != null ? nameTextColor : ChatColor.WHITE)+ ply.getName()
 				+ ChatColor.BOLD + " §7\u00BB " + ChatColor.RESET
 				+ (chatTextColor != null ? chatTextColor : ChatColor.WHITE) + event.getMessage());
@@ -324,33 +326,44 @@ public class PlayerHandling implements Listener {
 	@EventHandler
 	public void playerPreLogin(AsyncPlayerPreLoginEvent event) {
 		UUID uniqueId = event.getUniqueId();
+		String ip = event.getAddress().toString().split(":")[0].replace("/","");
+		 
+		ArrayList<HashMap<String,String>> bansQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM user_bans WHERE uniqueId = '" + uniqueId + "' AND is_expired = 0", false);
 		
-		ArrayList<HashMap<String, String>> banQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM bans WHERE uniqueId = '" + uniqueId + "' AND isExpired != 1", false);
-		
-		//If the user has an active ban
-		if (banQuery.size() > 0) {
-			HashMap<String, String> banQueryData = banQuery.get(0);
-			long difference = ((Integer.parseInt(banQueryData.get("length"))*60) + Integer.parseInt(banQueryData.get("added")) - (System.currentTimeMillis()/1000L));
+		if (bansQuery.size() > 0) {
+			HashMap<String, String> bansQueryData = bansQuery.get(0);
+			long difference = ((Integer.parseInt(bansQueryData.get("length"))*60) + Integer.parseInt(bansQueryData.get("created")) - (System.currentTimeMillis()/1000L));
 			
 			if (difference <= 0) {
-				mainInstance.getDatabaseInstance().query("UPDATE bans SET isExpired = 1 WHERE id = " + banQueryData.get("id"), true);
+				mainInstance.getDatabaseInstance().query("UPDATE user_bans SET is_expired = 1 WHERE id = " + bansQueryData.get("id"), true);
+				
+				ArrayList<HashMap<String,String>> ipbansQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM ip_bans WHERE ip = '" + ip + "'", false);
+				
+				if (ipbansQuery.size() > 0) {
+					HashMap<String, String> ipbansQueryData = ipbansQuery.get(0);
+					difference = ((Integer.parseInt(ipbansQueryData.get("length"))*60) + Integer.parseInt(ipbansQueryData.get("created")) - (System.currentTimeMillis()/1000L));
+					
+					if (difference <= 0) {
+						mainInstance.getDatabaseInstance().query("UPDATE ip_bans SET is_expired = 1 WHERE id = " + ipbansQueryData.get("id"), true);
+					} else {
+						event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + difference/60 + " minute(s).\n\nReason:" + bansQueryData.get("reason"));
+					}
+				}
 			} else {
-				event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + (difference/60) + " minute(s).\n\nReason:" + banQueryData.get("reason"));
+        		event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + difference/60 + " minute(s).\n\nReason:" + bansQueryData.get("reason"));
 			}
-		}
-		
-		String playerIp = event.getAddress().toString().split(":")[0].replace("/","");
-		ArrayList<HashMap<String, String>> ipBanQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM ipBans WHERE ip = '" + playerIp + "' AND isExpired != 1", false);
-		
-		//If the user has an active ban
-		if (ipBanQuery.size() > 0) {
-			HashMap<String, String> ipBanQueryData = ipBanQuery.get(0);
-			long difference = ((Integer.parseInt(ipBanQueryData.get("length"))*60) + Integer.parseInt(ipBanQueryData.get("added")) - (System.currentTimeMillis()/1000L));
+		} else {
+			ArrayList<HashMap<String,String>> ipbansQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM ip_bans WHERE ip = '" + ip + "' AND is_expired = 0", false);
 			
-			if (difference <= 0) {
-				mainInstance.getDatabaseInstance().query("UPDATE bans SET isExpired = 1 WHERE id = " + ipBanQueryData.get("id"), true);
-			} else {
-				event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + (difference/60) + " minute(s).\n\nReason:" + ipBanQueryData.get("reason"));
+			if (ipbansQuery.size() > 0) {
+				HashMap<String, String> ipbansQueryData = ipbansQuery.get(0);
+				long difference = ((Integer.parseInt(ipbansQueryData.get("length"))*60) + Integer.parseInt(ipbansQueryData.get("created")) - (System.currentTimeMillis()/1000L));
+				
+				if (difference <= 0) {
+					mainInstance.getDatabaseInstance().query("UPDATE ip_bans SET is_expired = 1 WHERE id = " + ipbansQueryData.get("id"), true);
+				} else {
+					event.disallow(Result.KICK_BANNED, "You are banned.\n\nExpires in: " + difference/60 + " minute(s).\n\nReason:" + ipbansQueryData.get("reason"));
+				}
 			}
 		}
 	}
@@ -358,7 +371,7 @@ public class PlayerHandling implements Listener {
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player ply = event.getPlayer();
-
+		
 		// Set health/food level
 		ply.setHealth(20);
 		ply.setFoodLevel(20);
@@ -374,45 +387,7 @@ public class PlayerHandling implements Listener {
 			Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 				@Override
 				public void run() {            	
-					ArrayList<HashMap<String, String>> userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", false);
-					String ip = ply.getAddress().toString().split(":")[0].replace("/","");
-					
-					//If the player exists in the users table
-					if (userQuery.size() > 0) {
-						HashMap<String, String> userQueryData = userQuery.get(0);
-						
-						playerData.setData(Integer.parseInt(userQueryData.get("id")), Integer.parseInt(userQueryData.get("points")), 0,
-								Double.parseDouble(userQueryData.get("timePlayed")), ip,
-								UserGroup.fromInt(Integer.parseInt(userQueryData.get("userGroup"))));
-						
-						//If the players ip has changed from whats in the DB
-						if (!userQueryData.get("ip").equals(ip)) {
-							//Insert ip into the ipLogs table
-							mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", true);
-							mainInstance.getDatabaseInstance().query("UPDATE users SET ip = '" + ip + "' WHERE uniqueId = '" + ply.getUniqueId() + "'", true);
-						}
-						
-						//If the player does not exists in the users table
-					} else {
-						//Insert the user into the users table
-						mainInstance.getDatabaseInstance().query("INSERT INTO users (uniqueId,name,ip) VALUES ('" + ply.getUniqueId() + "','" + ply.getName() + "','" + ip + "')", true);
-						
-						//Insert ip into the ipLogs table
-						mainInstance.getDatabaseInstance().query("INSERT INTO ipLogs (uniqueId,ip) VALUES ('" + ply.getUniqueId() + "','" + ip + "')", true);
-						
-						//Get the users data from the users table. This is done to get their db id
-						userQuery = mainInstance.getDatabaseInstance().query("SELECT * FROM users WHERE uniqueId = '" + ply.getUniqueId() + "'", false);
-						HashMap<String, String> userQueryData = userQuery.get(0);
-						playerData.setData(Integer.parseInt(userQueryData.get("id")), 0, 0, 0.0, ip, UserGroup.USER);
-						
-						// Let everyone know this is a new player
-						for (Player player : world.getPlayers()) {
-							player.sendMessage(ChatColor.YELLOW + "Welcome " + ChatColor.BOLD + ply.getName()
-							+ ChatColor.RESET.toString() + ChatColor.YELLOW + " for their first time on the server!");
-						}
-					}
-					
-					playerData.getCurrentRealm().updateTeamsFromUserGroups();
+					playerData.setupData();
 				}
 			});
 			playersData.put(ply.getUniqueId(), playerData);
@@ -451,7 +426,7 @@ public class PlayerHandling implements Listener {
 		
 		//Show/hide players accordingly
 		PlayerData pd = getPlayerData(ply);
-		ArrayList<Player> players = pd.getCurrentRealm().getPlayersInRealm();
+		ArrayList<Player> players = pd.getCurrentRealm().getPlayers(false);
 		Realm realm = pd.getRealm();
 		
 		for (Player ply2 : Bukkit.getOnlinePlayers()) {
@@ -511,7 +486,7 @@ public class PlayerHandling implements Listener {
 			pd.getParty().playerLeave(ply,true);
 		}
 		
-		pd.saveToDB();
+		pd.saveData(DBDataType.ALL);
 		
 		mainInstance.getTimerInstance().createRunnableTimer("leave_" + ply.getUniqueId(), 60, 1, new Runnable() {
 			@Override
@@ -603,7 +578,23 @@ public class PlayerHandling implements Listener {
 		Player ply = event.getPlayer();
 		
 		if (!ply.hasPermission("nyeblock.canBreakBlocks")) {
-			event.setCancelled(true);
+			RealmBase realm = getPlayerData(ply).getCurrentRealm();
+			Block block = event.getBlock();
+			
+			if (realm.getRealm() == Realm.STICK_DUEL) {
+				if (block.getType().equals(Material.RED_BED)) {
+					if (!((GameBase)realm).isGameClosed() && Math.abs(Math.abs(((StickDuel)realm).getPlayerBed(ply).getX())-Math.abs(block.getLocation().getX())) > 2) {
+						event.setDropItems(false);
+						((StickDuel)realm).bedBreak(block.getLocation().getBlockX(), ply);
+					} else {
+						event.setCancelled(true);
+					}
+				} else if (!block.getType().equals(Material.WHITE_WOOL)) {
+					event.setCancelled(true);
+				}
+			} else {				
+				event.setCancelled(true);
+			}
 		} else {
 			RealmBase realm = getPlayerData(ply).getCurrentRealm();
 			
@@ -652,7 +643,9 @@ public class PlayerHandling implements Listener {
 				logDamage((Player)((EnderPearl)dmgr).getShooter(),damaged);
 			} else if (dmgr instanceof Firework) {
 				event.setCancelled(true);
-			} else if (event.getEntity().getType().equals(EntityType.ITEM_FRAME)) {
+			} else if (dmged.getType().equals(EntityType.ITEM_FRAME)) {
+				event.setCancelled(true);
+			} else if (dmgr instanceof LightningStrike && getPlayerData((Player)dmged).getRealm().equals(Realm.STICK_DUEL)) {
 				event.setCancelled(true);
 			}
 		}

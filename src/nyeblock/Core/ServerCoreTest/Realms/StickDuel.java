@@ -7,12 +7,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
@@ -21,107 +25,78 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
-import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.GameStatusType;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPMode;
-import nyeblock.Core.ServerCoreTest.Misc.Enums.PvPType;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.MapPointType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
 
 @SuppressWarnings({"deprecation","serial"})
-public class PvP extends GameBase {
+public class StickDuel extends GameBase {
 	//Game info
 	private boolean active = false;
-	private int timeLeft = 0;
+	private HashMap<Integer,Location> teamBeds = new HashMap<>();
+	private HashMap<Integer,Integer> teamLifeCount = new HashMap<>(); 
 	//Player data
-	private ArrayList<Player> playersSpectating = new ArrayList<>();
 	private ArrayList<Player> playersInGame = new ArrayList<>();
 	//Etc
 	private long countdownStart;
 	private int readyCount = 0;
 	private int messageCount = 0;
 	private long lastNumber = 0;
-	private PvPMode pvpMode;
-	private PvPType pvpType;
+	private int timeLeft = 0;
 	
 	//
-	// CONSTRUCTORS
+	// CONSTRUCTOR
 	//
 	
-	public PvP(Main mainInstance, int id, String worldName, Realm realm) {
-		super(mainInstance,realm,worldName,Realm.PVP_LOBBY);
+	public StickDuel(Main mainInstance, int id, String worldName) {
+		super(mainInstance,Realm.STICK_DUEL,worldName,Realm.STICK_DUEL_LOBBY);
 		
 		this.id = id;
 		this.worldName = worldName;
-		duration = 300;
-		if (realm.equals(Realm.PVP_DUELS_FISTS)) {
-			minPlayers = 2;
-			maxPlayers = 2;
-			pvpMode = PvPMode.DUELS;
-			pvpType = PvPType.FIST;
-		} else if (realm.equals(Realm.PVP_DEULS_WEPSARMOR)) {
-			minPlayers = 2;
-			maxPlayers = 2;
-			pvpMode = PvPMode.DUELS;
-			pvpType = PvPType.WEPSARMOR;
-		} else if (realm.equals(Realm.PVP_2V2_FISTS)) {
-			minPlayers = 4;
-			maxPlayers = 4;
-			pvpMode = PvPMode.TWOVTWO;
-			pvpType = PvPType.FIST;
-		} else if (realm.equals(Realm.PVP_2V2_WEPSARMOR)) {
-			minPlayers = 4;
-			maxPlayers = 4;
-			pvpMode = PvPMode.TWOVTWO;
-			pvpType = PvPType.WEPSARMOR;
-		}
+		duration = 240;
+		minPlayers = 2;
+		maxPlayers = 2;
 	}
 	
-	public PvP(Main mainInstance, int id, String worldName, int duration, Realm realm) {
-		super(mainInstance,realm,worldName,Realm.PVP_LOBBY);
+	public StickDuel(Main mainInstance, int id, String worldName, int duration) {
+		super(mainInstance,Realm.STICK_DUEL,worldName,Realm.STICK_DUEL_LOBBY);
 		
 		this.id = id;
 		this.worldName = worldName;
 		this.duration = duration;
-		if (realm.equals(Realm.PVP_DUELS_FISTS)) {
-			minPlayers = 2;
-			maxPlayers = 2;
-			pvpMode = PvPMode.DUELS;
-			pvpType = PvPType.FIST;
-		} else if (realm.equals(Realm.PVP_DEULS_WEPSARMOR)) {
-			minPlayers = 2;
-			maxPlayers = 2;
-			pvpMode = PvPMode.DUELS;
-			pvpType = PvPType.WEPSARMOR;
-		} else if (realm.equals(Realm.PVP_2V2_FISTS)) {
-			minPlayers = 4;
-			maxPlayers = 4;
-			pvpMode = PvPMode.TWOVTWO;
-			pvpType = PvPType.FIST;
-		} else if (realm.equals(Realm.PVP_2V2_WEPSARMOR)) {
-			minPlayers = 4;
-			maxPlayers = 4;
-			pvpMode = PvPMode.TWOVTWO;
-			pvpType = PvPType.WEPSARMOR;
-		}
+		minPlayers = 2;
+		maxPlayers = 2;
 	}
 	
 	//
 	// CLASS METHODS
 	//
 	
+	public String getLifeDisplay(int lifes) {
+		String display = "";
+		
+		if (lifes > 0) {
+			for (int i = 0; i < lifes; i ++) {
+				display += ChatColor.GREEN + "\u2B24 ";
+			}
+		} else {
+			display = ChatColor.RED + "\u2716";
+		}
+		return display;
+	}
 	/**
     * Kick everyone in the game
     */
 	public void kickEveryone() {
-		ArrayList<Player> allPlayers = getPlayers(true);
+		ArrayList<Player> tempPlayers = getPlayers(true);
 		
-		for (Player ply : allPlayers) {			
+		for (Player ply : tempPlayers) {			
 			//Unhide all players who might be hidden for certain players
-			for (Player player : allPlayers) {
+			for (Player player : tempPlayers) {
 				if (!ply.canSee(player)) {					
 					player.showPlayer(mainInstance,ply);
 				}
@@ -150,6 +125,7 @@ public class PvP extends GameBase {
 				pd.setPermission("nyeblock.canMove",true);
 				pd.setPermission("nyeblock.canDamage", true);
 				pd.setPermission("nyeblock.canBeDamaged", true);
+				pd.setPermission("nyeblock.canPlaceBlocks", true);
 				
 				ply.setGameMode(GameMode.SURVIVAL);
 			}
@@ -167,14 +143,19 @@ public class PvP extends GameBase {
 	* What needs to be ran when the world is created
 	*/
 	public void onCreate() {
+		ArrayList<MapPoint> spawnPoints = map.getTypePoints(MapPointType.PLAYER_SPAWN);
+		
 		//Scoreboard
 		scoreboard = new Runnable() {
 			@Override
 			public void run() {
-				for(Player ply : getPlayers(true))
+				ArrayList<Player> allPlayers = new ArrayList<>(players);
+				allPlayers.addAll(silentPlayers);
+				
+				for(Player ply : allPlayers)
 				{       				
 					int pos = 1;
-					if (!endStarted) {						
+					if (!endStarted) {	
 						timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
 					}
 					PlayerData pd = playerHandling.getPlayerData(ply);
@@ -182,19 +163,20 @@ public class PvP extends GameBase {
 					
 					scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
 					scores.put(pos++, ChatColor.RESET.toString());
-					if (gameBegun) {						
+					if (gameBegun) {
 						scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
-						scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-						scores.put(pos++, ChatColor.YELLOW + "Mode: " + ChatColor.GREEN + pvpType.toString());
+						scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
+						scores.put(pos++, ChatColor.YELLOW + "Team 2: " + getLifeDisplay(teamLifeCount.get(1)) + (getPlayerTeam(ply) == 1 ? (ChatColor.GRAY + " (You)") : ""));
+						scores.put(pos++, ChatColor.YELLOW + "Team 1: " + getLifeDisplay(teamLifeCount.get(0)) + (getPlayerTeam(ply) == 0 ? (ChatColor.GRAY + " (You)") : ""));
 					} else {
 						scores.put(pos++, ChatColor.YELLOW + "Status: " + ChatColor.GREEN + status.getText());
 					}
-					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
 					scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
 					if (shouldRainbowTitleText) {
-						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + pvpMode.toString());				
+						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + realm.toString());				
 					} else {				
-						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + pvpMode.toString());
+						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + realm.toString());
 					}
 					pd.updateObjectiveScores(scores);
 				}
@@ -202,11 +184,22 @@ public class PvP extends GameBase {
 		};
 		
 		//Set points
-		for (int i = 0; i < map.getPoints().size(); i++) {
-			spawns.add(i,null);
+		for (int i = 0; i < spawnPoints.size(); i++) {
+			spawns.add(i,spawnPoints.get(i).getLocation());
 		}
-		for (MapPoint point : map.getPoints()) {
-			spawns.set(point.getPosition()-1,point.getLocation());
+		
+		//Spawn beds
+		for (MapPoint point : map.getTypePoints(MapPointType.BED_SPAWN)) {
+			teamBeds.put(point.getPosition()-1,point.getLocation());
+			teamLifeCount.put(point.getPosition()-1,2);
+			Bukkit.getScheduler().runTask(mainInstance, new Runnable() {
+			    @Override
+			    public void run() {
+			    	Location bedLoc = point.getLocation();
+			    	
+		    		Toolkit.setBed(bedLoc.getBlock(), Toolkit.getBlockFaceFromYaw(bedLoc.getYaw()), Material.RED_BED);
+			    }
+			});
 		}
 		
 		//Setup team spawns if they haven't been already
@@ -239,9 +232,9 @@ public class PvP extends GameBase {
 			if (!active) {
 				if (players.size() >= minPlayers || forceStart) {					
 					if (readyCount == 0) {
-						status = GameStatusType.STARTING;
 						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
+						status = GameStatusType.STARTING;
 					} else {
 						if (readyCount >= 5) {
 							active = true;
@@ -254,8 +247,9 @@ public class PvP extends GameBase {
 								
 								ply.teleport(getPlayerSpawn(ply));
 								
-								pd.setPermission("nyeblock.canMove",false);								
+								pd.setPermission("nyeblock.canMove",false);
 								ply.getInventory().clear(8);
+								setItems(ply);
 								
 								if (ply.getFireTicks() > 0) {									
 									mainInstance.getTimerInstance().createRunnableTimer("extinguish_" + ply.getName(), 1, 1, new Runnable() {
@@ -288,7 +282,7 @@ public class PvP extends GameBase {
 				}
 			}
 		}
-		//Check if team has won
+		//Check if a team is empty
 		if (gameBegun && !endStarted) {
 			for (int team = 0; team < 2; team++) {
 				int playersLeft = 0;
@@ -319,15 +313,17 @@ public class PvP extends GameBase {
 							playerHandling.getPlayerData(entry.getValue()).addGamePlayed(realm, true);
 						}
 					}
-					
-					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + namesString + " won!");
-					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
-					for (Player ply : players) {
-						//Print the players xp summary
+					for (Player ply : playersInGame) {
+						PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+						
+						pd.setPermission("nyeblock.canDamage", false);
+						pd.setPermission("nyeblock.canBeDamaged", false);
 						printSummary(ply,true);
 					}
-					mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
-					break;
+					
+					soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
+					messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + namesString + " won!");
+					mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 10, 1, "kickEveryone", false, null, this);
 				}
 			}
 		}
@@ -335,54 +331,79 @@ public class PvP extends GameBase {
 		if (gameBegun && (duration-((System.currentTimeMillis() / 1000L)-startTime)) < 0) {
 			if (!endStarted) {
 				endStarted = true;
-				gameBegun = false;
 				canUsersJoin = false;
 				
 				messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "Nobody wins!");
 				soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
-				//Wait 8 seconds, then kick everyone
 				mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
 			}
 		}
-	}
-	/**
-    * Set the players permissions
-    */
-	public void setDefaultPermissions(Player player) {
-		PermissionAttachment permissions = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getPermissionAttachment();
-		
-		permissions.setPermission("nyeblock.canPlaceBlocks", false);
-		permissions.setPermission("nyeblock.canBreakBlocks", false);
-		permissions.setPermission("nyeblock.canUseInventory", false);
-		permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
-		permissions.setPermission("nyeblock.canDamage", false);
-		permissions.setPermission("nyeblock.canBeDamaged", true);
-		permissions.setPermission("nyeblock.canTakeFallDamage", true);
-		permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
-		permissions.setPermission("nyeblock.canDropItems", false);
-		permissions.setPermission("nyeblock.canLoseHunger", false);
-		permissions.setPermission("nyeblock.canSwapItems", false);
-		permissions.setPermission("nyeblock.canMove", true);
-	}
-	/**
-    * Set the players items
-    */
-	public void setItems(Player player) {
-		if (isGameActive()) {						
-			//Select player
-			PlayerSelector selectPlayer = new PlayerSelector(mainInstance,player);
-			player.getInventory().setItem(4, selectPlayer.give());
+		//Check if players are on island
+		for (Player ply : players) {
+			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(-58,65,-23), new Vector(32,0,31))) {
+				ply.teleport(getPlayerSpawn(ply));
+			}
 		}
-		
-		//Return to hub
-		ReturnToLobby returnToLobby = new ReturnToLobby(mainInstance,lobbyRealm,player);
-		player.getInventory().setItem(8, returnToLobby.give());
 	}
-	public PvPType getPvPType() {
-		return pvpType;
-	}
-	public PvPMode getPvPMode() {
-		return pvpMode;
+	public void bedBreak(int bedX, Player breaker) {
+		if (gameBegun) {			
+			for (Map.Entry<Integer,Location> entry : teamBeds.entrySet()) {
+				if (Math.abs(Math.abs(entry.getValue().getX())-Math.abs(bedX)) < 2) {
+					Integer lifeCount = teamLifeCount.get(entry.getKey());
+					
+					addStat(breaker,"Breaking bed",25,SummaryStatType.XP);
+					if (lifeCount <= 1) {
+						int winningTeam = entry.getKey() == 0 ? 1 : 0;
+						String winString = "";
+						endStarted = true;
+						
+						for (Map.Entry<Location,Player> team : teamsSetup.get(winningTeam).entrySet()) {
+							if (entry.getValue() != null) {
+								if (winString.equals("")) {
+									winString = team.getValue().getName();
+								} else {
+									winString += " and " + team.getValue().getName();
+								}
+								playWinAction(team.getValue());
+								addStat(team.getValue(),"Winning",150,SummaryStatType.XP);
+								playerHandling.getPlayerData(team.getValue()).addGamePlayed(realm, true);
+							}
+						}
+						for (Player ply : playersInGame) {
+							PlayerData pd = mainInstance.getPlayerHandlingInstance().getPlayerData(ply);
+							
+							pd.setPermission("nyeblock.canDamage", false);
+							pd.setPermission("nyeblock.canBeDamaged", false);
+							printSummary(ply,true);
+						}
+						
+						soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
+						messageToAll(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + winString + " won!");
+						mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 10, 1, "kickEveryone", false, null, this);
+					} else {
+						world.strikeLightning(entry.getValue());
+						
+						for (Player ply : players) {
+							if (getPlayerTeam(ply) == entry.getKey()) {
+								ply.sendMessage(ChatColor.YELLOW + ChatColor.BOLD.toString() + "Your bed has been broken");
+							} else {
+								ply.sendMessage(ChatColor.YELLOW + ChatColor.BOLD.toString() + "Team " + (entry.getKey()+1) + "'s bed has been broken");
+							}
+						}
+						mainInstance.getTimerInstance().createRunnableTimer("bedSpawnWait_" + world.getName(), .5, 1, new Runnable() {
+							@Override
+							public void run() {							
+								Toolkit.setBed(entry.getValue().getBlock(), Toolkit.getBlockFaceFromYaw(entry.getValue().getYaw()), Material.RED_BED);
+							}
+						});
+						for (Player ply : players) {
+							ply.teleport(getPlayerSpawn(ply));
+						}
+					}
+					teamLifeCount.put(entry.getKey(),lifeCount-1);
+				}
+			}
+		}
 	}
 	/**
 	* When a player respawns
@@ -400,41 +421,6 @@ public class PvP extends GameBase {
     * Handle when a player died
     */
 	public void playerDeath(Player killed,Player killer) {		
-		boolean isSpectating = playersSpectating.contains(killed);
-		killed.setFireTicks(0);
-		
-		//Handle spectating
-		if (gameBegun && !isSpectating) {			
-			PlayerData pd = playerHandling.getPlayerData(killed);
-			isSpectating = true;
-			
-			killed.setGameMode(GameMode.ADVENTURE);
-			pd.setSpectatingStatus(true);
-			killed.setAllowFlight(true);
-			playersSpectating.add(killed);
-			playersInGame.remove(killed);
-			
-			killed.sendMessage(ChatColor.YELLOW + "You are now spectating. You are invisible and can fly around.");
-			
-			//Unhide spectators
-			for (Player ply : playersSpectating) {
-				killed.showPlayer(mainInstance,ply);
-			}
-			
-			//Hide player from players in the active game
-			for (Player ply : playersInGame) {
-				ply.hidePlayer(mainInstance,killed);
-			}
-			
-			//Set permissions
-			pd.setPermission("nyeblock.canBreakBlocks", false);
-			pd.setPermission("nyeblock.canUseInventory", false);
-			pd.setPermission("nyeblock.canDamage", false);
-			pd.setPermission("nyeblock.canBeDamaged", false);
-			pd.setPermission("nyeblock.canDropItems", false);
-			pd.setPermission("nyeblock.canLoseHunger", false);
-		}
-		
 		if (killer != null) {
 			for (int i = 0; i < 10; i++) {
 				killer.playEffect(killed.getLocation(), Effect.SMOKE, 1);
@@ -445,9 +431,7 @@ public class PvP extends GameBase {
 			addStat(killer,"Kills",10,SummaryStatType.XP);
 			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " was killed by " + ChatColor.GREEN + killer.getName() + ChatColor.YELLOW + "!");
 		} else {
-			if (!isSpectating) {
-				messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has died!");
-			}
+			messageToAll(ChatColor.GREEN + killed.getName() + ChatColor.YELLOW + " has died!");
 		}		
 	}
 	/**
@@ -471,13 +455,13 @@ public class PvP extends GameBase {
 					if (players.contains(ply)) {						
 						teamSpots.put(entry.getKey(), ply);
 						pd.addPlayerToTeam("team" + (team+1), ply);
-					}
-					if (team == 0) {
-						pd.setTeamColor("team1",ChatColor.GREEN);
-						pd.setTeamColor("team2",ChatColor.RED);
-					} else {
-						pd.setTeamColor("team1",ChatColor.RED);
-						pd.setTeamColor("team2",ChatColor.GREEN);
+						if (team == 0) {
+							pd.setTeamColor("team1",ChatColor.GREEN);
+							pd.setTeamColor("team2",ChatColor.RED);
+						} else {
+							pd.setTeamColor("team1",ChatColor.RED);
+							pd.setTeamColor("team2",ChatColor.GREEN);
+						}
 					}
 					break teamloop;
 				}
@@ -506,7 +490,7 @@ public class PvP extends GameBase {
 			}
 		}
 		
-		ply.sendTitle(ChatColor.YELLOW + "Welcome to PvP \u00BB " + pvpType.toString(),ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map.getName());
+		ply.sendTitle(ChatColor.YELLOW + "Welcome to " + realm.toString(),ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map.getName());
 		
 		for (Player player : players) {
 			if (player.getHealth() == 20) {				
@@ -534,15 +518,69 @@ public class PvP extends GameBase {
 			add(ply);
 		}});
 		
-		//Remove player from spectating list
-		playersSpectating.removeAll(new ArrayList<Player>() {{
-			add(ply);
-		}});
-		
 		//Remove player from other players teams
 		int teamIndex = getPlayerTeam(ply);
 		for (Player player : players) {
 			playerHandling.getPlayerData(player).removePlayerFromTeam("team" + (teamIndex+1), ply);
+		}
+	}
+	
+	//
+	// GETTERS
+	//
+	
+	/**
+	* Gets the specified players bed location
+	* @param ply - Player to get bed for
+	* @return location of the bed
+	*/
+	public Location getPlayerBed(Player ply) {
+		return teamBeds.get(getPlayerTeam(ply));
+	}
+	
+	//
+	// SETTERS
+	//
+	
+	/**
+    * Set the players permissions
+    * @param player - The player to set the permissions for
+    */
+	public void setDefaultPermissions(Player player) {
+		PermissionAttachment permissions = mainInstance.getPlayerHandlingInstance().getPlayerData(player).getPermissionAttachment();
+		
+		permissions.setPermission("nyeblock.canBreakBlocks", false);
+		permissions.setPermission("nyeblock.canPlaceBlocks", false);
+		permissions.setPermission("nyeblock.canUseInventory", false);
+		permissions.setPermission("nyeblock.shouldDropItemsOnDeath", false);
+		permissions.setPermission("nyeblock.canDamage", false);
+		permissions.setPermission("nyeblock.canBeDamaged", true);
+		permissions.setPermission("nyeblock.canTakeFallDamage", false);
+		permissions.setPermission("nyeblock.tempNoDamageOnFall", false);
+		permissions.setPermission("nyeblock.canDropItems", false);
+		permissions.setPermission("nyeblock.canLoseHunger", false);
+		permissions.setPermission("nyeblock.canSwapItems", false);
+		permissions.setPermission("nyeblock.canMove", true);
+	}
+	/**
+    * Set the players items
+    * @param player - The player to set the items for
+    */
+	public void setItems(Player player) {
+		if (!isGameActive()) {
+			if (active) {				
+				ItemStack stick = new ItemStack(Material.STICK);
+				stick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
+				
+				player.getInventory().setItem(0,stick);
+				player.getInventory().setItem(1,new ItemStack(Material.WHITE_WOOL,32));
+				
+				player.getInventory().setHeldItemSlot(0);			
+			} else {				
+				//Return to hub
+				ReturnToLobby returnToLobby = new ReturnToLobby(mainInstance,lobbyRealm,player);
+				player.getInventory().setItem(8, returnToLobby.give());
+			}
 		}
 	}
 }

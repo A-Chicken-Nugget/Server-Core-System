@@ -467,7 +467,7 @@ public class NyeBlockMenu extends MenuBase {
 									ArrayList<Player> playerResults = new ArrayList<Player>();
 									
 									for (Player ply2 : Bukkit.getOnlinePlayers()) {
-										if (ply2.getName().toLowerCase().contains(lines[0])) {
+										if (ply2.getName().toLowerCase().contains(lines[0].toLowerCase())) {
 											playerResults.add(ply2);
 										}
 									}

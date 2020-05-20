@@ -120,7 +120,7 @@ public class ChestValueItems {
 			put(createEnchantedItem(Material.DIAMOND_BOOTS,Enchantment.PROTECTION_ENVIRONMENTAL,Toolkit.GetRandomNumber(1,2)),1);
 			put(createEnchantedItem(Material.DIAMOND_CHESTPLATE,Enchantment.PROTECTION_ENVIRONMENTAL,Toolkit.GetRandomNumber(1,2)),1);
 			//Etc
-			put(createEnchantmentBook(Enchantment.FIRE_ASPECT,Toolkit.GetRandomNumber(1,4)),1);
+//			put(createEnchantmentBook(Enchantment.FIRE_ASPECT,Toolkit.GetRandomNumber(1,3)),1);
 		}});
 	}};
 	private ArrayList<ItemStack> defaultItems = new ArrayList<ItemStack>() {{

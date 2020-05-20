@@ -7,10 +7,14 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.lang.math.IntRange;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.type.Bed;
 import org.bukkit.craftbukkit.libs.org.apache.commons.io.IOUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Objective;
@@ -21,6 +25,8 @@ import org.json.simple.parser.ParseException;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import nyeblock.Core.ServerCoreTest.Misc.Enums.LogType;
 public class Toolkit 
 {
 	public static int GetRandomNumber(int min, int max) 
@@ -117,7 +123,13 @@ public class Toolkit
 		ChatColor returnColor = ChatColor.WHITE;
 		
 		if (color != null) {
-			returnColor = ChatColor.valueOf(color);
+			try {				
+				returnColor = ChatColor.valueOf(color);
+			} catch (Exception ex) {
+				LogType type = LogType.ERROR;
+				
+				System.out.println(type.getColor() + "[" + type.getTag() + "] " + ex.getLocalizedMessage());
+			}
 		}
 		return returnColor;
 	}
@@ -155,4 +167,20 @@ public class Toolkit
             return null;
         }
     }
+	//Spawn bed
+	public static void setBed(Block start, BlockFace facing, Material material) {
+	    for (Bed.Part part : Bed.Part.values()) {
+	        start.setBlockData(Bukkit.createBlockData(material, (data) -> {
+	           ((Bed) data).setPart(part);
+	           ((Bed) data).setFacing(facing);
+	        }));
+	        start = start.getRelative(facing.getOppositeFace());
+	    }
+	}
+	//Get blockface from yaw
+	public static BlockFace getBlockFaceFromYaw(float yaw) {
+		BlockFace[] axis = { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST };
+		
+		return axis[Math.round(yaw / 90f) & 0x3];
+	}
 }

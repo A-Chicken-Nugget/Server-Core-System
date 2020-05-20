@@ -15,13 +15,11 @@ public class TextAnimation {
 		mainInstance.getTimerInstance().createRunnableTimer("textAnimation_" + UUID.randomUUID(), delay, 0, new Runnable() {
 			@Override
 			public void run() {
-//				System.out.println("Before: " + lastIndex);
 				lastIndex++;
 				
 				if (messages.length-1 < lastIndex) {
 					lastIndex = 0;
-				}
-//				System.out.println("After: " + lastIndex + " :: " + messages[lastIndex]);					
+				}					
 			}
 		});
 	}

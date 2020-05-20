@@ -69,7 +69,7 @@ public class KitPvPLobby extends RealmBase {
 		scoreboard = new Runnable() {
 			@Override
 			public void run() {
-				for (Player ply : players) {
+				for (Player ply : getPlayers(true)) {
 					PlayerData pd = playerHandlingInstance.getPlayerData(ply);
 					HashMap<Integer, String> scores = new HashMap<>();
 					
@@ -80,7 +80,7 @@ public class KitPvPLobby extends RealmBase {
 					scores.put(6, ChatColor.GREEN.toString() + pd.getLevel(Realm.KITPVP));
 					scores.put(5, ChatColor.RESET.toString() + ChatColor.RESET.toString());
 					scores.put(4, ChatColor.YELLOW + "Points");
-					scores.put(3, ChatColor.GREEN.toString() + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()));
+					scores.put(3, ChatColor.GREEN.toString() + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()) + ChatColor.RESET.toString());
 					scores.put(2, ChatColor.RESET.toString());
 					scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
 					pd.setScoreboardTitle(boardAnimation.getMessage());
@@ -136,7 +136,7 @@ public class KitPvPLobby extends RealmBase {
 			world.setStorm(false);
 		}
 		//Check if players are on island
-		for (Player ply : players) {
+		for (Player ply : getPlayers(true)) {
 			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(-119,274,-119), new Vector(124,25,100))) {
 				ply.teleport(new Location(world,0.5,162,.5,180,0));
 			}
@@ -256,10 +256,10 @@ public class KitPvPLobby extends RealmBase {
 		customNPCManagerInstance.deleteNPC(Integer.valueOf(pd.getCustomDataKey("level_npc")));
 		
 		//Remove players from teams
-		for (Player player : players) {
+		for (Player player : getPlayers(true)) {
 			PlayerData pd2 = playerHandlingInstance.getPlayerData(player);
 			
-			pd2.removePlayerFromTeam(pd.getUserGroup().toString(), ply);
+			pd2.removePlayerFromTeam(pd.getPrimaryUserGroup().toString(), ply);
 		}
 	}
 }

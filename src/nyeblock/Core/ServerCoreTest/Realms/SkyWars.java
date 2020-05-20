@@ -37,6 +37,7 @@ import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
 import nyeblock.Core.ServerCoreTest.Menus.KitSelectorMenu;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.ChestValue;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.GameStatusType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.MapPointType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
@@ -51,21 +52,36 @@ public class SkyWars extends GameBase {
 	private HashMap<Integer,String> playerSpots = new HashMap<>();
 	private ArrayList<Player> playersSpectating = new ArrayList<>();
 	private ArrayList<Player> playersInGame = new ArrayList<>();
+	private HashMap<Player,Long> playerOutOfBoundsTimeout = new HashMap<>();
+	private HashMap<Player,Integer> playerOutOfBoundsTimeoutCount = new HashMap<>();
 	//Etc
+	private GameBase instance = this;
 	private long countdownStart;
 	private int readyCount = 0;
 	private int messageCount = 0;
 	private long lastNumber = 0;
-	protected ArrayList<Hologram> holograms = new ArrayList<>();
-	protected HashMap<Vector,ChestValue> chests = new HashMap<>();
+	private int timeLeft = 0;
+	private ArrayList<Hologram> holograms = new ArrayList<>();
+	private HashMap<Vector,ChestValue> chests = new HashMap<>();
+	private ArrayList<MapPoint> boundaries;
 	
 	//
-	// CONSTRUCTOR
+	// CONSTRUCTORS
 	//
 	
-	/**
-    * Custom game constructor
-    */
+	public SkyWars(Main mainInstance, int id, String worldName) {
+		super(mainInstance,Realm.SKYWARS,worldName,Realm.SKYWARS_LOBBY);
+		
+		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
+		kitHandling = mainInstance.getKitHandlingInstance();
+		this.id = id;
+		this.worldName = worldName;
+		duration = 900;
+		minPlayers = 4;
+		maxPlayers = 8;
+	}
+	
 	public SkyWars(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
 		super(mainInstance,Realm.SKYWARS,worldName,Realm.SKYWARS_LOBBY);
 		
@@ -77,36 +93,6 @@ public class SkyWars extends GameBase {
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
-		
-		scoreboard = new Runnable() {
-			@Override
-			public void run() {
-				for(Player ply : players)
-				{       				
-					int pos = 1;
-					int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
-					PlayerData pd = playerHandling.getPlayerData(ply);
-					HashMap<Integer,String> scores = new HashMap<Integer,String>();
-					
-					scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
-					scores.put(pos++, ChatColor.RESET.toString());
-					scores.put(pos++, ChatColor.YELLOW + "Kills: " + ChatColor.GREEN + playerKills.get(ply.getName()));
-					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-					scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
-					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-					scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
-					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-					scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-					if (shouldRainbowTitleText) {
-						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "SKY WARS");				
-					} else {				
-						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");
-					}
-					
-					pd.updateObjectiveScores(scores);
-				}
-			}
-		};
 	}
 	
 	//
@@ -117,17 +103,17 @@ public class SkyWars extends GameBase {
     * Kick everyone in the game
     */
 	public void kickEveryone() {
-		ArrayList<Player> tempPlayers = new ArrayList<>(players);
+		ArrayList<Player> allPlayers = getPlayers(true);
 		
-		for (Player ply : tempPlayers) {			
+		for (Player ply : allPlayers) {			
 			//Unhide all players who might be hidden for certain players
-			for (Player player : tempPlayers) {
+			for (Player player : allPlayers) {
 				if (!ply.canSee(player)) {					
 					player.showPlayer(mainInstance,ply);
 				}
 			}
 			
-			mainInstance.getRealmHandlingInstance().joinLobby(ply, lobbyRealm);
+			leave(ply,false,lobbyRealm);
 		}
 	}
 	/**
@@ -140,6 +126,8 @@ public class SkyWars extends GameBase {
 			gameBegun = true;
 			canUsersJoin = false;
 			startTime = System.currentTimeMillis() / 1000L;
+			status = GameStatusType.ACTIVE;
+			
 			for(Player ply : players) {
 				playersInGame.add(ply);
 				
@@ -181,13 +169,50 @@ public class SkyWars extends GameBase {
 	* What needs to be ran when the game is created
 	*/
 	public void onCreate() {
-		GameBase instance = this;
+		boundaries = map.getTypePoints(MapPointType.BOUNDARY);
+		
+		//Scoreboard
+		scoreboard = new Runnable() {
+			@Override
+			public void run() {
+				for(Player ply : getPlayers(false))
+				{       				
+					int pos = 1;
+					if (!endStarted) {						
+						timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
+					}
+					PlayerData pd = playerHandling.getPlayerData(ply);
+					HashMap<Integer,String> scores = new HashMap<Integer,String>();
+					
+					scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
+					scores.put(pos++, ChatColor.RESET.toString());
+					if (gameBegun) {						
+						scores.put(pos++, ChatColor.YELLOW + "Kills: " + ChatColor.GREEN + playerKills.get(ply.getName()));
+						scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
+						scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
+						scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+						scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
+					} else {
+						scores.put(pos++, ChatColor.YELLOW + "Status: " + ChatColor.GREEN + status.getText());
+					}
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+					if (shouldRainbowTitleText) {
+						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "SKY WARS");				
+					} else {				
+						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "SKY WARS");
+					}
+					
+					pd.updateObjectiveScores(scores);
+				}
+			}
+		};
 		
 		//Set points
 		for (MapPoint point : map.getPoints()) {
 			if (point.getType() == MapPointType.PLAYER_SPAWN) {				
 				spawns.add(point.getLocation());
-			} else {
+			} else if (point.getType() == MapPointType.CHEST_SPAWN) {
 				chests.put(point.getLocation().toVector(), point.getChestValue());
 			}
 		}
@@ -235,6 +260,7 @@ public class SkyWars extends GameBase {
 			if (!active) {
 				if (players.size() >= minPlayers || forceStart) {					
 					if (readyCount == 0) {
+						status = GameStatusType.STARTING;
 						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
 					} else {
@@ -247,6 +273,9 @@ public class SkyWars extends GameBase {
 					}
 					readyCount++;
 				} else {
+					if (!status.equals(GameStatusType.WAITING_FOR_PLAYERS)) {
+						status = GameStatusType.WAITING_FOR_PLAYERS;
+					}
 					if (readyCount > 0) {
 						readyCount = 0;
 					}
@@ -265,7 +294,7 @@ public class SkyWars extends GameBase {
 			}
 		}
 		//Check if player has won
-		if (playersInGame.size() == 3 && active) {
+		if (playersInGame.size() == 1 && active) {
 			for (Player ply : playersInGame) {				
 				if (!endStarted) {
 					endStarted = true;
@@ -294,6 +323,43 @@ public class SkyWars extends GameBase {
 				soundToAll(Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1);
 				//Wait 8 seconds, then kick everyone
 				mainInstance.getTimerInstance().createMethodTimer("kick_" + worldName, 8, 1, "kickEveryone", false, null, this);
+			}
+		}
+		//Check if players are within map boundaries
+		if (boundaries != null && boundaries.size() > 0) {			
+			for (Player ply : players) {
+				if (!Toolkit.playerInArea(ply.getLocation().toVector(),boundaries.get(0).getLocation().toVector(),boundaries.get(1).getLocation().toVector())) {
+					Long initiatedTime = playerOutOfBoundsTimeout.get(ply);
+					
+					if (initiatedTime != null) {
+						boolean onBlock = false;
+						
+						for (Block block : Toolkit.getBlocksBelowPlayer(ply)) {
+							if (block.getType() != Material.AIR) {
+								onBlock = true;
+								break;
+							}
+						}
+						if (onBlock) {							
+							if ((System.currentTimeMillis()/1000L)-initiatedTime < 10) {
+								int count = playerOutOfBoundsTimeoutCount.get(ply);
+								
+								if (count < 10) {
+									playerOutOfBoundsTimeoutCount.put(ply,count+1);
+									ply.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You are out of the map bounds. Please return or you will be killed!"));
+								} else {
+									ply.damage(99999999);
+								}
+							} else {
+								playerOutOfBoundsTimeoutCount.put(ply,0);
+							}
+							playerOutOfBoundsTimeout.put(ply,System.currentTimeMillis()/1000L);
+						}
+					} else {
+						playerOutOfBoundsTimeout.put(ply,System.currentTimeMillis()/1000L);
+						playerOutOfBoundsTimeoutCount.put(ply,0);
+					}
+				}
 			}
 		}
 	}
@@ -355,12 +421,6 @@ public class SkyWars extends GameBase {
     */
 	public String getPlayerKit(Player ply) {
 		return playerKits.get(ply.getName());
-	}
-	/**
-    * Get players in the current game
-    */
-	public ArrayList<Player> getPlayersInRealm() {
-		return playersInGame;
 	}
 	/**
     * Set a specific players kit
@@ -488,7 +548,9 @@ public class SkyWars extends GameBase {
 				if (!playerSpots.containsKey(i)) {
 					Location spawn = spawns.get(i);
 					
-					playerSpots.put(i,ply.getName());
+					if (players.contains(ply)) {						
+						playerSpots.put(i,ply.getName());
+					}
 					ply.teleport(spawn);	
 					break;
 				}

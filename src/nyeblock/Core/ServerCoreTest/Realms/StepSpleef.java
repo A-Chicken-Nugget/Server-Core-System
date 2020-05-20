@@ -27,6 +27,7 @@ import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.Items.PlayerSelector;
 import nyeblock.Core.ServerCoreTest.Items.ReturnToLobby;
 import nyeblock.Core.ServerCoreTest.Maps.MapPoint;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.GameStatusType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
 import nyeblock.Core.ServerCoreTest.Misc.Toolkit;
@@ -45,10 +46,24 @@ public class StepSpleef extends GameBase {
 	private int readyCount = 0;
 	private int messageCount = 0;
 	private long lastNumber = 0;
+	private int timeLeft = 0;
 	
-	/**
-    * Custom game constructor
-    */
+	//
+	// CONSTRUCTORS
+	//
+	
+	public StepSpleef(Main mainInstance, int id, String worldName) {
+		super(mainInstance,Realm.STEPSPLEEF,worldName,Realm.STEPSPLEEF_LOBBY);
+		
+		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.id = id;
+		this.worldName = worldName;
+		duration = 600;
+		minPlayers = 5;
+		maxPlayers = 20;
+	}
+	
 	public StepSpleef(Main mainInstance, int id, String worldName, int duration, int minPlayers, int maxPlayers) {
 		super(mainInstance,Realm.STEPSPLEEF,worldName,Realm.STEPSPLEEF_LOBBY);
 		
@@ -59,50 +74,23 @@ public class StepSpleef extends GameBase {
 		this.duration = duration;
 		this.minPlayers = minPlayers;
 		this.maxPlayers = maxPlayers;
-		
-		scoreboard = new Runnable() {
-			@Override
-			public void run() {
-				for(Player ply : players)
-				{       				
-					int pos = 1;
-					int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
-					PlayerData pd = playerHandling.getPlayerData(ply);
-					HashMap<Integer,String> scores = new HashMap<Integer,String>();
-					
-					scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
-					scores.put(pos++, ChatColor.RESET.toString());
-					scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
-					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
-					scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
-					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
-					scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
-					if (shouldRainbowTitleText) {
-						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "STEP SPLEEF");				
-					} else {				
-						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
-					}
-					pd.updateObjectiveScores(scores);
-				}
-			}
-		};
 	}
 
 	/**
     * Kick everyone in the game
     */
 	public void kickEveryone() {
-		ArrayList<Player> tempPlayers = new ArrayList<>(players);
+		ArrayList<Player> allPlayers = getPlayers(true);
 		
-		for (Player ply : tempPlayers) {			
+		for (Player ply : allPlayers) {			
 			//Unhide all players who might be hidden for certain players
-			for (Player player : tempPlayers) {
+			for (Player player : allPlayers) {
 				if (!ply.canSee(player)) {					
 					player.showPlayer(mainInstance,ply);
 				}
 			}
 			
-			mainInstance.getRealmHandlingInstance().joinLobby(ply, lobbyRealm);
+			leave(ply,false,lobbyRealm);
 		}
 	}
 	/**
@@ -115,6 +103,8 @@ public class StepSpleef extends GameBase {
 			gameBegun = true;
 			canUsersJoin = false;
 			startTime = System.currentTimeMillis() / 1000L;
+			status = GameStatusType.ACTIVE;
+			
 			for(Player ply : players) {
 				playersInGame.add(ply);
 			}
@@ -179,6 +169,40 @@ public class StepSpleef extends GameBase {
 	* What needs to be ran when the world is created
 	*/
 	public void onCreate() {
+		//Scoreboard
+		scoreboard = new Runnable() {
+			@Override
+			public void run() {
+				for(Player ply : getPlayers(true))
+				{       				
+					int pos = 1;
+					if (!endStarted) {	
+						timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
+					}
+					PlayerData pd = playerHandling.getPlayerData(ply);
+					HashMap<Integer,String> scores = new HashMap<Integer,String>();
+					
+					scores.put(pos++, ChatColor.GREEN + "http://nyeblock.com/");
+					scores.put(pos++, ChatColor.RESET.toString());
+					if (gameBegun) {
+						scores.put(pos++, ChatColor.YELLOW + "Players Left: " + ChatColor.GREEN + playersInGame.size());
+						scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString());
+						scores.put(pos++, ChatColor.YELLOW + "Time left: " + ChatColor.GREEN + (gameBegun ? (timeLeft <= 0 ? "0:00" : Toolkit.formatMMSS(timeLeft)) : Toolkit.formatMMSS(duration)));
+					} else {
+						scores.put(pos++, ChatColor.YELLOW + "Status: " + ChatColor.GREEN + status.getText());
+					}
+					scores.put(pos++, ChatColor.RESET.toString() + ChatColor.RESET.toString() + ChatColor.RESET.toString());
+					scores.put(pos++, ChatColor.GRAY + new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+					if (shouldRainbowTitleText) {
+						pd.setScoreboardTitle(chatColorList.get(new Random().nextInt(chatColorList.size())) + ChatColor.BOLD.toString() + "STEP SPLEEF");				
+					} else {				
+						pd.setScoreboardTitle(ChatColor.YELLOW.toString() + ChatColor.BOLD.toString() + "STEP SPLEEF");
+					}
+					pd.updateObjectiveScores(scores);
+				}
+			}
+		};
+		
 		//Set points
 		for (MapPoint point : map.getPoints()) {
 			spawns.add(point.getLocation());
@@ -225,6 +249,7 @@ public class StepSpleef extends GameBase {
 					if (readyCount == 0) {
 						messageToAll(ChatColor.YELLOW + "The game will begin shortly!");
 						soundToAll(Sound.BLOCK_NOTE_BLOCK_PLING,1);
+						status = GameStatusType.STARTING;
 						
 						for (Player ply : players) {
 							PlayerData pd = playerHandling.getPlayerData(ply);
@@ -256,6 +281,9 @@ public class StepSpleef extends GameBase {
 					}
 					readyCount++;
 				} else {
+					if (!status.equals(GameStatusType.WAITING_FOR_PLAYERS)) {
+						status = GameStatusType.WAITING_FOR_PLAYERS;
+					}
 					if (readyCount > 0) {
 						readyCount = 0;
 					}
@@ -346,18 +374,6 @@ public class StepSpleef extends GameBase {
 		return found;
 	}
 	/**
-    * Get the end status of the game
-    */
-	public boolean isGameOver() {
-		return endStarted;
-	}
-	/**
-    * Get players in the current game
-    */
-	public ArrayList<Player> getPlayersInRealm() {
-		return playersInGame;
-	}
-	/**
 	* When a player respawns
 	* @param ply - Player that is being respawned
 	* @return location to respawn the player
@@ -407,9 +423,8 @@ public class StepSpleef extends GameBase {
 			}
 		}
 		
-		//Find a random spawn
-		Location randSpawn = getRandomSpawnPoint();
-		killed.teleport(randSpawn);
+		//Teleport to a random spawn
+		killed.teleport(getRandomSpawnPoint());
 	}
 	/**
     * Handle when a player joins the game
@@ -418,8 +433,7 @@ public class StepSpleef extends GameBase {
 		PlayerData pd = playerHandling.getPlayerData(ply);
 		
 		//Teleport player to random spawn
-		Location randSpawn = getRandomSpawnPoint();
-		ply.teleport(randSpawn);
+		ply.teleport(getRandomSpawnPoint());
 		
 		//Setup team
 		pd.setScoreBoardTeams(null,Team.OptionStatus.NEVER);

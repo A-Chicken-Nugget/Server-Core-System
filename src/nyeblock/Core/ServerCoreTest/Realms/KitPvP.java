@@ -51,6 +51,19 @@ public class KitPvP extends GameBase {
 	// CONSTRUCTORS
 	//
 	
+	public KitPvP(Main mainInstance, int id, String worldName) {
+		super(mainInstance,Realm.KITPVP,worldName,Realm.KITPVP_LOBBY);
+		
+		this.mainInstance = mainInstance;
+		playerHandling = mainInstance.getPlayerHandlingInstance();
+		this.id = id;
+		this.worldName = worldName;
+		duration = 120;
+		maxPlayers = 20;
+		gameBegun = true;
+		startTime = System.currentTimeMillis() / 1000L;
+	}
+	
 	public KitPvP(Main mainInstance, int id, String worldName, int duration, int maxPlayers) {
 		super(mainInstance,Realm.KITPVP,worldName,Realm.KITPVP_LOBBY);
 		
@@ -62,11 +75,50 @@ public class KitPvP extends GameBase {
 		this.maxPlayers = maxPlayers;
 		gameBegun = true;
 		startTime = System.currentTimeMillis() / 1000L;
+	}
+	
+	//
+	// CLASS METHODS
+	//
+	
+//	/**
+//  * Creates a new instance of this game
+//  * @param mainInstance - instance of the main class
+//  * @param realm - realm of the game
+//  * @param id - id of the game
+//  * @param worldName - name of the world the game is going to be on
+//  * @return the new instance of the game
+//  */
+//	public static GameBase createNewInstance(Main mainInstance, Realm realm, int id, String worldName) {
+//		return new KitPvP(mainInstance,id,worldName,120,20);
+//	}
+	
+	/**
+    * Kick everyone in the game
+    */
+	public void kickEveryone() {
+		ArrayList<Player> allPlayers = getPlayers(true);
 		
+		for (Player ply : allPlayers) {			
+			//Unhide all players who might be hidden for certain players
+			for (Player player : allPlayers) {
+				if (!ply.canSee(player)) {					
+					player.showPlayer(mainInstance,ply);
+				}
+			}
+			
+			leave(ply,false,lobbyRealm);
+		}
+	}
+	/**
+	* What needs to be ran when the world is created
+	*/
+	public void onCreate() {
+		//Scoreboard
 		scoreboard = new Runnable() {
 			@Override
 			public void run() {
-				for(Player ply : players)
+				for(Player ply : getPlayers(true))
 				{    
 					int pos = 1;
 					int timeLeft = (int)(duration-((System.currentTimeMillis() / 1000L)-startTime));
@@ -107,27 +159,7 @@ public class KitPvP extends GameBase {
 				}
 			}
 		};
-	}
-	
-	//
-	// CLASS METHODS
-	//
-	
-	/**
-    * Kick everyone in the game
-    */
-	public void kickEveryone() {
-		mainInstance.getTimerInstance().deleteTimer(worldName + "_fireworks");
-		ArrayList<Player> tempPlayers = new ArrayList<>(players);
 		
-		for (Player ply : tempPlayers) {
-			leave(ply,false,lobbyRealm);
-		}
-	}
-	/**
-	* What needs to be ran when the world is created
-	*/
-	public void onCreate() {
 		//Set points
 		for (MapPoint point : map.getPoints()) {
 			if (point.getType() == MapPointType.PLAYER_SPAWN) {
@@ -316,12 +348,6 @@ public class KitPvP extends GameBase {
 		return playerInGraceBounds.get(ply.getName());
 	}
 	/**
-    * Get the status of the game
-    */
-	public boolean isGameOver() {
-		return endStarted;
-	}
-	/**
     * Get a specific players kit
     * @param player - the player to get the kit for.
     */
@@ -399,8 +425,7 @@ public class KitPvP extends GameBase {
 		updateTeamsFromUserGroups();
 		
 		//Teleport to random spawn
-		Location randSpawn = getRandomSpawnPoint();
-		ply.teleport(randSpawn);
+		ply.teleport(getRandomSpawnPoint());
 		
 		ply.sendTitle(ChatColor.YELLOW + "Welcome to KitPvP",ChatColor.YELLOW + "Map: " + ChatColor.GREEN + map.getName());
 		
@@ -437,7 +462,7 @@ public class KitPvP extends GameBase {
 		for (Player player : players) {
 			PlayerData pd2 = playerHandling.getPlayerData(player);
 			
-			pd2.removePlayerFromTeam(playerData.getUserGroup().toString(), ply);
+			pd2.removePlayerFromTeam(playerData.getPrimaryUserGroup().toString(), ply);
 		}
 	}
 }

@@ -68,7 +68,7 @@ public class PvPLobby extends RealmBase {
 		scoreboard = new Runnable() {
 			@Override
 			public void run() {
-				for (Player ply : players) {
+				for (Player ply : getPlayers(true)) {
 					PlayerData pd = playerHandlingInstance.getPlayerData(ply);
 					HashMap<Integer, String> scores = new HashMap<>();
 					
@@ -79,7 +79,7 @@ public class PvPLobby extends RealmBase {
 					scores.put(6, ChatColor.GREEN.toString() + pd.getLevel(levelRealm));
 					scores.put(5, ChatColor.RESET.toString() + ChatColor.RESET.toString());
 					scores.put(4, ChatColor.YELLOW + "Points");
-					scores.put(3, ChatColor.GREEN.toString() + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()));
+					scores.put(3, ChatColor.GREEN.toString() + (pd.getPoints() == -1 ? "Loading..." : pd.getPoints()) + ChatColor.RESET.toString());
 					scores.put(2, ChatColor.RESET.toString());
 					scores.put(1, ChatColor.GREEN + "http://nyeblock.com/");
 					pd.setScoreboardTitle(boardAnimation.getMessage());
@@ -92,9 +92,9 @@ public class PvPLobby extends RealmBase {
 		mainInstance.getTimerInstance().createMethodTimer("pvplobby_functions", .5, 0, "mainFunctions", false, null, this);
 		
 		//Duels fists NPC
-		fistsDuelsNPC = customNPCManagerInstance.spawnNPC(null, null, CustomNPCType.JOIN_REALM, new Location(world,-91.5,91,470.5,-24,0));
+		fistsDuelsNPC = customNPCManagerInstance.spawnNPC(null, null, CustomNPCType.JOIN_REALM, new Location(world,-196.5,121,599.5,30,0));
 		fistsDuelsNPC.setRealm(Realm.PVP_DUELS_FISTS);
-		Hologram fistsDuelsText = HologramsAPI.createHologram(mainInstance, new Location(world,-91.5,94,470.5));
+		Hologram fistsDuelsText = HologramsAPI.createHologram(mainInstance, new Location(world,-196.5,124,599.5));
 		fistsDuelsText.appendTextLine(ChatColor.YELLOW + "Click to join a " + ChatColor.BOLD + "Duels \u00BB Fists" + ChatColor.RESET + ChatColor.YELLOW + " game");
 		fistsDuelsText.appendTextLine(ChatColor.GREEN.toString() + mainInstance.getRealmHandlingInstance().getGamesCount(Realm.PVP_DUELS_FISTS) + ChatColor.YELLOW + " games active");
 		fistsDuelsText.appendItemLine(new ItemStack(Material.NETHER_STAR));
@@ -109,9 +109,9 @@ public class PvPLobby extends RealmBase {
 		});
 		
 		//2v2 fists NPC
-		fists2v2NPC = customNPCManagerInstance.spawnNPC(null, null, CustomNPCType.JOIN_REALM, new Location(world,-85.5,91,471.5,4,0));
+		fists2v2NPC = customNPCManagerInstance.spawnNPC(null, null, CustomNPCType.JOIN_REALM, new Location(world,-192.5,121,603.5,58,0));
 		fists2v2NPC.setRealm(Realm.PVP_2V2_FISTS);
-		Hologram fists2v2Text = HologramsAPI.createHologram(mainInstance, new Location(world,-85.5,94,471.5));
+		Hologram fists2v2Text = HologramsAPI.createHologram(mainInstance, new Location(world,-192.5,124,603.5));
 		fists2v2Text.appendTextLine(ChatColor.YELLOW + "Click to join a " + ChatColor.BOLD + "2v2 \u00BB Fists" + ChatColor.RESET + ChatColor.YELLOW + " game");
 		fists2v2Text.appendTextLine(ChatColor.GREEN.toString() + mainInstance.getRealmHandlingInstance().getGamesCount(Realm.PVP_2V2_FISTS) + ChatColor.YELLOW + " games active");
 		fists2v2Text.appendItemLine(new ItemStack(Material.NETHER_STAR));
@@ -173,9 +173,9 @@ public class PvPLobby extends RealmBase {
 			world.setStorm(false);
 		}
 		//Check if players are on island
-		for (Player ply : players) {
-			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(-127,255,551), new Vector(45,46,415))) {
-				ply.teleport(new Location(world,-86.5,91,482.5,90,0));
+		for (Player ply : getPlayers(true)) {
+			if (!Toolkit.playerInArea(ply.getLocation().toVector(),new Vector(-258,183,674), new Vector(-81,16,488))) {
+				ply.teleport(new Location(world,-202.5,120,609.5,-180,0));
 			}
 		}
 	}
@@ -232,14 +232,14 @@ public class PvPLobby extends RealmBase {
 	public Location playerRespawn(Player ply) {
 		setItems(ply);
 		
-		return new Location(world,-86.5,91,482.5,90,0);
+		return new Location(world,-202.5,120,609.5,-180,0);
 	}
 	/**
 	* When a player joins the hub
 	*/
 	public void playerJoin(Player ply) {
 		PlayerData pd = playerHandlingInstance.getPlayerData(ply);
-		Hologram hologram = HologramsAPI.createHologram(mainInstance,new Location(world,-87.5,95,494.5));
+		Hologram hologram = HologramsAPI.createHologram(mainInstance,new Location(world,-208.5,125,599.5));
 		int level = pd.getLevel(levelRealm);
 		
 		//Hologram content
@@ -257,10 +257,10 @@ public class PvPLobby extends RealmBase {
 		
 		playerLevelHolograms.put(ply,hologram);
 		
-		ply.teleport(new Location(world,-86.5,91,482.5,90,0));
+		ply.teleport(new Location(world,-202.5,120,609.5,-180,0));
 		
 		//Create the level npc for the player
-		CustomNPC levelNpc = customNPCManagerInstance.spawnNPC(null, ply.getName(), CustomNPCType.NORMAL, new Location(world,-87.5,91,494.5,-174,0));
+		CustomNPC levelNpc = customNPCManagerInstance.spawnNPC(null, ply.getName(), CustomNPCType.NORMAL, new Location(world,-208.5,121,599.5,-32,0));
 		pd.setCustomDataKey("level_npc", String.valueOf(levelNpc.getId()));
 		
 		levelNpc.showFor(ply);
@@ -288,10 +288,10 @@ public class PvPLobby extends RealmBase {
 		customNPCManagerInstance.deleteNPC(Integer.valueOf(pd.getCustomDataKey("level_npc")));
 		
 		//Remove players from teams
-		for (Player player : players) {
+		for (Player player : getPlayers(true)) {
 			PlayerData pd2 = playerHandlingInstance.getPlayerData(player);
 			
-			pd2.removePlayerFromTeam(pd.getUserGroup().toString(), ply);
+			pd2.removePlayerFromTeam(pd.getPrimaryUserGroup().toString(), ply);
 		}
 	}
 }

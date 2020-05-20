@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import nyeblock.Core.ServerCoreTest.Main;
 import nyeblock.Core.ServerCoreTest.PlayerData;
 import nyeblock.Core.ServerCoreTest.PlayerHandling;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.DBDataType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.UserGroup;
 
@@ -42,7 +43,7 @@ public class ResetData extends CommandBase {
 					pd.getCurrentRealm().leave(player,true,Realm.HUB);
 				} else if (args[1].equalsIgnoreCase("kick_reset")) {
 					player.kickPlayer(ChatColor.YELLOW + "Data reset. Join back.");
-					pd.saveToDB();
+					pd.saveData(DBDataType.ALL);
 					playerHandling.removePlayerData(player);
 				} else if (args[1].equalsIgnoreCase("log_queuing")) {
 					if (!pd.getLogSearch()) {						

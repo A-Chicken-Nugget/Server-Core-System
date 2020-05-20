@@ -17,6 +17,9 @@ public class SkyWars_Woodland extends MapBase {
 		World world = Bukkit.getWorld(game.getWorldName());
 		
 		setPoints(new ArrayList<MapPoint>() {{
+			add(new MapPoint(MapPointType.BOUNDARY,new Location(world,221,123,-4)));
+			add(new MapPoint(MapPointType.BOUNDARY,new Location(world,-49,28,259)));
+			
 			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,117.5,88,34.5),-1));
 			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,47.5,88,34.5),-1));
 			add(new MapPoint(MapPointType.PLAYER_SPAWN,new Location(world,-9.5,88,91.5),-1));

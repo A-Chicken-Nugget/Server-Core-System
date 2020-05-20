@@ -20,7 +20,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import com.boydti.fawe.object.clipboard.DiskOptimizedClipboard;
-import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.math.BlockVector3;
 
@@ -35,13 +34,12 @@ import nyeblock.Core.ServerCoreTest.PlayerHandling;
 import nyeblock.Core.ServerCoreTest.Maps.MapBase;
 import nyeblock.Core.ServerCoreTest.Menus.Shop.ShopItem;
 import nyeblock.Core.ServerCoreTest.Misc.DamagePlayer;
+import nyeblock.Core.ServerCoreTest.Misc.Enums.GameStatusType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.LogType;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.Realm;
 import nyeblock.Core.ServerCoreTest.Misc.Enums.SummaryStatType;
 import nyeblock.Core.ServerCoreTest.Misc.PlayerSummary;
 import nyeblock.Core.ServerCoreTest.Misc.SummaryStat;
-
-import com.bergerkiller.bukkit.lightcleaner.lighting.LightingService;
 
 @SuppressWarnings("serial")
 public abstract class GameBase extends RealmBase {
@@ -56,7 +54,7 @@ public abstract class GameBase extends RealmBase {
 	protected long created = System.currentTimeMillis();
 	protected World world;
 	protected Realm lobbyRealm;
-	private EditSession schematicEditSession;
+	protected GameStatusType status = GameStatusType.WAITING_FOR_PLAYERS;
 	//Player data
 	protected ArrayList<HashMap<Location,Player>> teamsSetup = new ArrayList<>();
 	private HashMap<Player,PlayerSummary> playerSummary = new HashMap<>();
@@ -253,16 +251,18 @@ public abstract class GameBase extends RealmBase {
 			}
 		}
 		
-		mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Removing schematic.");
+		mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Clearing schematic.");
 		
-		//Undo schematic
+		//Clear schematic
 		Bukkit.getScheduler().runTaskAsynchronously(mainInstance, new Runnable() {
 			@Override
 			public void run() {
-				schematicEditSession.undo(schematicEditSession);
-				schematicEditSession.flushQueue();
+				DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(map.getClearSchematicFile());
+				clipboard.paste(new BukkitWorld(world), BlockVector3.at(-42, 30, -6),false,true,null);
+				clipboard.close();
 			}
 		});
+		
 		
 		mainInstance.getRealmHandlingInstance().removeGameFromList(id);
 		mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Finished.");
@@ -289,7 +289,7 @@ public abstract class GameBase extends RealmBase {
 					
 					//Set schematic
 					DiskOptimizedClipboard clipboard = new DiskOptimizedClipboard(map.getSchematicFile());
-					schematicEditSession = clipboard.paste(new BukkitWorld(world), BlockVector3.at(-42, 30, -6),true,false,null);
+					clipboard.paste(new BukkitWorld(world), BlockVector3.at(-42, 30, -6),true,false,null);
 					clipboard.close();
 					
 					//Run create method in sub class
@@ -305,9 +305,9 @@ public abstract class GameBase extends RealmBase {
 				    mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Fixing lighting.");
 				    
 				    //Fix lighting
-				    LightingService.ScheduleArguments scheduleArgs = new LightingService.ScheduleArguments();
-				    scheduleArgs.setWorld(world);
-					LightingService.schedule(scheduleArgs);
+//				    LightingService.ScheduleArguments scheduleArgs = new LightingService.ScheduleArguments();
+//				    scheduleArgs.setWorld(world);
+//					LightingService.schedule(scheduleArgs);
 				    
 				    mainInstance.logMessage(LogType.NORMAL, "(" + worldName + ") Finished.");
 				}
